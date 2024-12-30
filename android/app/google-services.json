@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "391015804587",
+    "firebase_url": "https://iron-project-new-default-rtdb.firebaseio.com",
+    "project_id": "iron-project-new",
+    "storage_bucket": "iron-project-new.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:391015804587:android:8b890b49d3b030cab451ee",
+        "android_client_info": {
+          "package_name": "com.example.iron_project_new"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0nsW29V_Uk_i9BYk8KnCR5eGWreaa66c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
