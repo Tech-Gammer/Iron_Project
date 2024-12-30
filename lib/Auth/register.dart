@@ -68,6 +68,12 @@ class _RegisterPageState extends State<RegisterPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    SizedBox(height: 20,),
+                    CircleAvatar(
+                      radius: 70,
+                      backgroundImage: AssetImage('images/logo.png'), // Correct usage
+                    ),
+                    SizedBox(height: 15,),
                     TextFormField(
                       decoration: InputDecoration(labelText: 'Name',
                       border: OutlineInputBorder(

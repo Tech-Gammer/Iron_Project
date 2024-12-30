@@ -190,6 +190,7 @@ import 'package:provider/provider.dart';
 
 import 'Customer/addcustomers.dart';
 import 'Customer/customerlist.dart';
+import 'Invoice/invoiceslist.dart';
 import 'Invoicepage.dart';
 import 'Provider/lanprovider.dart';
 
@@ -363,9 +364,9 @@ class Dashboard extends StatelessWidget {
         mainAxisSpacing: 16,
         children: [
           _buildDashboardCard(
-              Icons.add, languageProvider.isEnglish ? 'Add Invoice' : 'نیابل اندراج', Colors.blue,
+              Icons.add, languageProvider.isEnglish ? 'Invoice' : 'بل اندراج', Colors.blue,
               (){
-                Navigator.push(context, MaterialPageRoute(builder: (context)=>InvoicePage()));
+                Navigator.push(context, MaterialPageRoute(builder: (context)=>InvoiceListPage()));
               }
           ),
           _buildDashboardCard(

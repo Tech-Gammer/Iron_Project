@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'Auth/login.dart';
 import 'Auth/register.dart';
 import 'Provider/customerprovider.dart';
+import 'Provider/invoice provider.dart';
 import 'Provider/lanprovider.dart';
 import 'dashboard.dart';
 import 'firebase_options.dart';
@@ -17,6 +18,7 @@ void main() async{
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => InvoiceProvider()),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => CustomerProvider()), // Add CustomerProvider
       ],
@@ -32,7 +34,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-//ss
+
     return Consumer<LanguageProvider>(
       builder: (context, languageProvider, child) {
         return MaterialApp(
