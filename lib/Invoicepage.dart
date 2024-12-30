@@ -80,6 +80,11 @@ class _InvoicePageState extends State<InvoicePage> {
     final customerProvider = Provider.of<CustomerProvider>(context, listen: false);
     final selectedCustomer = customerProvider.customers.firstWhere((customer) => customer.id == _selectedCustomerId);
 
+    // Get current date and time
+    final DateTime now = DateTime.now();
+    final String formattedDate = '${now.day}/${now.month}/${now.year}';
+    final String formattedTime = '${now.hour}:${now.minute.toString().padLeft(2, '0')}';
+
     // Load the image from assets
     final ByteData bytes = await rootBundle.load('images/logo.png');
     final Uint8List imageBytes = bytes.buffer.asUint8List();
@@ -117,6 +122,14 @@ class _InvoicePageState extends State<InvoicePage> {
                 pw.Text(
                   '${languageProvider.isEnglish ? 'Customer Address:' : 'کسٹمر پتہ:'} ${selectedCustomer.address ?? ''}',
                   style: pw.TextStyle(fontSize: 14),
+                ),
+                pw.Text(
+                  '${languageProvider.isEnglish ? 'Date:' : 'تاریخ:'} $formattedDate',
+                  style: pw.TextStyle(fontSize: 8),
+                ),
+                pw.Text(
+                  '${languageProvider.isEnglish ? 'Time:' : 'وقت:'} $formattedTime',
+                  style: pw.TextStyle(fontSize: 8),
                 ),
                 pw.SizedBox(height: 10),
                 // Invoice Table
@@ -212,6 +225,20 @@ class _InvoicePageState extends State<InvoicePage> {
     );
   }
 
+  bool _validatePaymentSelection() {
+    bool isValid = true;
+
+    if (_paymentType == null) {
+      isValid = false;
+    }
+
+    if (_paymentType == 'instant' && _instantPaymentMethod == null) {
+      isValid = false;
+    }
+
+    setState(() {}); // Trigger UI updates for error messages
+    return isValid;
+  }
 
   @override
   void initState() {
@@ -224,6 +251,7 @@ class _InvoicePageState extends State<InvoicePage> {
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context);
     final invoiceProvider = Provider.of<InvoiceProvider>(context, listen: false);
+    final _formKey = GlobalKey<FormState>();
 
     return Scaffold(
       appBar: AppBar(
@@ -253,7 +281,7 @@ class _InvoicePageState extends State<InvoicePage> {
                 children: [
                   // Dropdown to select customer
                   const Text('Select Customer:', style: TextStyle(fontSize: 18)),
-                  DropdownButton<String>(
+                  DropdownButtonFormField<String>(
                     isExpanded: true,
                     value: _selectedCustomerId,
                     hint: Text(languageProvider.isEnglish ? 'Choose a customer' : 'ایک کسٹمر منتخب کریں'),
@@ -262,6 +290,14 @@ class _InvoicePageState extends State<InvoicePage> {
                         _selectedCustomerId = newValue;
                       });
                     },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return languageProvider.isEnglish
+                            ? 'Please select a customer'
+                            : 'براہ کرم ایک کسٹمر منتخب کریں';
+                      }
+                      return null;
+                    },
                     items: customerProvider.customers.map<DropdownMenuItem<String>>((Customer customer) {
                       return DropdownMenuItem<String>(
                         value: customer.id,
@@ -269,6 +305,7 @@ class _InvoicePageState extends State<InvoicePage> {
                       );
                     }).toList(),
                   ),
+
                   // Show selected customer name
                   if (_selectedCustomerId != null)
                     Text('${languageProvider.isEnglish ? 'Selected Customer:' : 'منتخب شدہ کسٹمر:'} ${customerProvider.customers.firstWhere((customer) => customer.id == _selectedCustomerId).name}'),
@@ -420,78 +457,181 @@ class _InvoicePageState extends State<InvoicePage> {
                     languageProvider.isEnglish ? 'Payment Type:' : 'ادائیگی کی قسم:',
                     style: const TextStyle(fontSize: 18),
                   ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        Row(
                           children: [
-                            RadioListTile<String>(
-                              value: 'instant',
-                              groupValue: _paymentType,
-                              title: Text(languageProvider.isEnglish ? 'Instant Payment' : 'فوری ادائیگی'),
-                              onChanged: (value) {
-                                setState(() {
-                                  _paymentType = value!;
-                                  _instantPaymentMethod = null; // Reset instant payment method
-                        
-                                });
-                              },
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  RadioListTile<String>(
+                                    value: 'instant',
+                                    groupValue: _paymentType,
+                                    title: Text(languageProvider.isEnglish ? 'Instant Payment' : 'فوری ادائیگی'),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _paymentType = value!;
+                                        _instantPaymentMethod = null; // Reset instant payment method
+                              
+                                      });
+                                    },
+                                  ),
+                                  RadioListTile<String>(
+                                    value: 'udhaar',
+                                    groupValue: _paymentType,
+                                    title: Text(languageProvider.isEnglish ? 'Udhaar Payment' : 'ادھار ادائیگی'),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _paymentType = value!;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
-                            RadioListTile<String>(
-                              value: 'udhaar',
-                              groupValue: _paymentType,
-                              title: Text(languageProvider.isEnglish ? 'Udhaar Payment' : 'ادھار ادائیگی'),
-                              onChanged: (value) {
-                                setState(() {
-                                  _paymentType = value!;
-                                });
-                              },
-                            ),
+                            if (_paymentType == 'instant')
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    RadioListTile<String>(
+                                      value: 'cash',
+                                      groupValue: _instantPaymentMethod,
+                                      title: Text(languageProvider.isEnglish ? 'Cash Payment' : 'نقد ادائیگی'),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _instantPaymentMethod = value!;
+                                        });
+                                      },
+                                    ),
+                                    RadioListTile<String>(
+                                      value: 'online',
+                                      groupValue: _instantPaymentMethod,
+                                      title: Text(languageProvider.isEnglish ? 'Online Bank Transfer' : 'آن لائن بینک ٹرانسفر'),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _instantPaymentMethod = value!;
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
                           ],
                         ),
-                      ),
-                      if (_paymentType == 'instant')
-                        Expanded(
-                          child: Column(
-                            children: [
-                              RadioListTile<String>(
-                                value: 'cash',
-                                groupValue: _instantPaymentMethod,
-                                title: Text(languageProvider.isEnglish ? 'Cash Payment' : 'نقد ادائیگی'),
-                                onChanged: (value) {
-                                  setState(() {
-                                    _instantPaymentMethod = value!;
-                                  });
-                                },
-                              ),
-                              RadioListTile<String>(
-                                value: 'online',
-                                groupValue: _instantPaymentMethod,
-                                title: Text(languageProvider.isEnglish ? 'Online Bank Transfer' : 'آن لائن بینک ٹرانسفر'),
-                                onChanged: (value) {
-                                  setState(() {
-                                    _instantPaymentMethod = value!;
-                                  });
-                                },
-                              ),
-                            ],
+                        // Add validation messages
+                        if (_paymentType == null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16.0),
+                            child: Text(
+                              languageProvider.isEnglish
+                                  ? 'Please select a payment type'
+                                  : 'براہ کرم ادائیگی کی قسم منتخب کریں',
+                              style: TextStyle(color: Colors.red),
+                            ),
                           ),
-                        ),
-                    ],
+                        if (_paymentType == 'instant' && _instantPaymentMethod == null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16.0),
+                            child: Text(
+                              languageProvider.isEnglish
+                                  ? 'Please select an instant payment method'
+                                  : 'براہ کرم فوری ادائیگی کا طریقہ منتخب کریں',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
+                  // ElevatedButton(
+                  //   onPressed: () async {
+                  //     if (_selectedCustomerId == null) {
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         SnackBar(content: Text(languageProvider.isEnglish ? 'Please select a customer' : 'براہ کرم کسٹمر منتخب کریں')),
+                  //       );
+                  //       return;
+                  //     }
+                  //
+                  //     final invoiceNumber = generateInvoiceNumber();
+                  //     final subtotal = _calculateSubtotal();
+                  //     final grandTotal = _calculateGrandTotal();
+                  //
+                  //     try {
+                  //       await invoiceProvider.saveInvoice(
+                  //         invoiceNumber: invoiceNumber,
+                  //         customerId: _selectedCustomerId!,
+                  //         subtotal: subtotal,
+                  //         discount: _discount,
+                  //         grandTotal: grandTotal,
+                  //         paymentType: _paymentType,
+                  //         paymentMethod: _instantPaymentMethod,
+                  //         items: _invoiceRows,
+                  //       );
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         SnackBar(content: Text(languageProvider.isEnglish ? 'Invoice saved successfully' : 'انوائس کامیابی سے محفوظ ہوگئی')),
+                  //       );
+                  //       // Generate and print the PDF
+                  //       await _generateAndPrintPDF(invoiceNumber);
+                  //       Navigator.pop(context);
+                  //     } catch (e) {
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         SnackBar(content: Text(languageProvider.isEnglish ? 'Failed to save invoice' : 'انوائس محفوظ کرنے میں ناکام')),
+                  //       );
+                  //     }
+                  //   },
+                  //   child: Text(languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں'),
+                  // ),
                   ElevatedButton(
                     onPressed: () async {
+                      // Validate customer selection
                       if (_selectedCustomerId == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(languageProvider.isEnglish ? 'Please select a customer' : 'براہ کرم کسٹمر منتخب کریں')),
+                          SnackBar(
+                            content: Text(
+                              languageProvider.isEnglish
+                                  ? 'Please select a customer'
+                                  : 'براہ کرم کسٹمر منتخب کریں',
+                            ),
+                          ),
                         );
                         return;
                       }
 
+                      // Validate payment type
+                      if (_paymentType == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              languageProvider.isEnglish
+                                  ? 'Please select a payment type'
+                                  : 'براہ کرم ادائیگی کی قسم منتخب کریں',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
+                      // Validate instant payment method if "Instant Payment" is selected
+                      if (_paymentType == 'instant' && _instantPaymentMethod == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              languageProvider.isEnglish
+                                  ? 'Please select an instant payment method'
+                                  : 'براہ کرم فوری ادائیگی کا طریقہ منتخب کریں',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
+                      // Generate invoice details
                       final invoiceNumber = generateInvoiceNumber();
                       final subtotal = _calculateSubtotal();
                       final grandTotal = _calculateGrandTotal();
 
+                      // Try saving the invoice
                       try {
                         await invoiceProvider.saveInvoice(
                           invoiceNumber: invoiceNumber,
@@ -503,20 +643,42 @@ class _InvoicePageState extends State<InvoicePage> {
                           paymentMethod: _instantPaymentMethod,
                           items: _invoiceRows,
                         );
+
+                        // Show success message
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(languageProvider.isEnglish ? 'Invoice saved successfully' : 'انوائس کامیابی سے محفوظ ہوگئی')),
+                          SnackBar(
+                            content: Text(
+                              languageProvider.isEnglish
+                                  ? 'Invoice saved successfully'
+                                  : 'انوائس کامیابی سے محفوظ ہوگئی',
+                            ),
+                          ),
                         );
+
                         // Generate and print the PDF
                         await _generateAndPrintPDF(invoiceNumber);
+
+                        // Navigate back
                         Navigator.pop(context);
                       } catch (e) {
+                        // Show error message
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(languageProvider.isEnglish ? 'Failed to save invoice' : 'انوائس محفوظ کرنے میں ناکام')),
+                          SnackBar(
+                            content: Text(
+                              languageProvider.isEnglish
+                                  ? 'Failed to save invoice'
+                                  : 'انوائس محفوظ کرنے میں ناکام',
+                            ),
+                          ),
                         );
                       }
                     },
-                    child: Text(languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں'),
+                    child: Text(
+                      languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں',
+                    ),
                   ),
+
+
 
                 ],
               ),
