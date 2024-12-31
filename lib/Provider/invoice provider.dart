@@ -16,6 +16,7 @@ class InvoiceProvider with ChangeNotifier {
     String? paymentMethod, // For instant payments
     required List<Map<String, dynamic>> items,
   }) async {
+
     try {
       final invoiceData = {
         'invoiceNumber': invoiceNumber,

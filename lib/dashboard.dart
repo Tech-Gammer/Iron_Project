@@ -190,9 +190,11 @@ import 'package:provider/provider.dart';
 
 import 'Customer/addcustomers.dart';
 import 'Customer/customerlist.dart';
+import 'Invoice/customerlistforreport.dart';
 import 'Invoice/invoiceslist.dart';
-import 'Invoicepage.dart';
+import 'Invoice/Invoicepage.dart';
 import 'Provider/lanprovider.dart';
+import 'Reports/custoemrreports.dart';
 
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
@@ -334,27 +336,6 @@ class Dashboard extends StatelessWidget {
     );
   }
 
-  // Widget _buildContent( LanguageProvider languageProvider) {
-  //   return Padding(
-  //     padding: const EdgeInsets.all(16.0),
-  //     child: GridView.count(
-  //       crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 2,
-  //       crossAxisSpacing: 16,
-  //       mainAxisSpacing: 16,
-  //       children: [
-  //         _buildDashboardCard(
-  //             Icons.add, languageProvider.isEnglish ? 'Add Entry' : 'نیا اندراج', Colors.blue),
-  //         _buildDashboardCard(
-  //             Icons.list, languageProvider.isEnglish ? 'View Transactions' : 'لین دین دیکھیں', Colors.green),
-  //         _buildDashboardCard(
-  //             Icons.report, languageProvider.isEnglish ? 'Reports' : 'رپورٹس', Colors.red),
-  //         _buildDashboardCard(
-  //             Icons.settings, languageProvider.isEnglish ? 'Settings' : 'ترتیبات', Colors.orange),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   Widget _buildContent(BuildContext context, LanguageProvider languageProvider) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -375,7 +356,16 @@ class Dashboard extends StatelessWidget {
 
           }),
           _buildDashboardCard(
-              Icons.list, languageProvider.isEnglish ? 'View Transactions' : 'لین دین دیکھیں', Colors.green,(){}),
+              Icons.list, languageProvider.isEnglish ? 'View Transactions' : 'لین دین دیکھیں', Colors.green,(){
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CustomerListPage(),
+              ),
+            );
+
+
+          }),
           _buildDashboardCard(
               Icons.report, languageProvider.isEnglish ? 'Reports' : 'رپورٹس', Colors.red,(){}),
           _buildDashboardCard(
