@@ -157,57 +157,52 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                 return ListView.builder(
                   itemCount: _filteredInvoices.length,
                   itemBuilder: (context, index) {
-                    final invoice = _filteredInvoices[index];
+                    // final invoice = _filteredInvoices[index];
+                    final invoice = Map<String, dynamic>.from(_filteredInvoices[index]);
                     return ListTile(
                       title: Text('Invoice #${invoice['invoiceNumber']}'),
                       subtitle: Text('Customer: ${invoice['customerId']}'),
-                      trailing: Text('\Rs ${invoice['grandTotal']}'),
+                        trailing: Text('\Rs ${invoice['grandTotal']}'),
                       onTap: () {
-                        // Navigate to InvoiceEditPage with invoice details
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => InvoiceEditPage(
-                              invoiceId: invoice['id'],
-                              invoiceNumber: invoice['invoiceNumber'],
-                              customerId: invoice['customerId'],
-                              subtotal: invoice['subtotal'],
-                              discount: invoice['discount'],
-                              grandTotal: invoice['grandTotal'],
-                              paymentType: invoice['paymentType'],
-                              paymentMethod: invoice['paymentMethod'],
-                              items: List<Map<String, dynamic>>.from(invoice['items']),
+                            builder: (context) => InvoicePage(
+                              invoice: Map<String, dynamic>.from(_filteredInvoices[index]), // Pass selected invoice
                             ),
                           ),
                         );
+
                       },
-                      onLongPress: () {
-                        // Show delete confirmation dialog
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: const Text('Delete Invoice'),
-                              content: const Text('Are you sure you want to delete this invoice?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: const Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    invoiceProvider.deleteInvoice(invoice['id']);
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: const Text('Delete'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
+                        onLongPress: () {
+                          // Show delete confirmation dialog
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('Delete Invoice'),
+                                content: const Text('Are you sure you want to delete this invoice?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      // Call deleteInvoice from the InvoiceProvider
+                                      await invoiceProvider.deleteInvoice(invoice['id']);
+                                      Navigator.of(context).pop(); // Close the dialog
+                                    },
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        }
+
                     );
                   },
                 );

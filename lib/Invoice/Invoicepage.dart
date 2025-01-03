@@ -9,6 +9,10 @@ import '../Provider/invoice provider.dart';
 import '../Provider/lanprovider.dart'; // Import your customer provider
 
 class InvoicePage extends StatefulWidget {
+  final Map<String, dynamic>? invoice; // Optional invoice data for editing
+
+  InvoicePage({this.invoice});
+
   @override
   _InvoicePageState createState() => _InvoicePageState();
 }
@@ -18,15 +22,9 @@ class _InvoicePageState extends State<InvoicePage> {
   double _discount = 0.0; // Discount amount or percentage
   String _paymentType = 'instant';
   String? _instantPaymentMethod;
-  List<Map<String, dynamic>> _invoiceRows = [
-    {
-      'total': 0.0,
-      'rate': 0.0,
-      'qty': 0.0,
-      'weight': 0.0,
-      'description': '',
-    },
-  ];
+  TextEditingController _discountController = TextEditingController();
+  List<Map<String, dynamic>> _invoiceRows = [];
+  String? _invoiceId; // For editing existing invoices
 
   String generateInvoiceNumber() {
     // Generate a timestamp as invoice number (in milliseconds)
@@ -41,6 +39,10 @@ class _InvoicePageState extends State<InvoicePage> {
         'qty': 0.0,
         'weight': 0.0,
         'description': '',
+        'weightController': TextEditingController(),
+        'rateController': TextEditingController(),
+        'qtyController': TextEditingController(),
+        'descriptionController': TextEditingController(),
       });
     });
   }
@@ -226,11 +228,62 @@ class _InvoicePageState extends State<InvoicePage> {
   }
 
   @override
+  void dispose() {
+    for (var row in _invoiceRows) {
+      row['weightController']?.dispose();
+      row['rateController']?.dispose();
+      row['qtyController']?.dispose();
+      row['descriptionController']?.dispose();
+    }
+    _discountController.dispose(); // Dispose discount controller
+
+    super.dispose();
+  }
+
+
+  @override
   void initState() {
     super.initState();
     // Fetch the customers when the page is initialized
     Provider.of<CustomerProvider>(context, listen: false).fetchCustomers();
+    if (widget.invoice != null) {
+      // Populate fields for editing
+      final invoice = widget.invoice!;
+      _discount = widget.invoice!['discount'];
+      _discountController.text = _discount.toString(); // Initialize controller with discount value
+      _invoiceId = invoice['invoiceNumber']; // Save the invoice ID for updates
+      _selectedCustomerId = invoice['customerId'];
+      _discount = invoice['discount'];
+      _paymentType = invoice['paymentType'];
+      _instantPaymentMethod = invoice['paymentMethod'];
+      // _invoiceRows = List<Map<String, dynamic>>.from(invoice['items']); // Populate table rows
+      _invoiceRows = List<Map<String, dynamic>>.from(invoice['items']).map((row) {
+        return {
+          ...row,
+          'weightController': TextEditingController(text: row['weight'].toString()),
+          'rateController': TextEditingController(text: row['rate'].toString()),
+          'qtyController': TextEditingController(text: row['qty'].toString()),
+          'descriptionController': TextEditingController(text: row['description']),
+        };
+      }).toList();
+    } else {
+      // Default values for a new invoice
+      _invoiceRows = [
+        {
+          'total': 0.0,
+          'rate': 0.0,
+          'qty': 0.0,
+          'weight': 0.0,
+          'description': '',
+          'weightController': TextEditingController(),
+          'rateController': TextEditingController(),
+          'qtyController': TextEditingController(),
+          'descriptionController': TextEditingController(),
+        },
+      ];
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -240,7 +293,12 @@ class _InvoicePageState extends State<InvoicePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(languageProvider.isEnglish ? 'Create Invoice' : 'انوائس بنائیں'),
+        // title: Text(languageProvider.isEnglish ? 'Create Invoice' : 'انوائس بنائیں'),
+        title: Text(
+          widget.invoice == null
+              ? (languageProvider.isEnglish ? 'Create Invoice' : 'انوائس بنائیں')
+              : (languageProvider.isEnglish ? 'Update Invoice' : 'انوائس کو اپ ڈیٹ کریں'),
+        ),
         centerTitle: true,
         actions: [
           Padding(
@@ -302,13 +360,13 @@ class _InvoicePageState extends State<InvoicePage> {
                   Text(languageProvider.isEnglish ? 'Invoice Details:' : 'انوائس کی تفصیلات:', style: const TextStyle(fontSize: 18)),
                   Table(
                     border: TableBorder.all(),
-                    columnWidths: {
-                      0: const FlexColumnWidth(2),
-                      1: const FlexColumnWidth(2),
-                      2: const FlexColumnWidth(2),
-                      3: const FlexColumnWidth(2),
-                      4: const FlexColumnWidth(3),
-                      5: const FlexColumnWidth(1), // For Delete button column
+                    columnWidths: const {
+                      0: FlexColumnWidth(2),
+                      1: FlexColumnWidth(2),
+                      2: FlexColumnWidth(2),
+                      3: FlexColumnWidth(2),
+                      4: FlexColumnWidth(3),
+                      5: FlexColumnWidth(1), // For Delete button column
                     },
                     children: [
                       TableRow(
@@ -337,7 +395,9 @@ class _InvoicePageState extends State<InvoicePage> {
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: TextField(
-                                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                  // controller: TextEditingController(text: _invoiceRows[i]['rate'].toString()),
+                                  controller: _invoiceRows[i]['rateController'],
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),  // This allows only numeric input
                                   ],
@@ -353,7 +413,9 @@ class _InvoicePageState extends State<InvoicePage> {
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: TextField(
-                                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                  // controller: TextEditingController(text: _invoiceRows[i]['qty'].toString()),
+                                  controller: _invoiceRows[i]['qtyController'],
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly,  // This allows only numeric input
                                   ],
@@ -369,7 +431,9 @@ class _InvoicePageState extends State<InvoicePage> {
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: TextField(
-                                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                  // controller: TextEditingController(text: _invoiceRows[i]['weight'].toString()),
+                                  controller: _invoiceRows[i]['weightController'],
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,4}')),  // This allows only numeric input
                                   ],
@@ -385,6 +449,8 @@ class _InvoicePageState extends State<InvoicePage> {
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: TextField(
+                                  // controller: TextEditingController(text: _invoiceRows[i]['description']),
+                                  controller: _invoiceRows[i]['descriptionController'],
                                   onChanged: (value) {
                                     _updateRow(i, 'description', value);
                                   },
@@ -426,6 +492,7 @@ class _InvoicePageState extends State<InvoicePage> {
                   const SizedBox(height: 20),
                   Text(languageProvider.isEnglish ? 'Discount (Amount):' : 'رعایت (رقم):', style: const TextStyle(fontSize: 18)),
                   TextField(
+                    controller: _discountController,
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
                       setState(() {
@@ -457,6 +524,8 @@ class _InvoicePageState extends State<InvoicePage> {
                       ),
                     ],
                   ),
+
+
                   const SizedBox(height: 20),
 
                   // Payment Type
@@ -641,33 +710,85 @@ class _InvoicePageState extends State<InvoicePage> {
                       }
 
                       // Generate invoice details
-                      final invoiceNumber = generateInvoiceNumber();
+                      // final invoiceNumber = generateInvoiceNumber();
+                      // final grandTotal = _calculateGrandTotal();
+                      final invoiceNumber = _invoiceId ?? generateInvoiceNumber();
                       final grandTotal = _calculateGrandTotal();
-
                       // Try saving the invoice
                       try {
-                        await invoiceProvider.saveInvoice(
-                          invoiceNumber: invoiceNumber,
-                          customerId: _selectedCustomerId!,
-                          subtotal: subtotal,
-                          discount: _discount,
-                          grandTotal: grandTotal,
-                          paymentType: _paymentType,
-                          paymentMethod: _instantPaymentMethod,
-                          items: _invoiceRows,
-                        );
+                        // await invoiceProvider.saveInvoice(
+                        //   invoiceNumber: invoiceNumber,
+                        //   customerId: _selectedCustomerId!,
+                        //   subtotal: subtotal,
+                        //   discount: _discount,
+                        //   grandTotal: grandTotal,
+                        //   paymentType: _paymentType,
+                        //   paymentMethod: _instantPaymentMethod,
+                        //   items: _invoiceRows,
+                        // );
+                        //
+                        // // Show success message
+                        // ScaffoldMessenger.of(context).showSnackBar(
+                        //   SnackBar(
+                        //     content: Text(
+                        //       languageProvider.isEnglish
+                        //           ? 'Invoice saved successfully'
+                        //           : 'انوائس کامیابی سے محفوظ ہوگئی',
+                        //     ),
+                        //   ),
+                        // );
 
-                        // Show success message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              languageProvider.isEnglish
-                                  ? 'Invoice saved successfully'
-                                  : 'انوائس کامیابی سے محفوظ ہوگئی',
+                        if (_invoiceId != null) {
+                          // Update existing invoice
+                          await Provider.of<InvoiceProvider>(context, listen: false).updateInvoice(
+                            id: _invoiceId!,
+                            invoiceNumber: invoiceNumber,
+                            customerId: _selectedCustomerId!,
+                            subtotal: subtotal,
+                            discount: _discount,
+                            grandTotal: grandTotal,
+                            paymentType: _paymentType,
+                            paymentMethod: _instantPaymentMethod,
+                            items: _invoiceRows,
+                          );
+
+                          // ScaffoldMessenger.of(context).showSnackBar(
+                          //   SnackBar(content: Text('Invoice updated successfully')),
+                          // );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                languageProvider.isEnglish
+                                    ? 'Invoice updated successfully'
+                                    : 'انوائس کامیابی سے تبدیل ہوگئی',
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        }
+                        else {
+                          // Save new invoice
+                          await Provider.of<InvoiceProvider>(context, listen: false).saveInvoice(
+                            invoiceNumber: invoiceNumber,
+                            customerId: _selectedCustomerId!,
+                            subtotal: subtotal,
+                            discount: _discount,
+                            grandTotal: grandTotal,
+                            paymentType: _paymentType,
+                            paymentMethod: _instantPaymentMethod,
+                            items: _invoiceRows,
+                          );
 
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                languageProvider.isEnglish
+                                    ? 'Invoice saved successfully'
+                                    : 'انوائس کامیابی سے محفوظ ہوگئی',
+                              ),
+                            ),
+                          );
+
+                        }
                         // Generate and print the PDF
                         await _generateAndPrintPDF(invoiceNumber);
 
@@ -675,6 +796,7 @@ class _InvoicePageState extends State<InvoicePage> {
                         Navigator.pop(context);
                       } catch (e) {
                         // Show error message
+                        print(e);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
@@ -686,8 +808,13 @@ class _InvoicePageState extends State<InvoicePage> {
                         );
                       }
                     },
+                    // child: Text(
+                    //   languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں',
+                    // ),
                     child: Text(
-                      languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں',
+                      widget.invoice == null
+                          ? (languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں')
+                          : (languageProvider.isEnglish ? 'Update Invoice' : 'انوائس کو اپ ڈیٹ کریں'),
                     ),
                   )
 

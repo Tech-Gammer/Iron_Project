@@ -6,6 +6,7 @@ class InvoiceProvider with ChangeNotifier {
   List<Map<String, dynamic>> _invoices = [];
 
   List<Map<String, dynamic>> get invoices => _invoices;
+
   Future<void> saveInvoice({
     required String invoiceNumber,
     required String customerId,
@@ -16,8 +17,17 @@ class InvoiceProvider with ChangeNotifier {
     String? paymentMethod, // For instant payments
     required List<Map<String, dynamic>> items,
   }) async {
-
     try {
+      // Clean up the items to remove controllers and save only the values
+      final cleanedItems = items.map((item) {
+        return {
+          'rate': item['rate'] ?? 0.0,
+          'qty': item['qty'] ?? 0.0,
+          'weight': item['weight'] ?? 0.0,
+          'description': item['description'] ?? '',
+        };
+      }).toList();
+
       final invoiceData = {
         'invoiceNumber': invoiceNumber,
         'customerId': customerId,
@@ -26,9 +36,13 @@ class InvoiceProvider with ChangeNotifier {
         'grandTotal': grandTotal,
         'paymentType': paymentType,
         'paymentMethod': paymentMethod ?? '',
-        'items': items,
+        'items': cleanedItems,
         'createdAt': DateTime.now().toIso8601String(),
       };
+      print('Subtotal: $subtotal');
+      print('Discount: $discount');
+      print('Grand Total: $grandTotal');
+
 
       await _db.child('invoices').push().set(invoiceData);
     } catch (e) {
@@ -36,7 +50,7 @@ class InvoiceProvider with ChangeNotifier {
     }
   }
 
-  // Fetch invoices from Firebase
+
   Future<void> fetchInvoices() async {
     try {
       final snapshot = await _db.child('invoices').get();
@@ -53,7 +67,11 @@ class InvoiceProvider with ChangeNotifier {
             'grandTotal': value['grandTotal'],
             'paymentType': value['paymentType'],
             'paymentMethod': value['paymentMethod'],
-            'items': value['items'],
+            // 'items': value['items'],
+            // Convert items to List<Map<String, dynamic>>
+            'items': List<Map<String, dynamic>>.from(
+              (value['items'] as List).map((item) => Map<String, dynamic>.from(item)),
+            ),
             'createdAt': value['createdAt'],
           });
         });
@@ -76,6 +94,16 @@ class InvoiceProvider with ChangeNotifier {
     required List<Map<String, dynamic>> items,
   }) async {
     try {
+      // Clean up the items to remove controllers and save only the values
+      final cleanedItems = items.map((item) {
+        return {
+          'rate': item['rate'] ?? 0.0,
+          'qty': item['qty'] ?? 0.0,
+          'weight': item['weight'] ?? 0.0,
+          'description': item['description'] ?? '',
+        };
+      }).toList();
+
       final updatedInvoiceData = {
         'invoiceNumber': invoiceNumber,
         'customerId': customerId,
@@ -84,9 +112,13 @@ class InvoiceProvider with ChangeNotifier {
         'grandTotal': grandTotal,
         'paymentType': paymentType,
         'paymentMethod': paymentMethod ?? '',
-        'items': items,
+        'items': cleanedItems,
         'createdAt': DateTime.now().toIso8601String(),
       };
+
+      print('Subtotal: $subtotal');
+      print('Discount: $discount');
+      print('Grand Total: $grandTotal');
 
       await _db.child('invoices').child(id).update(updatedInvoiceData);
       await fetchInvoices();  // Refresh the invoices list after updating
@@ -94,14 +126,17 @@ class InvoiceProvider with ChangeNotifier {
       throw Exception('Failed to update invoice: $e');
     }
   }
-
-  // Delete an invoice
   Future<void> deleteInvoice(String id) async {
     try {
+      // Delete the invoice from the Firebase database by its ID
       await _db.child('invoices').child(id).remove();
-      await fetchInvoices();  // Refresh the invoices list after deleting
+
+      // Refresh the invoices list after deleting
+      await fetchInvoices();
     } catch (e) {
       throw Exception('Failed to delete invoice: $e');
     }
   }
+
+
 }
