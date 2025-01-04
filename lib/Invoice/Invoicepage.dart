@@ -347,21 +347,22 @@ class _InvoicePageState extends State<InvoicePage> {
           widget.invoice == null
               ? (languageProvider.isEnglish ? 'Create Invoice' : 'انوائس بنائیں')
               : (languageProvider.isEnglish ? 'Update Invoice' : 'انوائس کو اپ ڈیٹ کریں'),
+          style: TextStyle(color: Colors.teal.shade800),
         ),
+        backgroundColor: Colors.teal,
         centerTitle: true,
         actions: [
           IconButton(onPressed: (){
             final invoiceNumber = _invoiceId ?? generateInvoiceNumber();
             _generateAndPrintPDF(invoiceNumber);
-          }, icon: Icon(Icons.print)),
+          }, icon: Icon(Icons.print, color: Colors.white)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
               widget.invoice == null
                   ? '${languageProvider.isEnglish ? 'Invoice #' : 'انوائس نمبر#'}${generateInvoiceNumber()}'
                   : '${languageProvider.isEnglish ? 'Invoice #' : 'انوائس نمبر#'}${widget.invoice!['invoiceNumber']}',
-              style: const TextStyle(fontSize: 16),
-            ),
+              style: TextStyle(color: Colors.teal.shade600, fontSize: 16),            ),
           ),
         ],
       ),
@@ -378,7 +379,10 @@ class _InvoicePageState extends State<InvoicePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Dropdown to select customer
-                  const Text('Select Customer:', style: TextStyle(fontSize: 18)),
+                  Text(
+                    languageProvider.isEnglish ? 'Select Customer:' : 'ایک کسٹمر منتخب کریں',
+                    style: TextStyle(color: Colors.teal.shade800, fontSize: 18), // Title text color
+                  ),
                   DropdownButtonFormField<String>(
                     isExpanded: true,
                     value: _selectedCustomerId,
@@ -406,13 +410,16 @@ class _InvoicePageState extends State<InvoicePage> {
 
                   // Show selected customer name
                   if (_selectedCustomerId != null)
-                    Text('${languageProvider.isEnglish ? 'Selected Customer:' : 'منتخب شدہ کسٹمر:'} ${customerProvider.customers.firstWhere((customer) => customer.id == _selectedCustomerId).name}'),
+                    Text('${languageProvider.isEnglish ? 'Selected Customer:' : 'منتخب شدہ کسٹمر:'} ${customerProvider.customers.firstWhere((customer) => customer.id == _selectedCustomerId).name}',
+                      style: TextStyle(color: Colors.teal.shade600),
+                    ),
 
                   // Space between sections
                   const SizedBox(height: 20),
 
                   // Display columns for the invoice details
-                  Text(languageProvider.isEnglish ? 'Invoice Details:' : 'انوائس کی تفصیلات:', style: const TextStyle(fontSize: 18)),
+                  Text(languageProvider.isEnglish ? 'Invoice Details:' : 'انوائس کی تفصیلات:',
+                    style: TextStyle(color: Colors.teal.shade800, fontSize: 18),                  ),
                   Table(
                     border: TableBorder.all(),
                     columnWidths: const {
@@ -459,7 +466,9 @@ class _InvoicePageState extends State<InvoicePage> {
                                   onChanged: (value) {
                                     _updateRow(i, 'rate', double.tryParse(value) ?? 0.0);
                                   },
-                                  decoration: InputDecoration(hintText: languageProvider.isEnglish ? 'Rate' : 'قیمت'),
+                                  decoration: InputDecoration(hintText: languageProvider.isEnglish ? 'Rate' : 'قیمت',
+                                    hintStyle: TextStyle(color: Colors.teal.shade600),
+                                  ),
                                 ),
                               ),
                             ),
@@ -477,7 +486,8 @@ class _InvoicePageState extends State<InvoicePage> {
                                   onChanged: (value) {
                                     _updateRow(i, 'qty', double.tryParse(value) ?? 0.0);
                                   },
-                                  decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Qty' : 'مقدار'),
+                                  decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Qty' : 'مقدار',
+                                    hintStyle: TextStyle(color: Colors.teal.shade600),),
                                 ),
                               ),
                             ),
@@ -495,7 +505,8 @@ class _InvoicePageState extends State<InvoicePage> {
                                   onChanged: (value) {
                                     _updateRow(i, 'weight', double.tryParse(value) ?? 0.0);
                                   },
-                                  decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Weight' : 'وزن'),
+                                  decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Weight' : 'وزن',
+                                    hintStyle: TextStyle(color: Colors.teal.shade600),),
                                 ),
                               ),
                             ),
@@ -509,7 +520,8 @@ class _InvoicePageState extends State<InvoicePage> {
                                   onChanged: (value) {
                                     _updateRow(i, 'description', value);
                                   },
-                                  decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Description' : 'تفصیل'),
+                                  decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Description' : 'تفصیل',
+                                    hintStyle: TextStyle(color: Colors.teal.shade600),),
                                 ),
                               ),
                             ),
@@ -532,7 +544,7 @@ class _InvoicePageState extends State<InvoicePage> {
                   // add row button
                   IconButton(onPressed: (){
                     _addNewRow();
-                  }, icon: const Icon(Icons.add)),
+                  }, icon: const Icon(Icons.add, color: Colors.teal)),
                   // Subtotal row
                   const SizedBox(height: 20),
                   Row(
@@ -540,8 +552,11 @@ class _InvoicePageState extends State<InvoicePage> {
                     children: [
                       Text(
                         '${languageProvider.isEnglish ? 'Subtotal:' : 'کل رقم:'} ${_calculateSubtotal().toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal.shade800, // Subtotal text color
+                        ),                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -836,6 +851,10 @@ class _InvoicePageState extends State<InvoicePage> {
                       widget.invoice == null
                           ? (languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں')
                           : (languageProvider.isEnglish ? 'Update Invoice' : 'انوائس کو اپ ڈیٹ کریں'),
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal.shade400, // Button background color
                     ),
                   )
                 ],

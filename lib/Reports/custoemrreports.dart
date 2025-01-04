@@ -29,6 +29,7 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Customer Report'),
+          backgroundColor: Colors.teal,  // Customize the AppBar color
         ),
         body: Consumer<CustomerReportProvider>(
           builder: (context, provider, child) {
@@ -44,7 +45,7 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
             final transactions = selectedDateRange == null
                 ? provider.transactions
                 : provider.transactions.where((transaction) {
-              final date = DateFormat('dd MMM yy').parse(transaction['date']);
+              final date = DateTime.parse(transaction['date']);
               return date.isAfter(selectedDateRange!.start.subtract(const Duration(days: 1))) &&
                   date.isBefore(selectedDateRange!.end.add(const Duration(days: 1)));
             }).toList();
@@ -59,17 +60,24 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                     Center(
                       child: Column(
                         children: [
-
                           Text(
                             widget.customerName,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold,fontSize: 20),
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
+                              color: Colors.teal.shade800,  // Title color
+                            ),
                           ),
-                          Text('Phone Number: ${widget.customerPhone}'),
+                          Text(
+                            'Phone Number: ${widget.customerPhone}',
+                            style: TextStyle(color: Colors.teal.shade600),  // Subtext color
+                          ),
                           const SizedBox(height: 10),
                           Text(
                             selectedDateRange == null
                                 ? 'All Transactions'
                                 : '${DateFormat('dd MMM yy').format(selectedDateRange!.start)} - ${DateFormat('dd MMM yy').format(selectedDateRange!.end)}',
+                            style: TextStyle(color: Colors.teal.shade700),  // Date range color
                           ),
                         ],
                       ),
@@ -94,6 +102,12 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                           },
                           icon: const Icon(Icons.date_range),
                           label: const Text('Select Date Range'),
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: Colors.white, backgroundColor: Colors.teal.shade400, // Text color
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
                         ),
                         if (selectedDateRange != null)
                           TextButton(
@@ -102,20 +116,21 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                                 selectedDateRange = null;
                               });
                             },
-                            child: const Text('Clear Filter'),
+                            child: const Text('Clear Filter', style: TextStyle(color: Colors.teal)),
                           ),
                       ],
                     ),
                     const SizedBox(height: 20),
                     // Summary Section
                     Card(
-                      elevation: 2,
+                      color: Colors.teal.shade50,  // Background color for summary card
+                      elevation: 5,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _buildSummaryItem('Opening Balance', 'Rs 0 (Settled)', context),
                             _buildSummaryItem('Total Debit (-)', 'Rs ${report['debit']?.toStringAsFixed(2)}', context),
                             _buildSummaryItem('Total Credit (+)', 'Rs ${report['credit']?.toStringAsFixed(2)}', context),
                             _buildSummaryItem(
@@ -132,44 +147,38 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                     // Transactions Table
                     Text(
                       'No. of Entries: ${transactions.length} (Filtered)',
-                      style: Theme.of(context).textTheme.titleSmall,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.teal.shade700),
                     ),
                     const SizedBox(height: 10),
-                    DataTable(
-                      columns: const [
-                        DataColumn(label: Text('Date')),
-                        DataColumn(label: Text('Invoice Number')),
-                        DataColumn(label: Text('Payment Type')),
-                        DataColumn(label: Text('Payment Method')),
-                        DataColumn(label: Text('Debit (-)')),
-                        DataColumn(label: Text('Credit (+)')),
-                        DataColumn(label: Text('Balance')),
-                      ],
-                      rows: transactions.map((transaction) {
-                        final paymentMethod = transaction['paymentMethod']; // Assuming this field exists in your data
-                        final paymentType = transaction['paymentType']; // Assuming this field exists in your data
-                        final grandTotal = transaction['grandTotal'] ?? 0.0; // Assuming 'grandTotal' exists
-
-                        // Determine values based on payment method
-                        final debit = paymentMethod == 'cash' ? grandTotal : 0.0;
-                        final credit = paymentType == 'udhaar' ? grandTotal : 0.0;
-                        final balance = paymentMethod == 'cash' ? 0.0 : transaction['balance'];
-
-                        return DataRow(
-                          cells: [
-                            DataCell(Text(transaction['createdAt'] ?? 'N/A')),
-                            DataCell(Text(transaction['invoiceNumber'] ?? 'N/A')),
-                            DataCell(Text(transaction['paymentType'] ?? 'N/A')),
-                            DataCell(Text(transaction['paymentMethod'] ?? 'N/A')),
-                            // DataCell(Text(transaction['debit']?.toStringAsFixed(2) ?? '-')),
-                            // DataCell(Text(transaction['credit']?.toStringAsFixed(2) ?? '-')),
-                            // DataCell(Text(transaction['balance']?.toStringAsFixed(2) ?? '-')),
-                            DataCell(Text(debit != 0.0 ? 'Rs ${debit.toStringAsFixed(2)}' : '-')),
-                            DataCell(Text(credit != 0.0 ? 'Rs ${credit.toStringAsFixed(2)}' : '-')),
-                            DataCell(Text(balance != null ? 'Rs ${balance.toStringAsFixed(2)}' : '-')),
+                    Center(
+                      child: SizedBox(
+                        width: double.infinity,  // Make the table take full width
+                        child: DataTable(
+                          headingRowHeight: 60,  // Increase heading row height
+                          dataRowHeight: 60,  // Increase data row height
+                          columnSpacing: 20,  // Increase column spacing
+                          columns: const [
+                            DataColumn(label: Text('Date')),
+                            DataColumn(label: Text('Invoice Number')),
+                            DataColumn(label: Text('Transaction Type')),
+                            DataColumn(label: Text('Debit (-)')),
+                            DataColumn(label: Text('Credit (+)')),
+                            DataColumn(label: Text('Balance')),
                           ],
-                        );
-                      }).toList(),
+                          rows: transactions.map((transaction) {
+                            return DataRow(
+                              cells: [
+                                DataCell(Text(transaction['date'] ?? 'N/A')),
+                                DataCell(Text(transaction['invoiceNumber'] ?? 'N/A')),
+                                DataCell(Text(transaction['credit'] != 0.0 ? 'Invoice' : (transaction['debit'] != 0.0 ? 'Bill' : '-'))),
+                                DataCell(Text(transaction['debit'] != 0.0 ? 'Rs ${transaction['debit']?.toStringAsFixed(2)}' : '-')),
+                                DataCell(Text(transaction['credit'] != 0.0 ? 'Rs ${transaction['credit']?.toStringAsFixed(2)}' : '-')),
+                                DataCell(Text('Rs ${transaction['balance']?.toStringAsFixed(2)}')),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -187,7 +196,7 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.bodySmall,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.teal.shade600),
         ),
         const SizedBox(height: 5),
         Text(

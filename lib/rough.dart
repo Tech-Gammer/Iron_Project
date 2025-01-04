@@ -1,64 +1,46 @@
-// Table(
-//   border: TableBorder.all(),
-//   columnWidths: {
-//     0: const FlexColumnWidth(2),
-//     1: const FlexColumnWidth(2),
-//     2: const FlexColumnWidth(2),
-//     3: const FlexColumnWidth(2),
-//     4: const FlexColumnWidth(3),
-//     5: const FlexColumnWidth(1),
-//   },
-//   children: [
-//     // Table headers
-//     TableRow(
-//       children: [
-//         TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Total' : 'کل', textAlign: TextAlign.center))),
-//         TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Sarya Rate' : 'سرئے کی قیمت', textAlign: TextAlign.center))),
-//         TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Sarya Qty' : 'سرئے کی مقدار', textAlign: TextAlign.center))),
-//         TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Sarya Weight(Kg)' : 'سرئے کا وزن(کلوگرام)', textAlign: TextAlign.center))),
-//         TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Description' : 'تفصیل', textAlign: TextAlign.center))),
-//         TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Delete' : 'حذف کریں', textAlign: TextAlign.center))),
-//       ],
-//     ),
-//     // Table rows
-//     for (int i = 0; i < _invoiceRows.length; i++)
-//       TableRow(
-//         children: [
-//           TableCell(child: Text(_invoiceRows[i]['total'].toStringAsFixed(2))),
-//           TableCell(
-//             child: TextField(
-//               controller: TextEditingController(text: _invoiceRows[i]['rate'].toStringAsFixed(2)),
-//               keyboardType: TextInputType.number,
-//               onChanged: (value) => _updateRow(i, 'rate', double.tryParse(value) ?? 0.0),
+// class InvoiceProvider with ChangeNotifier {
+//   List<Map<String, dynamic>> _invoices = [];
+//
+//   List<Map<String, dynamic>> get invoices => _invoices;
+//
+//   // Fetch invoices from Firebase
+//   Future<void> fetchInvoices() async {
+//     try {
+//       final snapshot = await _db.child('invoices').get();
+//       if (snapshot.exists) {
+//         _invoices = [];
+//         final data = snapshot.value as Map<dynamic, dynamic>;
+//         data.forEach((key, value) {
+//           _invoices.add({
+//             'id': key,
+//             'invoiceNumber': value['invoiceNumber'],
+//             'customerId': value['customerId'],
+//             'subtotal': value['subtotal'],
+//             'discount': value['discount'],
+//             'grandTotal': value['grandTotal'],
+//             'paymentType': value['paymentType'],
+//             'paymentMethod': value['paymentMethod'],
+//             'debitAmount': value['debitAmount'] ?? 0.0,
+//             'debitAt': value['debitAt'],
+//             'items': List<Map<String, dynamic>>.from(
+//               (value['items'] as List).map((item) => Map<String, dynamic>.from(item)),
 //             ),
-//           ),
-//           TableCell(
-//             child: TextField(
-//               controller: TextEditingController(text: _invoiceRows[i]['qty'].toStringAsFixed(2)),
-//               keyboardType: TextInputType.number,
-//               onChanged: (value) => _updateRow(i, 'qty', double.tryParse(value) ?? 0.0),
-//             ),
-//           ),
-//           TableCell(
-//             child: TextField(
-//               controller: TextEditingController(text: _invoiceRows[i]['weight'].toStringAsFixed(2)),
-//               keyboardType: TextInputType.number,
-//               onChanged: (value) => _updateRow(i, 'weight', double.tryParse(value) ?? 0.0),
-//             ),
-//           ),
-//           TableCell(
-//             child: TextField(
-//               controller: TextEditingController(text: _invoiceRows[i]['description']),
-//               onChanged: (value) => _updateRow(i, 'description', value),
-//             ),
-//           ),
-//           TableCell(
-//             child: IconButton(
-//               icon: Icon(Icons.delete),
-//               onPressed: () => _deleteRow(i),
-//             ),
-//           ),
-//         ],
-//       ),
-//   ],
-// ),
+//             'createdAt': value['createdAt'] is int
+//                 ? DateTime.fromMillisecondsSinceEpoch(value['createdAt']).toIso8601String()
+//                 : value['createdAt'],
+//           });
+//         });
+//         notifyListeners();
+//         print('Invoices fetched: $_invoices'); // Debugging line
+//       }
+//     } catch (e) {
+//       throw Exception('Failed to fetch invoices: $e');
+//     }
+//   }
+//
+//   // Filter invoices by payment method
+//   List<Map<String, dynamic>> getInvoicesByPaymentMethod(String paymentMethod) {
+//     print('Filtering invoices by payment method: $paymentMethod'); // Debugging line
+//     return _invoices.where((invoice) => invoice['paymentMethod'] == paymentMethod).toList();
+//   }
+// }

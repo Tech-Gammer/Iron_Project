@@ -11,66 +11,65 @@ class CustomerReportProvider with ChangeNotifier {
   String error = '';
   List<Map<String, dynamic>> transactions = [];
   Map<String, dynamic> report = {};
+  // Future<void> fetchCustomerReport(String customerId) async {
+  //   isLoading = true;
+  //   error = '';
+  //   notifyListeners();
+  //
+  //   try {
+  //     // Fetch invoices from Firebase where customerId matches
+  //     final snapshot = await _db
+  //         .child('invoices')
+  //         .orderByChild('customerId')
+  //         .equalTo(customerId)
+  //         .get();
+  //
+  //     if (snapshot.exists && snapshot.value != null) {
+  //       // Parse Firebase snapshot data
+  //       final data = Map<String, dynamic>.from(snapshot.value as Map);
+  //
+  //       // Convert invoice map values into a list of transactions
+  //       transactions = data.values.map((entry) {
+  //         return Map<String, dynamic>.from(entry as Map);
+  //       }).toList();
+  //
+  //       calculateReport();
+  //     } else {
+  //       // No data found, reset report and transactions
+  //       transactions = [];
+  //       report = {'debit': 0.0, 'credit': 0.0, 'balance': 0.0};
+  //     }
+  //   } catch (e) {
+  //     // Handle parsing or network errors
+  //     error = 'Failed to fetch data: $e';
+  //   } finally {
+  //     isLoading = false;
+  //     notifyListeners();
+  //   }
+  // }
 
-  Future<void> fetchCustomerReport(String customerId) async {
-    isLoading = true;
-    error = '';
-    notifyListeners();
-
-    try {
-      // Fetch invoices from Firebase where customerId matches
-      final snapshot = await _db
-          .child('invoices')
-          .orderByChild('customerId')
-          .equalTo(customerId)
-          .get();
-
-      if (snapshot.exists && snapshot.value != null) {
-        // Parse Firebase snapshot data
-        final data = Map<String, dynamic>.from(snapshot.value as Map);
-
-        // Convert invoice map values into a list of transactions
-        transactions = data.values.map((entry) {
-          return Map<String, dynamic>.from(entry as Map);
-        }).toList();
-
-        calculateReport();
-      } else {
-        // No data found, reset report and transactions
-        transactions = [];
-        report = {'debit': 0.0, 'credit': 0.0, 'balance': 0.0};
-      }
-    } catch (e) {
-      // Handle parsing or network errors
-      error = 'Failed to fetch data: $e';
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  void calculateReport() {
-    double debit = 0.0;
-    double credit = 0.0;
-
-    for (var transaction in transactions) {
-      final paymentType = transaction['paymentType'] ?? '';
-      final amount = (transaction['grandTotal'] as num?)?.toDouble() ?? 0.0;
-
-      if (paymentType == 'instant') {
-        debit += amount;
-      } else if (paymentType == 'udhaar') {
-        credit += amount;
-      }
-    }
-
-    report = {
-      'debit': debit,
-      'credit': credit,
-      'balance': debit - credit,
-    };
-    notifyListeners();
-  }
+  // void calculateReport() {
+  //   double debit = 0.0;
+  //   double credit = 0.0;
+  //
+  //   for (var transaction in transactions) {
+  //     final paymentType = transaction['paymentType'] ?? '';
+  //     final amount = (transaction['grandTotal'] as num?)?.toDouble() ?? 0.0;
+  //
+  //     if (paymentType == 'instant') {
+  //       debit += amount;
+  //     } else if (paymentType == 'udhaar') {
+  //       credit += amount;
+  //     }
+  //   }
+  //
+  //   report = {
+  //     'debit': debit,
+  //     'credit': credit,
+  //     'balance': debit - credit,
+  //   };
+  //   notifyListeners();
+  // }
 
   // Future<void> exportReportPDF() async {
   //   final pdf = pw.Document();
@@ -188,5 +187,65 @@ class CustomerReportProvider with ChangeNotifier {
       ],
     );
   }
+
+
+
+  Future<void> fetchCustomerReport(String customerId) async {
+    try {
+      isLoading = true;
+      error = '';
+      report = {};
+      transactions = [];
+
+      // Fetch ledger entries for the customer
+      final ledgerSnapshot = await _db.child('ledger').child(customerId).get();
+      if (ledgerSnapshot.exists) {
+        final ledgerData = Map<String, dynamic>.from(ledgerSnapshot.value as Map<dynamic, dynamic>);
+
+        double totalDebit = 0.0;
+        double totalCredit = 0.0;
+        double currentBalance = 0.0;
+
+        ledgerData.forEach((key, value) {
+          final debit = (value['debitAmount'] ?? 0.0) as double;
+          final credit = (value['creditAmount'] ?? 0.0) as double;
+
+          // Accumulate debits and credits
+          totalDebit += debit;
+          totalCredit += credit;
+
+          // Update current balance dynamically
+          currentBalance += credit - debit;
+
+          // Add each ledger entry to the transactions list
+          transactions.add({
+            'id': key,
+            'date': value['createdAt'],
+            'invoiceNumber': value['invoiceNumber'],
+            // 'paymentType': value['paymentType'] ?? 'N/A', // Optional field
+            // 'paymentMethod': value['paymentMethod'] ?? 'N/A', // Optional field
+            'debit': debit,
+            'credit': credit,
+            'balance': currentBalance,
+          });
+        });
+
+        // Prepare the final report
+        report = {
+          'debit': totalDebit,
+          'credit': totalCredit,
+          'balance': currentBalance,
+        };
+      }
+
+      isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      error = 'Failed to fetch customer report: $e';
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
 
 }

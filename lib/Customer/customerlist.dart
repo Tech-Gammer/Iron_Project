@@ -9,10 +9,11 @@ class CustomerList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Customer List'),
+        title: Text('Customer List', style: TextStyle(color: Colors.teal.shade800)),
+        backgroundColor: Colors.teal,
         actions: [
           IconButton(
-            icon: Icon(Icons.add),
+            icon: Icon(Icons.add, color: Colors.white),
             onPressed: () {
               Navigator.push(
                 context,
@@ -28,13 +29,13 @@ class CustomerList extends StatelessWidget {
             future: customerProvider.fetchCustomers(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.active ||
-                  snapshot.connectionState == ConnectionState.active  ) {
+                  snapshot.connectionState == ConnectionState.active) {
                 return Center(child: CircularProgressIndicator());
               }
 
               if (customerProvider.customers.isEmpty) {
                 return Center(
-                  child: Text('No customers found.'),
+                  child: Text('No customers found.', style: TextStyle(color: Colors.teal.shade600)),
                 );
               }
 
@@ -67,7 +68,7 @@ class CustomerList extends StatelessWidget {
                             DataCell(Row(
                               children: [
                                 IconButton(
-                                  icon: Icon(Icons.edit, color: Colors.blue),
+                                  icon: Icon(Icons.edit, color: Colors.teal),
                                   onPressed: () {
                                     _showEditDialog(context, customer, customerProvider);
                                   },
@@ -93,24 +94,26 @@ class CustomerList extends StatelessWidget {
                         return Card(
                           elevation: 4,
                           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                          color: Colors.teal.shade50,  // Add background color from the palette
                           child: ListTile(
                             leading: CircleAvatar(
-                              child: Text('${index + 1}'),
+                              backgroundColor: Colors.teal.shade400,
+                              child: Text('${index + 1}', style: TextStyle(color: Colors.white)),
                             ),
-                            title: Text(customer.name),
+                            title: Text(customer.name, style: TextStyle(color: Colors.teal.shade800)),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(customer.address),
+                                Text(customer.address, style: TextStyle(color: Colors.teal.shade600)),
                                 SizedBox(height: 4),
-                                Text(customer.phone),
+                                Text(customer.phone, style: TextStyle(color: Colors.teal.shade600)),
                               ],
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
-                                  icon: Icon(Icons.edit, color: Colors.blue),
+                                  icon: Icon(Icons.edit, color: Colors.teal),
                                   onPressed: () {
                                     _showEditDialog(context, customer, customerProvider);
                                   },
@@ -150,21 +153,22 @@ class CustomerList extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Edit Customer'),
+          title: Text('Edit Customer', style: TextStyle(color: Colors.teal.shade800)),
+          backgroundColor: Colors.teal.shade50,
           content: SingleChildScrollView(
             child: Column(
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: InputDecoration(labelText: 'Name'),
+                  decoration: InputDecoration(labelText: 'Name', labelStyle: TextStyle(color: Colors.teal.shade600)),
                 ),
                 TextField(
                   controller: addressController,
-                  decoration: InputDecoration(labelText: 'Address'),
+                  decoration: InputDecoration(labelText: 'Address', labelStyle: TextStyle(color: Colors.teal.shade600)),
                 ),
                 TextField(
                   controller: phoneController,
-                  decoration: InputDecoration(labelText: 'Phone'),
+                  decoration: InputDecoration(labelText: 'Phone', labelStyle: TextStyle(color: Colors.teal.shade600)),
                   keyboardType: TextInputType.phone,
                 ),
               ],
@@ -173,7 +177,7 @@ class CustomerList extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
+              child: Text('Cancel', style: TextStyle(color: Colors.teal.shade800)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -186,6 +190,7 @@ class CustomerList extends StatelessWidget {
                 Navigator.pop(context);
               },
               child: Text('Save'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal.shade400),
             ),
           ],
         );
@@ -198,12 +203,13 @@ class CustomerList extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Delete Customer'),
-          content: Text('Are you sure you want to delete this customer?'),
+          title: Text('Delete Customer', style: TextStyle(color: Colors.teal.shade800)),
+          backgroundColor: Colors.teal.shade50,
+          content: Text('Are you sure you want to delete this customer?', style: TextStyle(color: Colors.teal.shade600)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
+              child: Text('Cancel', style: TextStyle(color: Colors.teal.shade800)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -211,6 +217,7 @@ class CustomerList extends StatelessWidget {
                 Navigator.pop(context);
               },
               child: Text('Delete'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal.shade400),
             ),
           ],
         );

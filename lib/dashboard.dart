@@ -190,11 +190,12 @@ import 'package:provider/provider.dart';
 
 import 'Customer/addcustomers.dart';
 import 'Customer/customerlist.dart';
-import 'Invoice/customerlistforreport.dart';
+import 'Reports/customerlistforreport.dart';
 import 'Invoice/invoiceslist.dart';
 import 'Invoice/Invoicepage.dart';
 import 'Provider/lanprovider.dart';
 import 'Reports/custoemrreports.dart';
+import 'Reports/threetypesofreport.dart';
 
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
@@ -367,7 +368,14 @@ class Dashboard extends StatelessWidget {
 
           }),
           _buildDashboardCard(
-              Icons.report, languageProvider.isEnglish ? 'Reports' : 'رپورٹس', Colors.red,(){}),
+              Icons.report, languageProvider.isEnglish ? 'Reports' : 'رپورٹس', Colors.red,(){
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => Threetypesreportslistcustomer(),
+              ),
+            );
+          }),
           _buildDashboardCard(
               Icons.settings, languageProvider.isEnglish ? 'Settings' : 'ترتیبات', Colors.orange,(){}),
         ],

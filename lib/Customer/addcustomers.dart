@@ -16,7 +16,10 @@ class _AddCustomerState extends State<AddCustomer> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Add Customer')),
+      appBar: AppBar(
+        title: Text('Add Customer', style: TextStyle(color: Colors.teal.shade800)),
+        backgroundColor: Colors.teal,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -24,22 +27,52 @@ class _AddCustomerState extends State<AddCustomer> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Customer Details', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              Text(
+                'Customer Details',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.teal.shade800,
+                ),
+              ),
               SizedBox(height: 20),
               TextFormField(
-                decoration: InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                  labelText: 'Name',
+                  labelStyle: TextStyle(color: Colors.teal.shade600),
+                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.teal.shade400),
+                  ),
+                ),
                 onSaved: (value) => _name = value!,
-                validator: (value) => value!.isEmpty ? 'Please enter the customer\'s name' : null,
+                validator: (value) =>
+                value!.isEmpty ? 'Please enter the customer\'s name' : null,
               ),
               SizedBox(height: 16),
               TextFormField(
-                decoration: InputDecoration(labelText: 'Address', border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                  labelText: 'Address',
+                  labelStyle: TextStyle(color: Colors.teal.shade600),
+                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.teal.shade400),
+                  ),
+                ),
                 onSaved: (value) => _address = value!,
-                validator: (value) => value!.isEmpty ? 'Please enter the customer\'s address' : null,
+                validator: (value) =>
+                value!.isEmpty ? 'Please enter the customer\'s address' : null,
               ),
               SizedBox(height: 16),
               TextFormField(
-                decoration: InputDecoration(labelText: 'Phone Number', border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                  labelText: 'Phone Number',
+                  labelStyle: TextStyle(color: Colors.teal.shade600),
+                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.teal.shade400),
+                  ),
+                ),
                 keyboardType: TextInputType.phone,
                 onSaved: (value) => _phone = value!,
                 validator: (value) {
@@ -54,6 +87,9 @@ class _AddCustomerState extends State<AddCustomer> {
                 child: ElevatedButton(
                   onPressed: () => _saveCustomer(context),
                   child: Text('Save'),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white, backgroundColor: Colors.teal.shade400,
+                  ),
                 ),
               ),
             ],

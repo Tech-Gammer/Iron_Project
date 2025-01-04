@@ -8,7 +8,7 @@ class InvoiceProvider with ChangeNotifier {
   List<Map<String, dynamic>> get invoices => _invoices;
 
   Future<void> saveInvoice({
-    required String invoiceId,  // Accepts the invoice ID (instead of using push)
+    required String invoiceId, // Accepts the invoice ID (instead of using push)
     required String invoiceNumber,
     required String customerId,
     required double subtotal,
@@ -43,7 +43,13 @@ class InvoiceProvider with ChangeNotifier {
       await _db.child('invoices').child(invoiceId).set(invoiceData);
       print('invoice saved');
       // Now update the ledger for this customer
-       await _updateCustomerLedger(customerId, grandTotal, invoiceNumber);
+      await _updateCustomerLedger(
+      customerId,
+      creditAmount: grandTotal, // The invoice total as a credit
+      debitAmount: 0.0, // No payment yet
+      remainingBalance: grandTotal, // Full amount due initially
+      invoiceNumber: invoiceNumber,
+      );
     } catch (e) {
       throw Exception('Failed to save invoice: $e');
     }
@@ -91,6 +97,7 @@ class InvoiceProvider with ChangeNotifier {
       throw Exception('Failed to update invoice: $e');
     }
   }
+
   Future<void> fetchInvoices() async {
     try {
       final snapshot = await _db.child('invoices').get();
@@ -107,12 +114,14 @@ class InvoiceProvider with ChangeNotifier {
             'grandTotal': value['grandTotal'],
             'paymentType': value['paymentType'],
             'paymentMethod': value['paymentMethod'],
-            // 'items': value['items'],
-            // Convert items to List<Map<String, dynamic>>
+            'debitAmount': value['debitAmount'] ?? 0.0, // **Added field for paid amount**
+            'debitAt': value['debitAt'], // **Added field for last payment date**
             'items': List<Map<String, dynamic>>.from(
               (value['items'] as List).map((item) => Map<String, dynamic>.from(item)),
             ),
-            'createdAt': value['createdAt'],
+            'createdAt': value['createdAt'] is int
+                ? DateTime.fromMillisecondsSinceEpoch(value['createdAt']).toIso8601String()
+                : value['createdAt'],
           });
         });
         notifyListeners();
@@ -134,43 +143,97 @@ class InvoiceProvider with ChangeNotifier {
     }
   }
 
-  Future<void> _updateCustomerLedger(String customerId, double creditAmount, String invoiceNumber) async {
+  // **New Method to Handle Invoice Payment**
+  Future<void> payInvoice(BuildContext context, String invoiceId, double paymentAmount) async {
     try {
-      // Get the existing ledger data for the customer
-      final customerLedgerRef = _db.child('ledger').child(customerId);
-      final DatabaseEvent snapshot = await customerLedgerRef.once();
+      // Find the selected invoice
+      final invoice = _invoices.firstWhere((inv) => inv['id'] == invoiceId);
 
-      double previousBalance = 0.0;
-
-      if (snapshot.snapshot.exists) {
-        // Cast snapshot.value to a Map<String, dynamic> safely
-        final existingLedgerData = Map<String, dynamic>.from(snapshot.snapshot.value as Map);
-
-        // Get the last entry in the ledger (the last invoice's remainingBalance)
-        final lastLedgerEntry = existingLedgerData.isNotEmpty
-            ? existingLedgerData.entries.last.value // Assuming the entries are ordered by createdAt
-            : null;
-
-        if (lastLedgerEntry != null) {
-          previousBalance = lastLedgerEntry['remainingBalance'] ?? 0.0;
-        }
+      if (invoice['debitAmount'] == null) {
+        invoice['debitAmount'] = 0.0;
       }
 
-      // Calculate the new remaining balance (previous remainingBalance + current creditAmount)
-      final remainingBalance = previousBalance + creditAmount;
+      final currentDebit = invoice['debitAmount'] as double;
+      final grandTotal = invoice['grandTotal'] as double;
 
-      // Create the ledger data for the current invoice
+      if (paymentAmount > (grandTotal - currentDebit)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Payment exceeds the remaining invoice balance.")),
+        );
+        throw Exception("Payment exceeds the remaining invoice balance.");
+      }
+
+      // Update invoice data
+      final updatedDebit = currentDebit + paymentAmount;
+      final debitAt = DateTime.now().toIso8601String();
+
+      await _db.child('invoices').child(invoiceId).update({
+        'debitAmount': updatedDebit, // **Update paid amount**
+        'debitAt': debitAt, // **Update last payment date**
+      });
+
+      // Update the ledger with the calculated remaining balance
+      await _updateCustomerLedger(
+        invoice['customerId'],
+        creditAmount: 0.0,
+        debitAmount: paymentAmount,
+        remainingBalance: grandTotal - updatedDebit,
+        invoiceNumber: invoice['invoiceNumber'],
+      );
+
+      // Refresh the invoices list
+      await fetchInvoices();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Payment of Rs. $paymentAmount recorded successfully.')),
+      );
+    } catch (e) {
+      throw Exception('Failed to pay invoice: $e');
+    }
+  }
+
+  // **Updated Method to Handle Customer Ledger**
+  Future<void> _updateCustomerLedger(
+      String customerId, {
+        required double creditAmount,
+        required double debitAmount,
+        required double remainingBalance,
+        required String invoiceNumber,
+      }) async {
+    try {
+      final customerLedgerRef = _db.child('ledger').child(customerId);
+
+      // Fetch the last ledger entry to calculate the new remaining balance
+      final snapshot = await customerLedgerRef.orderByChild('createdAt').limitToLast(1).get();
+
+      double lastRemainingBalance = 0.0;
+      if (snapshot.exists) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        final lastTransaction = data.values.first;
+        lastRemainingBalance = lastTransaction['remainingBalance'] as double;
+      }
+
+      // Calculate the new remaining balance
+      final newRemainingBalance = lastRemainingBalance + creditAmount - debitAmount;
+
+      // Ledger data to be saved
       final ledgerData = {
         'invoiceNumber': invoiceNumber,
         'creditAmount': creditAmount,
-        'remainingBalance': remainingBalance,
+        'debitAmount': debitAmount,
+        'remainingBalance': newRemainingBalance, // Updated balance
         'createdAt': DateTime.now().toIso8601String(),
       };
 
-      // Save or update the ledger entry for the customer
       await customerLedgerRef.push().set(ledgerData);
     } catch (e) {
       throw Exception('Failed to update customer ledger: $e');
     }
+  }
+
+// Filter invoices by payment method
+  List<Map<String, dynamic>> getInvoicesByPaymentMethod(String paymentMethod) {
+    print('Filtering invoices by payment method: $paymentMethod'); // Debugging line
+    return _invoices.where((invoice) => invoice['paymentMethod'] == paymentMethod).toList();
   }
 }
