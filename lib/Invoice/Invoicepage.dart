@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -18,6 +19,8 @@ class InvoicePage extends StatefulWidget {
 }
 
 class _InvoicePageState extends State<InvoicePage> {
+  final DatabaseReference _db = FirebaseDatabase.instance.ref();
+
   String? _selectedCustomerId;
   double _discount = 0.0; // Discount amount or percentage
   String _paymentType = 'instant';
@@ -65,7 +68,8 @@ class _InvoicePageState extends State<InvoicePage> {
   }
 
   double _calculateSubtotal() {
-    return _invoiceRows.fold(0.0, (sum, row) => sum + row['total']);
+     // return _invoiceRows.fold(0.0, (sum, row) => sum + row['total']);
+       return _invoiceRows.fold(0.0, (sum, row) => sum + (row['total'] ?? 0.0));
   }
 
   double _calculateGrandTotal() {
@@ -74,7 +78,6 @@ class _InvoicePageState extends State<InvoicePage> {
     double discountAmount = _discount;
     return subtotal - discountAmount;
   }
-
 
   Future<void> _generateAndPrintPDF(String invoiceNumber) async {
     final pdf = pw.Document();
@@ -86,6 +89,10 @@ class _InvoicePageState extends State<InvoicePage> {
     final DateTime now = DateTime.now();
     final String formattedDate = '${now.day}/${now.month}/${now.year}';
     final String formattedTime = '${now.hour}:${now.minute.toString().padLeft(2, '0')}';
+
+    // Get the remaining balance from the ledger
+    double remainingBalance = await _getRemainingBalance(_selectedCustomerId!);
+
 
     // Load the image from assets
     final ByteData bytes = await rootBundle.load('images/logo.png');
@@ -199,9 +206,19 @@ class _InvoicePageState extends State<InvoicePage> {
                 ),
                 pw.SizedBox(height: 20),
                 // Footer
-                pw.Text(
-                  languageProvider.isEnglish ? 'Previous Balance: [Placeholder]' : 'پچھلا بیلنس: [Placeholder]',
-                  style: const pw.TextStyle(fontSize: 14),
+                // Previous Balance Section (Remaining Balance)
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(
+                      languageProvider.isEnglish ? 'Previous Balance:' : 'پچھلا بیلنس:',
+                      style: const pw.TextStyle(fontSize: 14),
+                    ),
+                    pw.Text(
+                      remainingBalance.toStringAsFixed(2),
+                      style:  pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+                    ),
+                  ],
                 ),
                 pw.SizedBox(height: 30),
                 pw.Row(
@@ -219,13 +236,44 @@ class _InvoicePageState extends State<InvoicePage> {
         },
       ),
     );
-
-
     // Print or preview the PDF
     await Printing.layoutPdf(
       onLayout: (format) async => pdf.save(),
     );
   }
+
+  Future<double> _getRemainingBalance(String customerId) async {
+    try {
+      // Reference to the customer's ledger in Firebase
+      final customerLedgerRef = _db.child('ledger').child(customerId);
+
+      // Get the most recent entry based on the 'createdAt' field
+      final DatabaseEvent snapshot = await customerLedgerRef.orderByChild('createdAt').limitToLast(1).once();
+
+      if (snapshot.snapshot.exists) {
+        // The snapshot will contain the data in a Map form
+        final Map<dynamic, dynamic> ledgerEntries = snapshot.snapshot.value as Map<dynamic, dynamic>;
+
+        // Get the last entry (since we ordered by 'createdAt' and limited to last 1)
+        final lastEntryKey = ledgerEntries.keys.first; // Get the key of the first (and only) entry
+        final lastEntry = ledgerEntries[lastEntryKey];
+
+        if (lastEntry != null && lastEntry is Map) {
+          // Get the remaining balance from the last entry
+          final double remainingBalance = lastEntry['remainingBalance'] ?? 0.0;
+          return remainingBalance;
+        }
+      }
+
+      // If no ledger entry exists, return 0 as default
+      return 0.0;
+    } catch (e) {
+      print("Error fetching remaining balance: $e");
+      return 0.0; // Return 0 if there's an error
+    }
+  }
+
+
 
   @override
   void dispose() {
@@ -239,7 +287,6 @@ class _InvoicePageState extends State<InvoicePage> {
 
     super.dispose();
   }
-
 
   @override
   void initState() {
@@ -266,6 +313,10 @@ class _InvoicePageState extends State<InvoicePage> {
           'descriptionController': TextEditingController(text: row['description']),
         };
       }).toList();
+      // Update each row's total
+      for (int i = 0; i < _invoiceRows.length; i++) {
+        _updateRow(i, 'total', null); // Pass null as value since the function uses row data for calculation
+      }
     } else {
       // Default values for a new invoice
       _invoiceRows = [
@@ -284,7 +335,6 @@ class _InvoicePageState extends State<InvoicePage> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context);
@@ -293,7 +343,6 @@ class _InvoicePageState extends State<InvoicePage> {
 
     return Scaffold(
       appBar: AppBar(
-        // title: Text(languageProvider.isEnglish ? 'Create Invoice' : 'انوائس بنائیں'),
         title: Text(
           widget.invoice == null
               ? (languageProvider.isEnglish ? 'Create Invoice' : 'انوائس بنائیں')
@@ -301,10 +350,16 @@ class _InvoicePageState extends State<InvoicePage> {
         ),
         centerTitle: true,
         actions: [
+          IconButton(onPressed: (){
+            final invoiceNumber = _invoiceId ?? generateInvoiceNumber();
+            _generateAndPrintPDF(invoiceNumber);
+          }, icon: Icon(Icons.print)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
-              '${languageProvider.isEnglish ? 'Invoice #' : 'انوائس نمبر#'}${generateInvoiceNumber()}',
+              widget.invoice == null
+                  ? '${languageProvider.isEnglish ? 'Invoice #' : 'انوائس نمبر#'}${generateInvoiceNumber()}'
+                  : '${languageProvider.isEnglish ? 'Invoice #' : 'انوائس نمبر#'}${widget.invoice!['invoiceNumber']}',
               style: const TextStyle(fontSize: 16),
             ),
           ),
@@ -387,7 +442,7 @@ class _InvoicePageState extends State<InvoicePage> {
                             TableCell(
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
-                                child: Text(_invoiceRows[i]['total'].toStringAsFixed(2), textAlign: TextAlign.center),
+                                child: Text(_invoiceRows[i]['total']?.toStringAsFixed(2) ?? '0.00', textAlign: TextAlign.center),
                               ),
                             ),
                             // Sarya Rate
@@ -512,7 +567,6 @@ class _InvoicePageState extends State<InvoicePage> {
                     },
                     decoration: InputDecoration(hintText: languageProvider.isEnglish ? 'Enter discount' : 'رعایت درج کریں'),
                   ),
-
                   // Grand Total row
                   const SizedBox(height: 20),
                   Row(
@@ -524,10 +578,7 @@ class _InvoicePageState extends State<InvoicePage> {
                       ),
                     ],
                   ),
-
-
                   const SizedBox(height: 20),
-
                   // Payment Type
                   Text(
                     languageProvider.isEnglish ? 'Payment Type:' : 'ادائیگی کی قسم:',
@@ -620,8 +671,7 @@ class _InvoicePageState extends State<InvoicePage> {
                       ],
                     ),
                   ),
-
-                  ElevatedButton(
+                  ElevatedButton  (
                     onPressed: () async {
                       // Validate customer selection
                       if (_selectedCustomerId == null) {
@@ -708,40 +758,14 @@ class _InvoicePageState extends State<InvoicePage> {
                         );
                         return; // Do not save or print if discount is invalid
                       }
-
-                      // Generate invoice details
-                      // final invoiceNumber = generateInvoiceNumber();
-                      // final grandTotal = _calculateGrandTotal();
                       final invoiceNumber = _invoiceId ?? generateInvoiceNumber();
                       final grandTotal = _calculateGrandTotal();
                       // Try saving the invoice
                       try {
-                        // await invoiceProvider.saveInvoice(
-                        //   invoiceNumber: invoiceNumber,
-                        //   customerId: _selectedCustomerId!,
-                        //   subtotal: subtotal,
-                        //   discount: _discount,
-                        //   grandTotal: grandTotal,
-                        //   paymentType: _paymentType,
-                        //   paymentMethod: _instantPaymentMethod,
-                        //   items: _invoiceRows,
-                        // );
-                        //
-                        // // Show success message
-                        // ScaffoldMessenger.of(context).showSnackBar(
-                        //   SnackBar(
-                        //     content: Text(
-                        //       languageProvider.isEnglish
-                        //           ? 'Invoice saved successfully'
-                        //           : 'انوائس کامیابی سے محفوظ ہوگئی',
-                        //     ),
-                        //   ),
-                        // );
-
                         if (_invoiceId != null) {
                           // Update existing invoice
                           await Provider.of<InvoiceProvider>(context, listen: false).updateInvoice(
-                            id: _invoiceId!,
+                            invoiceId: _invoiceId!, // Pass the correct ID for updating
                             invoiceNumber: invoiceNumber,
                             customerId: _selectedCustomerId!,
                             subtotal: subtotal,
@@ -751,10 +775,6 @@ class _InvoicePageState extends State<InvoicePage> {
                             paymentMethod: _instantPaymentMethod,
                             items: _invoiceRows,
                           );
-
-                          // ScaffoldMessenger.of(context).showSnackBar(
-                          //   SnackBar(content: Text('Invoice updated successfully')),
-                          // );
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
@@ -768,6 +788,7 @@ class _InvoicePageState extends State<InvoicePage> {
                         else {
                           // Save new invoice
                           await Provider.of<InvoiceProvider>(context, listen: false).saveInvoice(
+                            invoiceId: invoiceNumber, // Pass the invoice number (or generated ID)
                             invoiceNumber: invoiceNumber,
                             customerId: _selectedCustomerId!,
                             subtotal: subtotal,
@@ -817,8 +838,6 @@ class _InvoicePageState extends State<InvoicePage> {
                           : (languageProvider.isEnglish ? 'Update Invoice' : 'انوائس کو اپ ڈیٹ کریں'),
                     ),
                   )
-
-
                 ],
               ),
             );
