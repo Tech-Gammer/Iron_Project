@@ -1,24 +1,24 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:iron_project_new/Provider/filled%20provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../Provider/customerprovider.dart';
-import '../Provider/invoice provider.dart';
 import '../Provider/lanprovider.dart'; // Import your customer provider
 
-class InvoicePage extends StatefulWidget {
-  final Map<String, dynamic>? invoice; // Optional invoice data for editing
+class filledpage extends StatefulWidget {
+  final Map<String, dynamic>? filled; // Optional filled data for editing
 
-  InvoicePage({this.invoice});
+  filledpage({this.filled});
 
   @override
-  _InvoicePageState createState() => _InvoicePageState();
+  _filledpageState createState() => _filledpageState();
 }
 
-class _InvoicePageState extends State<InvoicePage> {
+class _filledpageState extends State<filledpage> {
   final DatabaseReference _db = FirebaseDatabase.instance.ref();
 
   String? _selectedCustomerName; // This should hold the name of the selected customer
@@ -27,21 +27,21 @@ class _InvoicePageState extends State<InvoicePage> {
   String _paymentType = 'instant';
   String? _instantPaymentMethod;
   TextEditingController _discountController = TextEditingController();
-  List<Map<String, dynamic>> _invoiceRows = [];
-  String? _invoiceId; // For editing existing invoices
+  List<Map<String, dynamic>> _filledRows = [];
+  String? _filledId; // For editing existing filled
 
-  String generateInvoiceNumber() {
-    // Generate a timestamp as invoice number (in milliseconds)
+  String generateFilledNumber() {
+    // Generate a timestamp as filled number (in milliseconds)
     return DateTime.now().millisecondsSinceEpoch.toString();
   }
 
   void _addNewRow() {
     setState(() {
-      _invoiceRows.add({
+      _filledRows.add({
         'total': 0.0,
         'rate': 0.0,
         'qty': 0.0,
-        'weight': 0.0,
+        // 'weight': 0.0,
         'description': '',
         'weightController': TextEditingController(),
         'rateController': TextEditingController(),
@@ -53,24 +53,23 @@ class _InvoicePageState extends State<InvoicePage> {
 
   void _updateRow(int index, String field, dynamic value) {
     setState(() {
-      _invoiceRows[index][field] = value;
+      _filledRows[index][field] = value;
 
       // If both Sarya Rate and Sarya Qty are filled, calculate the Total
-      if (_invoiceRows[index]['rate'] != 0.0 && _invoiceRows[index]['qty'] != 0.0) {
-        _invoiceRows[index]['total'] = _invoiceRows[index]['rate'] * _invoiceRows[index]['weight'];
+      if (_filledRows[index]['rate'] != 0.0 && _filledRows[index]['qty'] != 0.0) {
+        _filledRows[index]['total'] = _filledRows[index]['rate'] * _filledRows[index]['qty'];
       }
     });
   }
 
   void _deleteRow(int index) {
     setState(() {
-      _invoiceRows.removeAt(index);
+      _filledRows.removeAt(index);
     });
   }
 
   double _calculateSubtotal() {
-     // return _invoiceRows.fold(0.0, (sum, row) => sum + row['total']);
-       return _invoiceRows.fold(0.0, (sum, row) => sum + (row['total'] ?? 0.0));
+    return _filledRows.fold(0.0, (sum, row) => sum + (row['total'] ?? 0.0));
   }
 
   double _calculateGrandTotal() {
@@ -80,7 +79,7 @@ class _InvoicePageState extends State<InvoicePage> {
     return subtotal - discountAmount;
   }
 
-  Future<void> _generateAndPrintPDF(String invoiceNumber) async {
+  Future<void> _generateAndPrintPDF(String filledNumber) async {
     final pdf = pw.Document();
     final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
     final customerProvider = Provider.of<CustomerProvider>(context, listen: false);
@@ -108,13 +107,13 @@ class _InvoicePageState extends State<InvoicePage> {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                // Company Logo and Invoice Header
+                // Company Logo and Filled Header
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Image(logoImage, width: 70, height: 70), // Adjust width and height as needed
                     pw.Text(
-                      languageProvider.isEnglish ? 'Invoice' : 'انوائس',
+                      languageProvider.isEnglish ? 'Filled' : 'انوائس',
                       style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
                     ),
                   ],
@@ -142,17 +141,17 @@ class _InvoicePageState extends State<InvoicePage> {
                   style: const pw.TextStyle(fontSize: 8),
                 ),
                 pw.SizedBox(height: 10),
-                // Invoice Table
+                // filled Table
                 pw.Table.fromTextArray(
                   headers: [
                     pw.Text(
                       languageProvider.isEnglish ? 'Description' : 'تفصیل',
                       style: const pw.TextStyle(fontSize: 8),  // Reduced font size
                     ),
-                    pw.Text(
-                      languageProvider.isEnglish ? 'Sarya Weight' : 'سرئے کا وزن',
-                      style: const pw.TextStyle(fontSize: 10),  // Reduced font size
-                    ),
+                    // pw.Text(
+                    //   languageProvider.isEnglish ? 'Sarya Weight' : 'سرئے کا وزن',
+                    //   style: const pw.TextStyle(fontSize: 10),  // Reduced font size
+                    // ),
                     pw.Text(
                       languageProvider.isEnglish ? 'Sarya Qty' : 'سرئے کی مقدار',
                       style: const pw.TextStyle(fontSize: 10),  // Reduced font size
@@ -166,10 +165,10 @@ class _InvoicePageState extends State<InvoicePage> {
                       style: const pw.TextStyle(fontSize: 10),  // Reduced font size
                     ),
                   ],
-                  data: _invoiceRows.map((row) {
+                  data: _filledRows.map((row) {
                     return [
                       pw.Text(row['description'], style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
-                      pw.Text(row['weight'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
+                      // pw.Text(row['weight'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
                       pw.Text(row['qty'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
                       pw.Text(row['rate'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
                       pw.Text(row['total'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
@@ -246,7 +245,7 @@ class _InvoicePageState extends State<InvoicePage> {
   Future<double> _getRemainingBalance(String customerId) async {
     try {
       // Reference to the customer's ledger in Firebase
-      final customerLedgerRef = _db.child('ledger').child(customerId);
+      final customerLedgerRef = _db.child('filledledger').child(customerId);
 
       // Get the most recent entry based on the 'createdAt' field
       final DatabaseEvent snapshot = await customerLedgerRef.orderByChild('createdAt').limitToLast(1).once();
@@ -274,12 +273,10 @@ class _InvoicePageState extends State<InvoicePage> {
     }
   }
 
-
-
   @override
   void dispose() {
-    for (var row in _invoiceRows) {
-      row['weightController']?.dispose();
+    for (var row in _filledRows) {
+      // row['weightController']?.dispose();
       row['rateController']?.dispose();
       row['qtyController']?.dispose();
       row['descriptionController']?.dispose();
@@ -294,40 +291,40 @@ class _InvoicePageState extends State<InvoicePage> {
     super.initState();
     // Fetch the customers when the page is initialized
     Provider.of<CustomerProvider>(context, listen: false).fetchCustomers();
-    if (widget.invoice != null) {
+    if (widget.filled != null) {
       // Populate fields for editing
-      final invoice = widget.invoice!;
-      _discount = widget.invoice!['discount'];
+      final filled = widget.filled!;
+      _discount = widget.filled!['discount'];
       _discountController.text = _discount.toString(); // Initialize controller with discount value
-      _invoiceId = invoice['invoiceNumber']; // Save the invoice ID for updates
-      _selectedCustomerId = invoice['customerId'];
-      _discount = invoice['discount'];
-      _paymentType = invoice['paymentType'];
-      _instantPaymentMethod = invoice['paymentMethod'];
-      // _invoiceRows = List<Map<String, dynamic>>.from(invoice['items']); // Populate table rows
-      _invoiceRows = List<Map<String, dynamic>>.from(invoice['items']).map((row) {
+      _filledId = filled['filledNumber']; // Save the filled ID for updates
+      _selectedCustomerId = filled['customerId'];
+      _discount = filled['discount'];
+      _paymentType = filled['paymentType'];
+      _instantPaymentMethod = filled['paymentMethod'];
+      // _filledRows = List<Map<String, dynamic>>.from(filled['items']); // Populate table rows
+      _filledRows = List<Map<String, dynamic>>.from(filled['items']).map((row) {
         return {
           ...row,
-          'weightController': TextEditingController(text: row['weight'].toString()),
+          // 'weightController': TextEditingController(text: row['weight'].toString()),
           'rateController': TextEditingController(text: row['rate'].toString()),
           'qtyController': TextEditingController(text: row['qty'].toString()),
           'descriptionController': TextEditingController(text: row['description']),
         };
       }).toList();
       // Update each row's total
-      for (int i = 0; i < _invoiceRows.length; i++) {
+      for (int i = 0; i < _filledRows.length; i++) {
         _updateRow(i, 'total', null); // Pass null as value since the function uses row data for calculation
       }
     } else {
-      // Default values for a new invoice
-      _invoiceRows = [
+      // Default values for a new filled
+      _filledRows = [
         {
           'total': 0.0,
           'rate': 0.0,
           'qty': 0.0,
-          'weight': 0.0,
+          // 'weight': 0.0,
           'description': '',
-          'weightController': TextEditingController(),
+          // 'weightController': TextEditingController(),
           'rateController': TextEditingController(),
           'qtyController': TextEditingController(),
           'descriptionController': TextEditingController(),
@@ -339,30 +336,30 @@ class _InvoicePageState extends State<InvoicePage> {
   @override
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context);
-    final invoiceProvider = Provider.of<InvoiceProvider>(context, listen: false);
+    final filledProvider = Provider.of<FilledProvider>(context, listen: false);
     final _formKey = GlobalKey<FormState>();
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.invoice == null
-              ? (languageProvider.isEnglish ? 'Create Invoice' : 'انوائس بنائیں')
-              : (languageProvider.isEnglish ? 'Update Invoice' : 'انوائس کو اپ ڈیٹ کریں'),
+          widget.filled == null
+              ? (languageProvider.isEnglish ? 'Create Filled' : 'فلڈ بنائیں')
+              : (languageProvider.isEnglish ? 'Update Filled' : 'انوائس کو اپ ڈیٹ کریں'),
           style: TextStyle(color: Colors.teal.shade800),
         ),
         backgroundColor: Colors.teal,
         centerTitle: true,
         actions: [
           IconButton(onPressed: (){
-            final invoiceNumber = _invoiceId ?? generateInvoiceNumber();
-            _generateAndPrintPDF(invoiceNumber);
+            final filledNumber = _filledId ?? generateFilledNumber();
+            _generateAndPrintPDF(filledNumber);
           }, icon: Icon(Icons.print, color: Colors.white)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
-              widget.invoice == null
-                  ? '${languageProvider.isEnglish ? 'Invoice #' : 'انوائس نمبر#'}${generateInvoiceNumber()}'
-                  : '${languageProvider.isEnglish ? 'Invoice #' : 'انوائس نمبر#'}${widget.invoice!['invoiceNumber']}',
+              widget.filled == null
+                  ? '${languageProvider.isEnglish ? 'Filled #' : 'فلڈ نمبر#'}${generateFilledNumber()}'
+                  : '${languageProvider.isEnglish ? 'Filled #' : 'فلڈ نمبر#'}${widget.filled!['filledNumber']}',
               style: TextStyle(color: Colors.teal.shade600, fontSize: 16),            ),
           ),
         ],
@@ -414,9 +411,9 @@ class _InvoicePageState extends State<InvoicePage> {
 
                   // Show selected customer name
                   if (_selectedCustomerId != null)
-                    // Text('${languageProvider.isEnglish ? 'Selected Customer:' : 'منتخب شدہ کسٹمر:'} ${customerProvider.customers.firstWhere((customer) => customer.id == _selectedCustomerId).name}',
-                    //   style: TextStyle(color: Colors.teal.shade600),
-                    // ),
+                  // Text('${languageProvider.isEnglish ? 'Selected Customer:' : 'منتخب شدہ کسٹمر:'} ${customerProvider.customers.firstWhere((customer) => customer.id == _selectedCustomerId).name}',
+                  //   style: TextStyle(color: Colors.teal.shade600),
+                  // ),
                     Text(
                       '${languageProvider.isEnglish ? 'Selected Customer:' : 'منتخب شدہ کسٹمر:'} $_selectedCustomerName',
                       style: TextStyle(color: Colors.teal.shade600),
@@ -425,8 +422,8 @@ class _InvoicePageState extends State<InvoicePage> {
                   // Space between sections
                   const SizedBox(height: 20),
 
-                  // Display columns for the invoice details
-                  Text(languageProvider.isEnglish ? 'Invoice Details:' : 'انوائس کی تفصیلات:',
+                  // Display columns for the filled details
+                  Text(languageProvider.isEnglish ? 'Filled Details:' : 'فلڈ کی تفصیلات:',
                     style: TextStyle(color: Colors.teal.shade800, fontSize: 18),                  ),
                   Table(
                     border: TableBorder.all(),
@@ -441,23 +438,23 @@ class _InvoicePageState extends State<InvoicePage> {
                     children: [
                       TableRow(
                         children: [
-                           TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Total' : 'کل', textAlign: TextAlign.center))),
-                           TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Sarya Rate' : 'سرئے کی قیمت', textAlign: TextAlign.center))),
-                           TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Sarya Qty' : 'سرئے کی مقدار', textAlign: TextAlign.center))),
-                           TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Sarya Weight(Kg)' : 'سرئے کا وزن(کلوگرام)', textAlign: TextAlign.center))),
-                           TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Description' : 'تفصیل', textAlign: TextAlign.center))),
-                           TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Delete' : 'حذف کریں', textAlign: TextAlign.center))),
+                          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Total' : 'کل', textAlign: TextAlign.center))),
+                          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'FIlled Rate' : 'فلڈ کی قیمت', textAlign: TextAlign.center))),
+                          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Filled Qty' : 'فلڈ کی مقدار', textAlign: TextAlign.center))),
+                          // TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Filled Weight(Kg)' : 'فلڈ کا وزن(کلوگرام)', textAlign: TextAlign.center))),
+                          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Description' : 'تفصیل', textAlign: TextAlign.center))),
+                          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Delete' : 'حذف کریں', textAlign: TextAlign.center))),
                         ],
                       ),
-                      // Generate a row for each item in _invoiceRows
-                      for (int i = 0; i < _invoiceRows.length; i++)
+                      // Generate a row for each item in _filledRows
+                      for (int i = 0; i < _filledRows.length; i++)
                         TableRow(
                           children: [
                             // Total
                             TableCell(
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
-                                child: Text(_invoiceRows[i]['total']?.toStringAsFixed(2) ?? '0.00', textAlign: TextAlign.center),
+                                child: Text(_filledRows[i]['total']?.toStringAsFixed(2) ?? '0.00', textAlign: TextAlign.center),
                               ),
                             ),
                             // Sarya Rate
@@ -465,8 +462,7 @@ class _InvoicePageState extends State<InvoicePage> {
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: TextField(
-                                  // controller: TextEditingController(text: _invoiceRows[i]['rate'].toString()),
-                                  controller: _invoiceRows[i]['rateController'],
+                                  controller: _filledRows[i]['rateController'],
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),  // This allows only numeric input
@@ -485,8 +481,7 @@ class _InvoicePageState extends State<InvoicePage> {
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: TextField(
-                                  // controller: TextEditingController(text: _invoiceRows[i]['qty'].toString()),
-                                  controller: _invoiceRows[i]['qtyController'],
+                                  controller: _filledRows[i]['qtyController'],
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly,  // This allows only numeric input
@@ -499,32 +494,12 @@ class _InvoicePageState extends State<InvoicePage> {
                                 ),
                               ),
                             ),
-                            // Sarya Weight
-                            TableCell(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: TextField(
-                                  // controller: TextEditingController(text: _invoiceRows[i]['weight'].toString()),
-                                  controller: _invoiceRows[i]['weightController'],
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,4}')),  // This allows only numeric input
-                                  ],
-                                  onChanged: (value) {
-                                    _updateRow(i, 'weight', double.tryParse(value) ?? 0.0);
-                                  },
-                                  decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Weight' : 'وزن',
-                                    hintStyle: TextStyle(color: Colors.teal.shade600),),
-                                ),
-                              ),
-                            ),
                             // Description
                             TableCell(
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: TextField(
-                                  // controller: TextEditingController(text: _invoiceRows[i]['description']),
-                                  controller: _invoiceRows[i]['descriptionController'],
+                                  controller: _filledRows[i]['descriptionController'],
                                   onChanged: (value) {
                                     _updateRow(i, 'description', value);
                                   },
@@ -624,7 +599,7 @@ class _InvoicePageState extends State<InvoicePage> {
                                       setState(() {
                                         _paymentType = value!;
                                         _instantPaymentMethod = null; // Reset instant payment method
-                              
+
                                       });
                                     },
                                   ),
@@ -739,19 +714,19 @@ class _InvoicePageState extends State<InvoicePage> {
                       }
 
                       // Validate weight and rate fields
-                      for (var row in _invoiceRows) {
-                        if (row['weight'] == null || row['weight'] <= 0) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                languageProvider.isEnglish
-                                    ? 'Weight cannot be zero or less'
-                                    : 'وزن صفر یا اس سے کم نہیں ہو سکتا',
-                              ),
-                            ),
-                          );
-                          return;
-                        }
+                      for (var row in _filledRows) {
+                        // if (row['weight'] == null || row['weight'] <= 0) {
+                        //   ScaffoldMessenger.of(context).showSnackBar(
+                        //     SnackBar(
+                        //       content: Text(
+                        //         languageProvider.isEnglish
+                        //             ? 'Weight cannot be zero or less'
+                        //             : 'وزن صفر یا اس سے کم نہیں ہو سکتا',
+                        //       ),
+                        //     ),
+                        //   );
+                        //   return;
+                        // }
 
                         if (row['rate'] == null || row['rate'] <= 0) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -781,15 +756,15 @@ class _InvoicePageState extends State<InvoicePage> {
                         );
                         return; // Do not save or print if discount is invalid
                       }
-                      final invoiceNumber = _invoiceId ?? generateInvoiceNumber();
+                      final filledNumber = _filledId ?? generateFilledNumber();
                       final grandTotal = _calculateGrandTotal();
-                      // Try saving the invoice
+                      // Try saving the filled
                       try {
-                        if (_invoiceId != null) {
-                          // Update existing invoice
-                          await Provider.of<InvoiceProvider>(context, listen: false).updateInvoice(
-                            invoiceId: _invoiceId!, // Pass the correct ID for updating
-                            invoiceNumber: invoiceNumber,
+                        if (_filledId != null) {
+                          // Update existing filled
+                          await Provider.of<FilledProvider>(context, listen: false).updateFilled(
+                            filledId: _filledId!, // Pass the correct ID for updating
+                            filledNumber: filledNumber,
                             customerId: _selectedCustomerId!,
                             customerName: _selectedCustomerName!,
                             subtotal: subtotal,
@@ -797,23 +772,23 @@ class _InvoicePageState extends State<InvoicePage> {
                             grandTotal: grandTotal,
                             paymentType: _paymentType,
                             paymentMethod: _instantPaymentMethod,
-                            items: _invoiceRows,
+                            items: _filledRows,
                           );
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
                                 languageProvider.isEnglish
-                                    ? 'Invoice updated successfully'
-                                    : 'انوائس کامیابی سے تبدیل ہوگئی',
+                                    ? 'Filled updated successfully'
+                                    : 'فلڈ کامیابی سے تبدیل ہوگئی',
                               ),
                             ),
                           );
                         }
                         else {
-                          // Save new invoice
-                          await Provider.of<InvoiceProvider>(context, listen: false).saveInvoice(
-                            invoiceId: invoiceNumber, // Pass the invoice number (or generated ID)
-                            invoiceNumber: invoiceNumber,
+                          // Save new filled
+                          await Provider.of<FilledProvider>(context, listen: false).saveFilled(
+                            filledId: filledNumber, // Pass the filled number (or generated ID)
+                            filledNumber: filledNumber,
                             customerId: _selectedCustomerId!,
                             customerName: _selectedCustomerName!,
                             subtotal: subtotal,
@@ -821,22 +796,22 @@ class _InvoicePageState extends State<InvoicePage> {
                             grandTotal: grandTotal,
                             paymentType: _paymentType,
                             paymentMethod: _instantPaymentMethod,
-                            items: _invoiceRows,
+                            items: _filledRows,
                           );
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
                                 languageProvider.isEnglish
-                                    ? 'Invoice saved successfully'
-                                    : 'انوائس کامیابی سے محفوظ ہوگئی',
+                                    ? 'Filled saved successfully'
+                                    : 'فلڈ کامیابی سے محفوظ ہوگئی',
                               ),
                             ),
                           );
 
                         }
                         // Generate and print the PDF
-                        await _generateAndPrintPDF(invoiceNumber);
+                        await _generateAndPrintPDF(filledNumber);
 
                         // Navigate back
                         Navigator.pop(context);
@@ -847,20 +822,17 @@ class _InvoicePageState extends State<InvoicePage> {
                           SnackBar(
                             content: Text(
                               languageProvider.isEnglish
-                                  ? 'Failed to save invoice'
+                                  ? 'Failed to save filled'
                                   : 'انوائس محفوظ کرنے میں ناکام',
                             ),
                           ),
                         );
                       }
                     },
-                    // child: Text(
-                    //   languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں',
-                    // ),
                     child: Text(
-                      widget.invoice == null
-                          ? (languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں')
-                          : (languageProvider.isEnglish ? 'Update Invoice' : 'انوائس کو اپ ڈیٹ کریں'),
+                      widget.filled == null
+                          ? (languageProvider.isEnglish ? 'Save Filled' : 'فلڈ محفوظ کریں')
+                          : (languageProvider.isEnglish ? 'Update Filled' : 'فلڈ کو اپ ڈیٹ کریں'),
                       style: TextStyle(color: Colors.white),
                     ),
                     style: ElevatedButton.styleFrom(

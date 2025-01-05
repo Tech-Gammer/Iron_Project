@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../Provider/customerprovider.dart';
+import 'bycustomerreport.dart';
+import 'bypaymentType.dart';
 import 'custoemrreports.dart';
 
 class CustomerListPage extends StatefulWidget {
@@ -16,6 +18,85 @@ class _CustomerListPageState extends State<CustomerListPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<CustomerProvider>(context, listen: false).fetchCustomers();
     });
+  }
+  void _showReportOptions(BuildContext context, String customerName, String customerPhone, String customerId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Select Report'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                title: Text('Ledger'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CustomerReportPage(
+                        customerId: customerId,
+                        customerName: customerName,
+                        customerPhone: customerPhone,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Reports by customerName'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => byCustomerReport(
+                        customerId: customerId,
+                        customerName: customerName,
+                        customerPhone: customerPhone,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              // ListTile(
+              //   title: Text('Reports by paymentType'),
+              //   onTap: () {
+              //     Navigator.pop(context);
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(
+              //         builder: (context) => PaymentTypeReportPage(
+              //           customerId: customerId,
+              //           customerName: customerName,
+              //           customerPhone: customerPhone,
+              //         ),
+              //       ),
+              //     );
+              //   },
+              // ),
+              // ListTile(
+              //   title: Text('Reports by paymentMethod'),
+              //   onTap: () {
+              //     Navigator.pop(context);
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(
+              //         builder: (context) => CustomerReportPage(
+              //           customerId: customerId,
+              //           customerName: customerName,
+              //           customerPhone: customerPhone,
+              //         ),
+              //       ),
+              //     );
+              //   },
+              // ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -60,15 +141,21 @@ class _CustomerListPageState extends State<CustomerListPage> {
                 ),
                 onTap: () {
                   // Navigate to the customer report page
-                  Navigator.push(
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //     builder: (context) => CustomerReportPage(
+                  //       customerId: customer.id,
+                  //       customerName: customer.name,
+                  //       customerPhone: customer.phone,
+                  //     ),
+                  //   ),
+                  // );
+                  _showReportOptions(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => CustomerReportPage(
-                        customerId: customer.id,
-                        customerName: customer.name,
-                        customerPhone: customer.phone,
-                      ),
-                    ),
+                    customer.name,
+                    customer.phone,
+                    customer.id,
                   );
                 },
               );

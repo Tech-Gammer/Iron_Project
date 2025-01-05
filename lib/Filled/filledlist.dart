@@ -1,45 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'Invoicepage.dart';
-import '../Provider/invoice provider.dart';
 import 'package:intl/intl.dart';
+import '../Provider/filled provider.dart';
+import 'filledpage.dart';
 
-class InvoiceListPage extends StatefulWidget {
+class filledListpage extends StatefulWidget {
   @override
-  _InvoiceListPageState createState() => _InvoiceListPageState();
+  _filledListpageState createState() => _filledListpageState();
 }
 
-class _InvoiceListPageState extends State<InvoiceListPage> {
+class _filledListpageState extends State<filledListpage> {
   TextEditingController _searchController = TextEditingController();
   final TextEditingController _paymentController = TextEditingController();
   DateTimeRange? _selectedDateRange;
-  List<Map<String, dynamic>> _filteredInvoices = [];
+  List<Map<String, dynamic>> _filteredFilled = [];
 
   @override
   Widget build(BuildContext context) {
-    final invoiceProvider = Provider.of<InvoiceProvider>(context);
+    final filledProvider = Provider.of<FilledProvider>(context);
 
-    _filteredInvoices = invoiceProvider.invoices.where((invoice) {
+    _filteredFilled = filledProvider.filled.where((filled) {
       final searchQuery = _searchController.text.toLowerCase();
-      final invoiceNumber = (invoice['invoiceNumber'] ?? '').toString().toLowerCase();
-      final matchesSearch = invoiceNumber.contains(searchQuery);
+      final filledNumber = (filled['filledNumber'] ?? '').toString().toLowerCase();
+      final matchesSearch = filledNumber.contains(searchQuery);
 
       if (_selectedDateRange != null) {
-        final invoiceDateStr = invoice['createdAt'];
-        DateTime? invoiceDate;
+        final filledDateStr = filled['createdAt'];
+        DateTime? filledDate;
 
         // Parse the date, accounting for different formats
         try {
-          invoiceDate = DateTime.tryParse(invoiceDateStr) ?? DateTime.fromMillisecondsSinceEpoch(int.parse(invoiceDateStr));
+          filledDate = DateTime.tryParse(filledDateStr) ?? DateTime.fromMillisecondsSinceEpoch(int.parse( filledDateStr));
         } catch (e) {
           print('Error parsing date: $e');
           return false;
         }
 
-        final isInDateRange = (invoiceDate.isAfter(_selectedDateRange!.start) ||
-            invoiceDate.isAtSameMomentAs(_selectedDateRange!.start)) &&
-            (invoiceDate.isBefore(_selectedDateRange!.end) ||
-                invoiceDate.isAtSameMomentAs(_selectedDateRange!.end));
+        final isInDateRange = (filledDate.isAfter(_selectedDateRange!.start) ||
+            filledDate.isAtSameMomentAs(_selectedDateRange!.start)) &&
+            (filledDate.isBefore(_selectedDateRange!.end) ||
+                filledDate.isAtSameMomentAs(_selectedDateRange!.end));
 
         return matchesSearch && isInDateRange;
       }
@@ -49,7 +49,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Invoice List'),
+        title: const Text('Filled List'),
         centerTitle: true,
         backgroundColor: Colors.teal,  // AppBar background color
         actions: [
@@ -58,7 +58,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => InvoicePage()),
+                MaterialPageRoute(builder: (context) => filledpage()),
               );
             },
           ),
@@ -72,7 +72,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                labelText: 'Search by Invoice ID',
+                labelText: 'Search by Filled ID',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
@@ -151,37 +151,37 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
               ],
             ),
           ),
-          // Invoice List
+          // Filled List
           Expanded(
             child: FutureBuilder(
-              future: invoiceProvider.fetchInvoices(),
+              future:  filledProvider.fetchFilled(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.active) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                if (_filteredInvoices.isEmpty) {
-                  return const Center(child: Text('No invoices found.'));
+                if (_filteredFilled.isEmpty) {
+                  return const Center(child: Text('No  filled found.'));
                 }
                 return ListView.builder(
-                  itemCount: _filteredInvoices.length,
+                  itemCount: _filteredFilled.length,
                   itemBuilder: (context, index) {
-                    final invoice = Map<String, dynamic>.from(_filteredInvoices[index]);
-                    final grandTotal = invoice['grandTotal'] ?? 0.0;
-                    final debitAmount = invoice['debitAmount'] ?? 0.0;
+                    final  filled = Map<String, dynamic>.from(_filteredFilled[index]);
+                    final grandTotal = filled['grandTotal'] ?? 0.0;
+                    final debitAmount = filled['debitAmount'] ?? 0.0;
                     final remainingAmount = grandTotal - debitAmount;
                     return ListTile(
-                      title: Text('Invoice #${invoice['invoiceNumber']}'),
+                      title: Text('Filled #${filled['filledNumber']}'),
                       subtitle: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Text('Customer: ${invoice['customerName']?? 'Unknown'}'),
+                          Text('Customer: ${filled['customerName']?? 'Unknown'}'),
                           const SizedBox(width: 20,),
-                          Text('Date and Time: ${invoice['createdAt']}'),
+                          Text('Date and Time: ${filled['createdAt']}'),
                           const SizedBox(width: 20,),
                           IconButton(
                             icon: const Icon(Icons.payment),
                             onPressed: () {
-                              _showInvoicePaymentDialog(invoice, invoiceProvider);
+                              _showFilledPaymentDialog(filled, filledProvider);
                             },
                           ),
                         ],
@@ -189,7 +189,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min, // Ensures the row takes only as much space as needed
                         children: [
-                          Text('Rs ${invoice['grandTotal']}', style: TextStyle(fontSize: 20)),
+                          Text('Rs ${filled['grandTotal']}', style: TextStyle(fontSize: 20)),
                           const SizedBox(width: 10), // Adds some space between the two texts
                           Text(
                             'Remaining: Rs ${remainingAmount.toStringAsFixed(2)}',
@@ -201,8 +201,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => InvoicePage(
-                              invoice: Map<String, dynamic>.from(_filteredInvoices[index]), // Pass selected invoice
+                            builder: (context) => filledpage(
+                              filled: Map<String, dynamic>.from(_filteredFilled[index]), // Pass selected filled
                             ),
                           ),
                         );
@@ -213,8 +213,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                           context: context,
                           builder: (context) {
                             return AlertDialog(
-                              title: const Text('Delete Invoice'),
-                              content: const Text('Are you sure you want to delete this invoice?'),
+                              title: const Text('Delete Filled'),
+                              content: const Text('Are you sure you want to delete this filled?'),
                               actions: [
                                 TextButton(
                                   onPressed: () {
@@ -224,8 +224,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                                 ),
                                 TextButton(
                                   onPressed: () async {
-                                    // Call deleteInvoice from the InvoiceProvider
-                                    await invoiceProvider.deleteInvoice(invoice['id']);
+                                    // Call deletefilled from the filledProvider
+                                    await filledProvider.deleteFilled(filled['id']);
                                     Navigator.of(context).pop(); // Close the dialog
                                   },
                                   child: const Text('Delete'),
@@ -246,14 +246,14 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
     );
   }
 
-  Future<void> _showInvoicePaymentDialog(
-      Map<String, dynamic> invoice, InvoiceProvider invoiceProvider) async {
+  Future<void> _showFilledPaymentDialog(
+      Map<String, dynamic> filled, FilledProvider filledProvider) async {
     _paymentController.clear();
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Pay Invoice'),
+          title: const Text('Pay Filled'),
           content: TextField(
             controller: _paymentController,
             keyboardType: TextInputType.number,
@@ -272,8 +272,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
               onPressed: () async {
                 final amount = double.tryParse(_paymentController.text);
                 if (amount != null && amount > 0) {
-                  // await invoiceProvider.addDebit(invoice['id'], amount);
-                  await invoiceProvider.payInvoice(context, invoice['id'], amount);
+                  // awaitfilledProvider.addDebit(filled['id'], amount);
+                  await filledProvider.payFilled(context, filled['id'], amount);
                   Navigator.of(context).pop();
                 } else {
                   // Handle invalid input

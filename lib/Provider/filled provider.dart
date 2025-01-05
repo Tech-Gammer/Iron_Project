@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 
-class InvoiceProvider with ChangeNotifier {
+class FilledProvider with ChangeNotifier {
   final DatabaseReference _db = FirebaseDatabase.instance.ref();
-  List<Map<String, dynamic>> _invoices = [];
+  List<Map<String, dynamic>> _filled = [];
 
-  List<Map<String, dynamic>> get invoices => _invoices;
+  List<Map<String, dynamic>> get filled => _filled;
 
-  Future<void> saveInvoice({
-    required String invoiceId, // Accepts the invoice ID (instead of using push)
-    required String invoiceNumber,
+  Future<void> saveFilled({
+    required String filledId, // Accepts the filled ID (instead of using push)
+    required String filledNumber,
     required String customerId,
     required String customerName, // Accept the customer name as a parameter
     required double subtotal,
@@ -24,13 +24,13 @@ class InvoiceProvider with ChangeNotifier {
         return {
           'rate': item['rate'] ?? 0.0,
           'qty': item['qty'] ?? 0.0,
-          'weight': item['weight'] ?? 0.0,
+          // 'weight': item['weight'] ?? 0.0,
           'description': item['description'] ?? '',
         };
       }).toList();
 
-      final invoiceData = {
-        'invoiceNumber': invoiceNumber,
+      final filledData = {
+        'filledNumber': filledNumber,
         'customerId': customerId,
         'customerName': customerName, // Save customer name here
         'subtotal': subtotal,
@@ -41,25 +41,25 @@ class InvoiceProvider with ChangeNotifier {
         'items': cleanedItems,
         'createdAt': DateTime.now().toIso8601String(),
       };
-      // Save the invoice at the specified invoiceId path
-      await _db.child('invoices').child(invoiceId).set(invoiceData);
-      print('invoice saved');
+      // Save the filled at the specified filledId path
+      await _db.child('filled').child(filledId).set(filledData);
+      print('filled saved');
       // Now update the ledger for this customer
       await _updateCustomerLedger(
-      customerId,
-      creditAmount: grandTotal, // The invoice total as a credit
-      debitAmount: 0.0, // No payment yet
-      remainingBalance: grandTotal, // Full amount due initially
-      invoiceNumber: invoiceNumber,
+        customerId,
+        creditAmount: grandTotal, // The filled total as a credit
+        debitAmount: 0.0, // No payment yet
+        remainingBalance: grandTotal, // Full amount due initially
+        filledNumber: filledNumber,
       );
     } catch (e) {
-      throw Exception('Failed to save invoice: $e');
+      throw Exception('Failed to save filled: $e');
     }
   }
 
-  Future<void> updateInvoice({
-    required String invoiceId, // Same invoiceId as the one used during save
-    required String invoiceNumber,
+  Future<void> updateFilled({
+    required String filledId, // Same filledId as the one used during save
+    required String filledNumber,
     required String customerId,
     required String customerName, // Accept the customer name as a parameter
     required double subtotal,
@@ -74,13 +74,13 @@ class InvoiceProvider with ChangeNotifier {
         return {
           'rate': item['rate'] ?? 0.0,
           'qty': item['qty'] ?? 0.0,
-          'weight': item['weight'] ?? 0.0,
+          // 'weight': item['weight'] ?? 0.0,
           'description': item['description'] ?? '',
         };
       }).toList();
 
-      final updatedInvoiceData = {
-        'invoiceNumber': invoiceNumber,
+      final updatedFilledData = {
+        'filledNumber': filledNumber,
         'customerId': customerId,
         'customerName': customerName, // Update customer name here as well
         'subtotal': subtotal,
@@ -92,26 +92,26 @@ class InvoiceProvider with ChangeNotifier {
         'updatedAt': DateTime.now().toIso8601String(),
       };
 
-      // Update the invoice at the same path using the invoiceId
-      await _db.child('invoices').child(invoiceId).update(updatedInvoiceData);
+      // Update the filled at the same path using the filledId
+      await _db.child('filled').child(filledId).update(updatedFilledData);
 
-      // Optionally refresh the invoices list after updating
-      await fetchInvoices();
+      // Optionally refresh the filled list after updating
+      await fetchFilled();
     } catch (e) {
-      throw Exception('Failed to update invoice: $e');
+      throw Exception('Failed to update filled: $e');
     }
   }
 
-  Future<void> fetchInvoices() async {
+  Future<void> fetchFilled() async {
     try {
-      final snapshot = await _db.child('invoices').get();
+      final snapshot = await _db.child('filled').get();
       if (snapshot.exists) {
-        _invoices = [];
+        _filled = [];
         final data = snapshot.value as Map<dynamic, dynamic>;
         data.forEach((key, value) {
-          _invoices.add({
-            'id': key, // This is the unique ID for each invoice
-            'invoiceNumber': value['invoiceNumber'],
+          _filled.add({
+            'id': key, // This is the unique ID for each filled
+            'filledNumber': value['filledNumber'],
             'customerId': value['customerId'],
             'customerName': value['customerName'],
             'subtotal': value['subtotal'],
@@ -132,68 +132,68 @@ class InvoiceProvider with ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      throw Exception('Failed to fetch invoices: $e');
+      throw Exception('Failed to fetch filled: $e');
     }
   }
 
-  Future<void> deleteInvoice(String id) async {
+  Future<void> deleteFilled(String id) async {
     try {
-      // Delete the invoice from the Firebase database by its ID
-      await _db.child('invoices').child(id).remove();
+      // Delete the filled from the Firebase database by its ID
+      await _db.child('filled').child(id).remove();
 
-      // Refresh the invoices list after deleting
-      await fetchInvoices();
+      // Refresh the filled list after deleting
+      await fetchFilled();
     } catch (e) {
-      throw Exception('Failed to delete invoice: $e');
+      throw Exception('Failed to delete filled: $e');
     }
   }
 
-  // **New Method to Handle Invoice Payment**
-  Future<void> payInvoice(BuildContext context, String invoiceId, double paymentAmount) async {
+  // **New Method to Handle filled Payment**
+  Future<void> payFilled(BuildContext context, String filledId, double paymentAmount) async {
     try {
-      // Find the selected invoice
-      final invoice = _invoices.firstWhere((inv) => inv['id'] == invoiceId);
+      // Find the selected filled
+      final filled = _filled.firstWhere((fill) => fill['id'] == filledId);
 
-      if (invoice['debitAmount'] == null) {
-        invoice['debitAmount'] = 0.0;
+      if (filled['debitAmount'] == null) {
+        filled['debitAmount'] = 0.0;
       }
 
-      final currentDebit = invoice['debitAmount'] as double;
-      final grandTotal = invoice['grandTotal'] as double;
+      final currentDebit = filled['debitAmount'] as double;
+      final grandTotal = filled['grandTotal'] as double;
 
       if (paymentAmount > (grandTotal - currentDebit)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Payment exceeds the remaining invoice balance.")),
+          SnackBar(content: Text("Payment exceeds the remaining filled balance.")),
         );
-        throw Exception("Payment exceeds the remaining invoice balance.");
+        throw Exception("Payment exceeds the remaining filled balance.");
       }
 
-      // Update invoice data
+      // Update filled data
       final updatedDebit = currentDebit + paymentAmount;
       final debitAt = DateTime.now().toIso8601String();
 
-      await _db.child('invoices').child(invoiceId).update({
+      await _db.child('filled').child(filledId).update({
         'debitAmount': updatedDebit, // **Update paid amount**
         'debitAt': debitAt, // **Update last payment date**
       });
 
       // Update the ledger with the calculated remaining balance
       await _updateCustomerLedger(
-        invoice['customerId'],
+        filled['customerId'],
         creditAmount: 0.0,
         debitAmount: paymentAmount,
         remainingBalance: grandTotal - updatedDebit,
-        invoiceNumber: invoice['invoiceNumber'],
+        filledNumber: filled['filledNumber'],
       );
 
-      // Refresh the invoices list
-      await fetchInvoices();
+      // Refresh the filled list
+      await fetchFilled();
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Payment of Rs. $paymentAmount recorded successfully.')),
       );
     } catch (e) {
-      throw Exception('Failed to pay invoice: $e');
+      throw Exception('Failed to pay filled: $e');
     }
   }
 
@@ -203,10 +203,10 @@ class InvoiceProvider with ChangeNotifier {
         required double creditAmount,
         required double debitAmount,
         required double remainingBalance,
-        required String invoiceNumber,
+        required String filledNumber,
       }) async {
     try {
-      final customerLedgerRef = _db.child('ledger').child(customerId);
+      final customerLedgerRef = _db.child('filledledger').child(customerId);
 
       // Fetch the last ledger entry to calculate the new remaining balance
       final snapshot = await customerLedgerRef.orderByChild('createdAt').limitToLast(1).get();
@@ -223,7 +223,7 @@ class InvoiceProvider with ChangeNotifier {
 
       // Ledger data to be saved
       final ledgerData = {
-        'invoiceNumber': invoiceNumber,
+        'filledNumber': filledNumber,
         'creditAmount': creditAmount,
         'debitAmount': debitAmount,
         'remainingBalance': newRemainingBalance, // Updated balance
@@ -236,9 +236,9 @@ class InvoiceProvider with ChangeNotifier {
     }
   }
 
-  List<Map<String, dynamic>> getInvoicesByPaymentMethod(String paymentMethod) {
-    return _invoices.where((invoice) {
-      final method = invoice['paymentMethod'] ?? '';
+  List<Map<String, dynamic>> getFilledByPaymentMethod(String paymentMethod) {
+    return _filled.where((filled) {
+      final method = filled['paymentMethod'] ?? '';
       return method.toLowerCase() == paymentMethod.toLowerCase();
     }).toList();
   }

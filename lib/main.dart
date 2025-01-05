@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'Auth/login.dart';
 import 'Auth/register.dart';
 import 'Provider/customerprovider.dart';
+import 'Provider/filled provider.dart';
 import 'Provider/invoice provider.dart';
 import 'Provider/lanprovider.dart';
 import 'dashboard.dart';
@@ -18,6 +19,7 @@ void main() async{
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => FilledProvider()),
         ChangeNotifierProvider(create: (_) => InvoiceProvider()),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => CustomerProvider()), // Add CustomerProvider

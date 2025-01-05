@@ -187,15 +187,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import 'Customer/addcustomers.dart';
 import 'Customer/customerlist.dart';
+import 'Filled/filledlist.dart';
+import 'Reports/bypaymentType.dart';
 import 'Reports/customerlistforreport.dart';
 import 'Invoice/invoiceslist.dart';
-import 'Invoice/Invoicepage.dart';
 import 'Provider/lanprovider.dart';
-import 'Reports/custoemrreports.dart';
-import 'Reports/threetypesofreport.dart';
 
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
@@ -352,6 +349,12 @@ class Dashboard extends StatelessWidget {
               }
           ),
           _buildDashboardCard(
+              Icons.add, languageProvider.isEnglish ? 'Filled' : 'فلڈ اندراج', Colors.blue,
+                  (){
+                Navigator.push(context, MaterialPageRoute(builder: (context)=>filledListpage()));
+              }
+          ),
+          _buildDashboardCard(
               Icons.list, languageProvider.isEnglish ? 'Customers' : 'کسٹمرز', Colors.green,(){
             Navigator.push(context, MaterialPageRoute(builder: (context)=>CustomerList()));
 
@@ -364,15 +367,13 @@ class Dashboard extends StatelessWidget {
                 builder: (context) => CustomerListPage(),
               ),
             );
-
-
           }),
           _buildDashboardCard(
               Icons.report, languageProvider.isEnglish ? 'Reports' : 'رپورٹس', Colors.red,(){
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => Threetypesreportslistcustomer(),
+                builder: (context) => PaymentTypeReportPage(),
               ),
             );
           }),
