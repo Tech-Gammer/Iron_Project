@@ -188,11 +188,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'Customer/customerlist.dart';
+import 'DailyExpensesPages/viewexpensepage.dart';
 import 'Filled/filledlist.dart';
 import 'Reports/bypaymentType.dart';
 import 'Reports/customerlistforreport.dart';
 import 'Invoice/invoiceslist.dart';
 import 'Provider/lanprovider.dart';
+import 'Reports/ledgerselcttion.dart';
+import 'Reports/reportselecttionpage.dart';
 
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
@@ -355,16 +358,22 @@ class Dashboard extends StatelessWidget {
               }
           ),
           _buildDashboardCard(
+              Icons.add, languageProvider.isEnglish ? 'Expenses' : 'اخراجات', Colors.blue,
+                  (){
+                Navigator.push(context, MaterialPageRoute(builder: (context)=>ViewExpensesPage()));
+              }
+          ),
+          _buildDashboardCard(
               Icons.list, languageProvider.isEnglish ? 'Customers' : 'کسٹمرز', Colors.green,(){
             Navigator.push(context, MaterialPageRoute(builder: (context)=>CustomerList()));
 
           }),
           _buildDashboardCard(
-              Icons.list, languageProvider.isEnglish ? 'View Transactions' : 'لین دین دیکھیں', Colors.green,(){
+              Icons.list, languageProvider.isEnglish ? 'View Ledger' : 'کھاتہ دیکھیں', Colors.green,(){
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => CustomerListPage(),
+                builder: (context) => ledgerselection(),
               ),
             );
           }),
@@ -373,7 +382,7 @@ class Dashboard extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => PaymentTypeReportPage(),
+                builder: (context) => ReportsPage(),
               ),
             );
           }),

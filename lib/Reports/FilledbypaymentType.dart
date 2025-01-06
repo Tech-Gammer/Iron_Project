@@ -6,22 +6,23 @@ import '../Provider/customerprovider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-class PaymentTypeReportPage extends StatefulWidget {
+
+class FilledPaymentTypeReportPage extends StatefulWidget {
   final String? customerId;
   final String? customerName;
   final String? customerPhone;
 
-  PaymentTypeReportPage({
+  FilledPaymentTypeReportPage({
     this.customerId,
     this.customerName,
     this.customerPhone,
   });
 
   @override
-  _PaymentTypeReportPageState createState() => _PaymentTypeReportPageState();
+  _FilledPaymentTypeReportPageState createState() => _FilledPaymentTypeReportPageState();
 }
 
-class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
+class _FilledPaymentTypeReportPageState extends State<FilledPaymentTypeReportPage> {
   String? _selectedPaymentType = 'all'; // Filter by payment type: 'udhaar' or 'instant'
   String? _selectedCustomerId; // Filter by customer ID
   String? _selectedCustomerName; // Store selected customer name
@@ -40,7 +41,7 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
   Future<void> _fetchTodayReportData() async {
     final DateTime now = DateTime.now();
     final DateTime startOfDay = DateTime(now.year, now.month, now.day); // Midnight of today
-    final DateTime endOfDay = startOfDay.add(Duration(days: 1)).subtract(Duration(milliseconds: 1)); // Last millisecond of today
+    final DateTime endOfDay = startOfDay.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1)); // Last millisecond of today
 
     // Set the selected date range to today
     _selectedDateRange = DateTimeRange(start: startOfDay, end: endOfDay);
@@ -51,8 +52,8 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
 
   // Fetching report data based on filters
   Future<void> _fetchReportData() async {
-    final DatabaseReference invoiceRef = FirebaseDatabase.instance.ref().child('invoices');
-    Query query = invoiceRef;
+    final DatabaseReference filledRef = FirebaseDatabase.instance.ref().child('filled');
+    Query query = filledRef;
 
     // Filter by paymentType if selected
     if (_selectedPaymentType != 'all') {
@@ -66,15 +67,15 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
 
       // Now, filter the data by paymentMethod, customerId, and date range in the code
       List<Map<String, dynamic>> filteredData = data.values
-          .where((invoice) {
-        bool matchesCustomer = _selectedCustomerId == null || invoice['customerId'] == _selectedCustomerId;
+          .where((filled) {
+        bool matchesCustomer = _selectedCustomerId == null || filled['customerId'] == _selectedCustomerId;
         bool matchesDateRange = _selectedDateRange == null ||
-            (DateTime.parse(invoice['createdAt']).isAfter(_selectedDateRange!.start) &&
-                DateTime.parse(invoice['createdAt']).isBefore(_selectedDateRange!.end));
+            (DateTime.parse(filled['createdAt']).isAfter(_selectedDateRange!.start) &&
+                DateTime.parse(filled['createdAt']).isBefore(_selectedDateRange!.end));
 
         // Apply paymentMethod filter only if the paymentType is 'instant'
         bool matchesPaymentMethod = (_selectedPaymentType != 'instant' ||
-            (_selectedPaymentMethod == 'all' || invoice['paymentMethod'] == _selectedPaymentMethod));
+            (_selectedPaymentMethod == 'all' || filled['paymentMethod'] == _selectedPaymentMethod));
 
         return matchesCustomer && matchesDateRange && matchesPaymentMethod;
       })
@@ -103,7 +104,7 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
           data: ThemeData.light().copyWith(
             primaryColor: Colors.teal,
             hintColor: Colors.teal,
-            buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
+            buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
           ),
           child: child!,
         );
@@ -128,7 +129,7 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Select a Customer'),
+          title: const Text('Select a Customer'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: customerProvider.customers.map((customer) {
@@ -166,8 +167,8 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
   }
 // Method to calculate the total amount
   double _calculateTotalAmount() {
-    return _reportData.fold(0.0, (sum, invoice) {
-      return sum + (invoice['grandTotal'] ?? 0.0);
+    return _reportData.fold(0.0, (sum, filled) {
+      return sum + (filled['grandTotal'] ?? 0.0);
     });
   }
 
@@ -179,7 +180,7 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
         build: (pw.Context context) {
           return pw.Column(
             children: [
-              pw.Text('Payment Type Report For Sarya', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              pw.Text('Payment Type Report For Filled', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 20),
               pw.Text('Customer: ${_selectedCustomerName ?? 'All'}'),
               // pw.Text('Phone: ${widget.customerPhone ?? 'All'}'),
@@ -188,13 +189,13 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                 context: context,
                 data: [
                   ['Customer', 'Payment Type', 'Payment Method', 'Amount', 'Date'],
-                  ..._reportData.map((invoice) {
+                  ..._reportData.map((filled) {
                     return [
-                      invoice['customerName'] ?? 'N/A',
-                      invoice['paymentType'] ?? 'N/A',
-                      invoice['paymentMethod'] ?? 'N/A',
-                      'Rs ${invoice['grandTotal']}',
-                      DateFormat.yMMMd().format(DateTime.parse(invoice['createdAt'])),
+                      filled['customerName'] ?? 'N/A',
+                      filled['paymentType'] ?? 'N/A',
+                      filled['paymentMethod'] ?? 'N/A',
+                      'Rs ${filled['grandTotal']}',
+                      DateFormat.yMMMd().format(DateTime.parse(filled['createdAt'])),
                     ];
                   }).toList(),
                 ],
@@ -211,13 +212,11 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
     await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Payment Type Report'),
+        title: const Text('Payment Type Report'),
         backgroundColor: Colors.teal,
       ),
       body: Padding(
@@ -267,7 +266,7 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                     }).toList(),
                   ),
                 ),
-                SizedBox(width: 15),
+                const SizedBox(width: 15),
                 // Customer dropdown or filter
                 ElevatedButton(
                   onPressed: () => _selectCustomer(context),
@@ -283,7 +282,7 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                         : 'Selected: $_selectedCustomerName', // Display selected customer name
                   ),
                 ),
-                SizedBox(width: 15),
+                const SizedBox(width: 15),
                 // Date range picker
                 ElevatedButton(
                   onPressed: () => _selectDateRange(context),
@@ -296,7 +295,7 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                   child: Text(
                       _selectedDateRange == null ? 'Select Date Range' : 'Date Range Selected'),
                 ),
-                SizedBox(width: 15),
+                const SizedBox(width: 15),
                 // Clear filter button
                 ElevatedButton(
                   onPressed: _clearFilters,
@@ -306,11 +305,11 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: Text('Clear Filters'),
+                  child: const Text('Clear Filters'),
                 ),
               ],
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // Payment method dropdown (only for instant payments)
             if (_selectedPaymentType == 'instant')
               Row(
@@ -348,10 +347,10 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                       }).toList(),
                     ),
                   ),
-                  SizedBox(width: 15),
+                  const SizedBox(width: 15),
                 ],
               ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // Table for showing report data
             Expanded(
               child: SingleChildScrollView(
@@ -384,13 +383,13 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                         DataColumn(label: Text('Date', style: TextStyle(color: Colors.teal.shade800))),
                       ],
                       rows: _reportData.isNotEmpty
-                          ? _reportData.map((invoice) {
+                          ? _reportData.map((filled) {
                         return DataRow(cells: [
-                          DataCell(Text(invoice['customerName'] ?? 'N/A')),
-                          DataCell(Text(invoice['paymentType'] ?? 'N/A')),
-                          DataCell(Text(invoice['paymentMethod'] ?? 'N/A')),
-                          DataCell(Text(invoice['grandTotal'].toString())),
-                          DataCell(Text(DateFormat.yMMMd().format(DateTime.parse(invoice['createdAt'])))),
+                          DataCell(Text(filled['customerName'] ?? 'N/A')),
+                          DataCell(Text(filled['paymentType'] ?? 'N/A')),
+                          DataCell(Text(filled['paymentMethod'] ?? 'N/A')),
+                          DataCell(Text(filled['grandTotal'].toString())),
+                          DataCell(Text(DateFormat.yMMMd().format(DateTime.parse(filled['createdAt'])))),
                         ]);
                       }).toList()
                           : [],
@@ -404,18 +403,17 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
               child: Row(
                 children: [
                   Text('Total: ${_calculateTotalAmount().toStringAsFixed(2)}rs',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal.shade800
-                  ),)
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.teal.shade800
+                    ),)
                 ],
               ),
             ),
-            // Button to generate and print the PDF
             ElevatedButton(
               onPressed: _generateAndPrintPDF,
-              child: Text('Generate and Print PDF'),
+              child: const Text('Generate and Print PDF'),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.teal.shade400),
             ),
           ],

@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../Provider/filledreportprovider.dart';
 import '../Provider/reportprovider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-class CustomerReportPage extends StatefulWidget {
+class FilledLedgerReportPage extends StatefulWidget {
   final String customerId;
   final String customerName;
   final String customerPhone;
 
-  const CustomerReportPage({
+  const FilledLedgerReportPage({
     Key? key,
     required this.customerId,
     required this.customerName,
@@ -18,22 +19,22 @@ class CustomerReportPage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<CustomerReportPage> createState() => _CustomerReportPageState();
+  State<FilledLedgerReportPage> createState() => _FilledLedgerReportPageState();
 }
 
-class _CustomerReportPageState extends State<CustomerReportPage> {
+class _FilledLedgerReportPageState extends State<FilledLedgerReportPage> {
   DateTimeRange? selectedDateRange;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => CustomerReportProvider()..fetchCustomerReport(widget.customerId),
+      create: (_) => FilledCustomerReportProvider()..fetchCustomerReport(widget.customerId),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Customer Ledger For Sarya'),
+          title: const Text('Customer Report'),
           backgroundColor: Colors.teal,  // Customize the AppBar color
         ),
-        body: Consumer<CustomerReportProvider>(
+        body: Consumer<FilledCustomerReportProvider>(
           builder: (context, provider, child) {
             if (provider.isLoading) {
               return const Center(child: CircularProgressIndicator());
@@ -161,7 +162,7 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                           columnSpacing: 20,  // Increase column spacing
                           columns: const [
                             DataColumn(label: Text('Date')),
-                            DataColumn(label: Text('Invoice Number')),
+                            DataColumn(label: Text('Filled Number')),
                             DataColumn(label: Text('Transaction Type')),
                             DataColumn(label: Text('Debit (-)')),
                             DataColumn(label: Text('Credit (+)')),
@@ -171,8 +172,8 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                             return DataRow(
                               cells: [
                                 DataCell(Text(transaction['date'] ?? 'N/A')),
-                                DataCell(Text(transaction['invoiceNumber'] ?? 'N/A')),
-                                DataCell(Text(transaction['credit'] != 0.0 ? 'Invoice' : (transaction['debit'] != 0.0 ? 'Bill' : '-'))),
+                                DataCell(Text(transaction['filledNumber'] ?? 'N/A')),
+                                DataCell(Text(transaction['credit'] != 0.0 ? 'Filled' : (transaction['debit'] != 0.0 ? 'Bill' : '-'))),
                                 DataCell(Text(transaction['debit'] != 0.0 ? 'Rs ${transaction['debit']?.toStringAsFixed(2)}' : '-')),
                                 DataCell(Text(transaction['credit'] != 0.0 ? 'Rs ${transaction['credit']?.toStringAsFixed(2)}' : '-')),
                                 DataCell(Text('Rs ${transaction['balance']?.toStringAsFixed(2)}')),
@@ -221,8 +222,6 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
     );
   }
 
-
-
   Future<void> _generateAndPrintPDF(Map<String, dynamic> report, List<Map<String, dynamic>> transactions) async {
     final pdf = pw.Document();
     final font = await PdfGoogleFonts.robotoRegular();
@@ -248,7 +247,7 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text('Customer Ledegr for Sarya', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              pw.Text('Customer Ledegr for Filled', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 20),
               pw.Text('Customer Name: ${widget.customerName}', style: pw.TextStyle(fontSize: 18)),
               pw.Text('Phone Number: ${widget.customerPhone}', style: pw.TextStyle(fontSize: 18)),
@@ -259,11 +258,11 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
               pw.Table.fromTextArray(
                 context: context,
                 data: [
-                  ['Date', 'Invoice Number', 'Transaction Type', 'Debit', 'Credit', 'Balance'],
+                  ['Date', 'Filled Number', 'Transaction Type', 'Debit', 'Credit', 'Balance'],
                   ...transactions.map((transaction) => [
                     transaction['date'] ?? 'N/A',
-                    transaction['invoiceNumber'] ?? 'N/A',
-                    transaction['credit'] != 0.0 ? 'Invoice' : (transaction['debit'] != 0.0 ? 'Bill' : '-'),
+                    transaction['filledNumber'] ?? 'N/A',
+                    transaction['credit'] != 0.0 ? 'Filled' : (transaction['debit'] != 0.0 ? 'Bill' : '-'),
                     transaction['debit'] != 0.0 ? 'Rs ${transaction['debit']?.toStringAsFixed(2)}' : '-',
                     transaction['credit'] != 0.0 ? 'Rs ${transaction['credit']?.toStringAsFixed(2)}' : '-',
                     'Rs ${transaction['balance']?.toStringAsFixed(2)}',
@@ -285,5 +284,6 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
 
     await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
   }
+
 
 }

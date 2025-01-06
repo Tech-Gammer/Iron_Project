@@ -4,13 +4,15 @@ import '../Provider/customerprovider.dart';
 import 'bycustomerreport.dart';
 import 'bypaymentType.dart';
 import 'custoemrreports.dart';
+import 'filledbycustomerreport.dart';
+import 'filledledgerreport.dart';
 
-class CustomerListPage extends StatefulWidget {
+class Filledcustomerlistpage extends StatefulWidget {
   @override
-  _CustomerListPageState createState() => _CustomerListPageState();
+  _FilledcustomerlistpageState createState() => _FilledcustomerlistpageState();
 }
 
-class _CustomerListPageState extends State<CustomerListPage> {
+class _FilledcustomerlistpageState extends State<Filledcustomerlistpage> {
   @override
   void initState() {
     super.initState();
@@ -35,7 +37,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CustomerReportPage(
+                      builder: (context) => FilledLedgerReportPage(
                         customerId: customerId,
                         customerName: customerName,
                         customerPhone: customerPhone,
@@ -51,7 +53,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => byCustomerReport(
+                      builder: (context) => filledbycustomerreport(
                         customerId: customerId,
                         customerName: customerName,
                         customerPhone: customerPhone,
@@ -73,7 +75,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Customer List For Sarya Ledger',
+          'Customer List For Filled ledger',
           style: TextStyle(
             color: Colors.teal.shade800, // Title text color
           ),
