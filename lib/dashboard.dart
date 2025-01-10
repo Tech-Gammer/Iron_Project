@@ -189,6 +189,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'Customer/customerlist.dart';
 import 'DailyExpensesPages/viewexpensepage.dart';
+import 'Employee/addemployee.dart';
+import 'Employee/employeelist.dart';
 import 'Filled/filledlist.dart';
 import 'Reports/bypaymentType.dart';
 import 'Reports/customerlistforreport.dart';
@@ -361,6 +363,12 @@ class Dashboard extends StatelessWidget {
               Icons.add, languageProvider.isEnglish ? 'Expenses' : 'اخراجات', Colors.blue,
                   (){
                 Navigator.push(context, MaterialPageRoute(builder: (context)=>ViewExpensesPage()));
+              }
+          ),
+          _buildDashboardCard(
+              Icons.add, languageProvider.isEnglish ? 'Employee' : 'ورکر', Colors.blue,
+                  (){
+                Navigator.push(context, MaterialPageRoute(builder: (context)=>EmployeeListPage()));
               }
           ),
           _buildDashboardCard(

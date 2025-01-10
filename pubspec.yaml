@@ -47,6 +47,7 @@ dependencies:
   printing: ^5.13.4
   flutter_pdfview: ^1.2.0
   html: ^0.15.0
+  csv: ^6.0.0
 
 dev_dependencies:
   flutter_test:

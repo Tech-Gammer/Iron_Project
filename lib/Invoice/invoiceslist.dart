@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../Provider/lanprovider.dart';
 import 'Invoicepage.dart';
 import '../Provider/invoice provider.dart';
 import 'package:intl/intl.dart';
@@ -18,6 +19,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
   @override
   Widget build(BuildContext context) {
     final invoiceProvider = Provider.of<InvoiceProvider>(context);
+    // final languageProvider = Provider.of<LanguageProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
 
     _filteredInvoices = invoiceProvider.invoices.where((invoice) {
       final searchQuery = _searchController.text.toLowerCase();
@@ -49,7 +52,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Invoice List'),
+        title: Text(languageProvider.isEnglish ? 'Invoice List:' : 'انوائس لسٹ',),
         centerTitle: true,
         backgroundColor: Colors.teal,  // AppBar background color
         actions: [
@@ -72,7 +75,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                labelText: 'Search by Invoice ID',
+                labelText: languageProvider.isEnglish ? 'Search By Invoice ID' : 'انوائس آئی ڈی سے تالاش کریں',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
@@ -122,7 +125,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
               },
               child: Text(
                 _selectedDateRange == null
-                    ? 'Select Date Range'
+                    ? languageProvider.isEnglish ? 'Select Date:' : 'ڈیٹ منتخب کریں'
                     : 'From: ${DateFormat('yyyy-MM-dd').format(_selectedDateRange!.start)} - To: ${DateFormat('yyyy-MM-dd').format(_selectedDateRange!.end)}',
               ),
               style: ElevatedButton.styleFrom(
@@ -143,7 +146,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                       _selectedDateRange = null;
                     });
                   },
-                  child: const Text('Clear Date Range'),
+                  child: Text(languageProvider.isEnglish ? 'Clear Date Filter:' : 'انوائس لسٹ کا فلٹر ختم کریں',),
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white, backgroundColor: Colors.teal.shade400, // Text color
                   ),
@@ -160,7 +163,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (_filteredInvoices.isEmpty) {
-                  return const Center(child: Text('No invoices found.'));
+                  return Center(child: Text(languageProvider.isEnglish ? 'No Invoice Found:' : 'کوئی انوائس موجود نہیں',));
                 }
                 return ListView.builder(
                   itemCount: _filteredInvoices.length,
@@ -170,18 +173,29 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                     final debitAmount = invoice['debitAmount'] ?? 0.0;
                     final remainingAmount = grandTotal - debitAmount;
                     return ListTile(
-                      title: Text('Invoice #${invoice['invoiceNumber']}'),
+                      // title: Text('Invoice #${invoice['invoiceNumber']}'),
+                      title: Text(
+                        // languageProvider.isEnglish ? 'Invoice #' : 'انوائس نمبر' '${invoice['invoiceNumber']}',
+                        '${languageProvider.isEnglish ? 'Invoice #' : 'انوائس نمبر'} ${invoice['invoiceNumber']}',
+
+                      ),
                       subtitle: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Text('Customer: ${invoice['customerName']?? 'Unknown'}'),
+                          // Text('Customer: ${invoice['customerName']?? 'Unknown'}'),
+                          Text(
+                              '${languageProvider.isEnglish ? 'Customer' : 'کسٹمر کا نام'} ${invoice['customerName']}',
+                            ),
                           const SizedBox(width: 20,),
-                          Text('Date and Time: ${invoice['createdAt']}'),
+                          // Text('Date and Time: ${invoice['createdAt']}'),
+                          Text(
+                            '${languageProvider.isEnglish ? 'Date and Time' : 'ڈیٹ & ٹائم'} ${invoice['createdAt']}',
+                          ),
                           const SizedBox(width: 20,),
                           IconButton(
                             icon: const Icon(Icons.payment),
                             onPressed: () {
-                              _showInvoicePaymentDialog(invoice, invoiceProvider);
+                              _showInvoicePaymentDialog(invoice, invoiceProvider, languageProvider);
                             },
                           ),
                         ],
@@ -189,10 +203,13 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min, // Ensures the row takes only as much space as needed
                         children: [
-                          Text('Rs ${invoice['grandTotal']}', style: TextStyle(fontSize: 20)),
+                          Text('Rs ${invoice['grandTotal']}',
+                              style: TextStyle(fontSize: 20)),
                           const SizedBox(width: 10), // Adds some space between the two texts
                           Text(
-                            'Remaining: Rs ${remainingAmount.toStringAsFixed(2)}',
+                            // 'Remaining: Rs ${remainingAmount.toStringAsFixed(2)}',
+                            '${languageProvider.isEnglish ? 'remainingAmount' : 'بقایا رقم'} ${remainingAmount.toStringAsFixed(2)}',
+
                             style: TextStyle(fontSize: 16, color: Colors.red),
                           ),
                         ],
@@ -213,14 +230,18 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                           context: context,
                           builder: (context) {
                             return AlertDialog(
-                              title: const Text('Delete Invoice'),
-                              content: const Text('Are you sure you want to delete this invoice?'),
+                              // title: const Text('Delete Invoice'),
+                              title: Text(languageProvider.isEnglish ? 'Delete Invoice' : 'انوائس ڈلیٹ کریں'),
+
+                              // content: const Text('Are you sure you want to delete this invoice?'),
+                              content: Text(languageProvider.isEnglish ? 'Are you sure you want to delete this invoice?' : 'کیاآپ واقعی اس انوائس کو ڈیلیٹ کرنا چاہتے ہیں'),
                               actions: [
                                 TextButton(
                                   onPressed: () {
                                     Navigator.of(context).pop();
                                   },
-                                  child: const Text('Cancel'),
+                                  // child: const Text('Cancel'),
+                                  child: Text(languageProvider.isEnglish ? 'Cancel' : 'ردکریں'),
                                 ),
                                 TextButton(
                                   onPressed: () async {
@@ -228,7 +249,9 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                                     await invoiceProvider.deleteInvoice(invoice['id']);
                                     Navigator.of(context).pop(); // Close the dialog
                                   },
-                                  child: const Text('Delete'),
+                                  // child: const Text('Delete'),
+                                  child: Text(languageProvider.isEnglish ? 'Delete' : 'ڈیلیٹ کریں'),
+
                                 ),
                               ],
                             );
@@ -247,18 +270,24 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
   }
 
   Future<void> _showInvoicePaymentDialog(
-      Map<String, dynamic> invoice, InvoiceProvider invoiceProvider) async {
+
+      Map<String, dynamic> invoice, InvoiceProvider invoiceProvider, LanguageProvider languageprovider) async {
+    // final languageProvider = Provider.of<LanguageProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+
     _paymentController.clear();
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Pay Invoice'),
+          // title: const Text('Pay Invoice'),
+          title: Text(languageProvider.isEnglish ? 'Pay Invoice' : 'انوائس کی رقم ادا کریں'),
           content: TextField(
             controller: _paymentController,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Enter Payment Amount',
+            decoration: InputDecoration(
+              // labelText: 'Enter Payment Amount',
+              labelText: languageProvider.isEnglish ? 'Enter Payment Amount' : 'رقم لکھیں'
             ),
           ),
           actions: [
