@@ -44,6 +44,45 @@ class EmployeeProvider with ChangeNotifier {
 
 
   // Method to save attendance to Firebase
+  // Future<void> markAttendance(
+  //     BuildContext context,
+  //     String employeeId,
+  //     String status,
+  //     String description,
+  //     DateTime date) async {
+  //   final dateString = date.toIso8601String().split('T').first; // Format the date (e.g., "2025-01-08")
+  //   final timeString = date.toIso8601String().split('T').last.split('.').first; // Extract the time (e.g., "14:30:00")
+  //
+  //
+  //   // Check if attendance for this day already exists
+  //   final snapshot = await _attendanceRef.child(employeeId).child(dateString).get();
+  //   if (snapshot.exists) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text("Attendance already marked for today.")),
+  //     );
+  //     print("Attendance already marked for today.");
+  //     return; // Do not save if attendance already exists for today
+  //   }
+  //
+  //   // Save attendance data in Firebase if not already marked
+  //   try {
+  //     await _attendanceRef.child(employeeId).child(dateString).set({
+  //       'status': status,
+  //       'description': description,
+  //       'date':dateString,
+  //       'time': timeString
+  //     });
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text("Attendance already marked for today.")),
+  //     );
+  //     print("Attendance marked for today.");
+  //     notifyListeners(); // Notify listeners after data is saved
+  //   } catch (e) {
+  //     print("Error saving attendance: $e");
+  //   }
+  // }
+
+
   Future<void> markAttendance(
       BuildContext context,
       String employeeId,
@@ -53,46 +92,67 @@ class EmployeeProvider with ChangeNotifier {
     final dateString = date.toIso8601String().split('T').first; // Format the date (e.g., "2025-01-08")
     final timeString = date.toIso8601String().split('T').last.split('.').first; // Extract the time (e.g., "14:30:00")
 
-
-    // Check if attendance for this day already exists
-    final snapshot = await _attendanceRef.child(employeeId).child(dateString).get();
-    if (snapshot.exists) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Attendance already marked for today.")),
-      );
-      print("Attendance already marked for today.");
-      return; // Do not save if attendance already exists for today
-    }
-
-    // Save attendance data in Firebase if not already marked
     try {
+      // Check if attendance for this day already exists
+      final snapshot = await _attendanceRef.child(employeeId).child(dateString).get();
+      if (snapshot.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Attendance already marked for today."),
+            duration: Duration(seconds: 3),
+          ),
+        );
+        print("Attendance already marked for today.");
+        return; // Do not save if attendance already exists for today
+      }
+
+      // Save attendance data in Firebase if not already marked
       await _attendanceRef.child(employeeId).child(dateString).set({
         'status': status,
         'description': description,
-        'date':dateString,
-        'time': timeString
+        'date': dateString,
+        'time': timeString,
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Attendance already marked for today.")),
+        const SnackBar(
+          content: Text("Attendance marked successfully."),
+          duration: Duration(seconds: 3),
+        ),
       );
       print("Attendance marked for today.");
       notifyListeners(); // Notify listeners after data is saved
     } catch (e) {
       print("Error saving attendance: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to mark attendance: $e"),
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
 
-  // Fetch attendance data for an employee
-  Future<Map<String, dynamic>> getAttendance(String employeeId, DateTime date) async {
-    final dateString = date.toIso8601String().split('T').first;
-    final snapshot = await _attendanceRef.child(employeeId).child(dateString).get();
 
-    if (snapshot.exists) {
-      return Map<String, dynamic>.from(snapshot.value as Map);
-    } else {
-      return {};
+
+  Future<Map<String, Map<String, dynamic>>> getAttendanceForDateRange(
+      String employeeId, DateTimeRange dateRange) async {
+    Map<String, Map<String, dynamic>> attendanceData = {};
+
+    // Iterate through each date in the range
+    for (DateTime date = dateRange.start;
+    date.isBefore(dateRange.end.add(const Duration(days: 1)));
+    date = date.add(const Duration(days: 1))) {
+      final dateString = date.toIso8601String().split('T').first;
+      final snapshot = await _attendanceRef.child(employeeId).child(dateString).get();
+
+      if (snapshot.exists) {
+        attendanceData[dateString] = Map<String, dynamic>.from(snapshot.value as Map);
+      }
     }
+
+    return attendanceData;
   }
+
 
 
 }

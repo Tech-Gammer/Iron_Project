@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:intl/intl.dart'; // Import intl package
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
+import '../Provider/lanprovider.dart'; // Import intl package
 
 class AddExpensePage extends StatefulWidget {
   @override
@@ -46,12 +49,17 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
   // Show dialog to prompt user for opening balance
   void _showOpeningBalanceDialog() async {
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+
     showDialog(
       context: context,
       barrierDismissible: false, // Prevent dismissing without providing the balance
       builder: (context) {
         return AlertDialog(
-          title: const Text('Set Opening Balance for Today'),
+          // title: const Text('Set Opening Balance for Today'),
+          title: Text(
+            languageProvider.isEnglish ? 'Set Opening Balance for Today:' : 'آج کے لیے اوپننگ بیلنس سیٹ کریں۔',
+          ),
           content: TextField(
             keyboardType: TextInputType.number,
             onChanged: (value) {
@@ -59,21 +67,32 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 _openingBalance = double.tryParse(value) ?? 0.0;
               });
             },
-            decoration: const InputDecoration(labelText: 'Enter opening balance'),
+            decoration:  InputDecoration(
+                labelText:  languageProvider.isEnglish ? 'Enter Opening Balance' : 'اوپننگ بیلنس درج کریں۔',
+
+            ),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child:  Text(
+                languageProvider.isEnglish ? 'Cancel' : 'منسوخ کریں۔',
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Set'),
+              child:  Text(
+                languageProvider.isEnglish ? 'Set' : 'سیٹ',
+              ),
               onPressed: () {
                 if (_openingBalance <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please enter a valid balance')),
+                    SnackBar(content: Text(
+                        // 'Please enter a valid balance'
+                      languageProvider.isEnglish ? 'Please enter a valid balance' : 'براہ کرم ایک درست بیلنس درج کریں۔',
+                      )
+                    ),
                   );
                 } else {
                   Navigator.of(context).pop(); // Close the dialog
@@ -89,6 +108,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
   // Save opening balance to Firebase (original balance is only saved once)
   void _saveOpeningBalanceToDB() {
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+
     String formattedDate = DateFormat('dd:MM:yyyy').format(_selectedDate);
 
     // Only save original opening balance if it's not already set
@@ -97,20 +118,34 @@ class _AddExpensePageState extends State<AddExpensePage> {
         dbRef.child("originalOpeningBalance").child(formattedDate).set(_openingBalance); // Save original balance if it's not set yet
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Opening balance set successfully')),
+         SnackBar(content: Text(
+            // 'Opening balance set successfully'
+          languageProvider.isEnglish ? 'Opening balance set successfully' : 'اوپننگ بیلنس کامیابی سے سیٹ ہو گیا۔',
+
+        )),
       );
     }).catchError((error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving opening balance: $error')),
+        SnackBar(content: Text(
+            // 'Error saving opening balance: $error'
+          languageProvider.isEnglish ? 'Error saving opening balance:$error' : '$errorاوپننگ بیلنس بچانے میں خرابی:' ,
+
+        )),
       );
     });
   }
 
   // Save the daily expense
   void _saveExpense() {
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+
     if (_descriptionController.text.isEmpty || _amountController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+         SnackBar(content: Text(
+            // 'Please fill in all fields'
+          languageProvider.isEnglish ? 'Please fill in all fields' : 'براہ کرم تمام فیلڈز کو پُر کریں۔',
+
+        )),
       );
       return;
     }
@@ -120,7 +155,11 @@ class _AddExpensePageState extends State<AddExpensePage> {
     // Check if opening balance is sufficient for the expense
     if (_openingBalance < expenseAmount) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Insufficient funds!')),
+         SnackBar(content: Text(
+            // 'Insufficient funds!'
+          languageProvider.isEnglish ? 'Insufficient funds!' : 'ناکافی فنڈز!',
+
+        )),
       );
       return;
     }
@@ -139,7 +178,11 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
     dbRef.child(formattedDate).child("expenses").push().set(data).then((_) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Expense added successfully')),
+         SnackBar(content: Text(
+            // 'Expense added successfully'
+          languageProvider.isEnglish ? 'Expense added successfully' : 'اخراجات کامیابی کے ساتھ شامل ہو گئے۔',
+
+        )),
       );
       _descriptionController.clear();
       _amountController.clear();
@@ -151,21 +194,35 @@ class _AddExpensePageState extends State<AddExpensePage> {
       _saveUpdatedOpeningBalance();
     }).catchError((error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error adding expense: $error')),
+        SnackBar(content: Text(
+            // 'Error adding expense: $error'
+          languageProvider.isEnglish ? 'Error adding expense: $error' : 'اخراجات شامل کرنے میں خرابی:$error',
+
+        )),
       );
     });
   }
 
   // Save the updated opening balance (after deducting the expense)
   void _saveUpdatedOpeningBalance() {
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+
     String formattedDate = DateFormat('dd:MM:yyyy').format(_selectedDate);
     dbRef.child("openingBalance").child(formattedDate).set(_openingBalance).then((_) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Opening balance updated successfully')),
+         SnackBar(content: Text(
+            // 'Opening balance updated successfully'
+          languageProvider.isEnglish ? 'Opening balance updated successfully' : 'اوپننگ بیلنس کامیابی کے ساتھ اپ ڈیٹ ہو گیا۔',
+
+        )),
       );
     }).catchError((error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating opening balance: $error')),
+        SnackBar(content: Text(
+            // 'Error updating opening balance: $error'
+          languageProvider.isEnglish ? 'Error updating opening balance: $error' : 'اوپننگ بیلنس کو اپ ڈیٹ کرنے میں خرابی: $error',
+
+        )),
       );
     });
   }
@@ -188,10 +245,17 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+
     return Scaffold(
       backgroundColor: Colors.teal.shade50, // Background color
       appBar: AppBar(
-        title: const Text("Add Expense"),
+        // title: const Text("Add Expense"),
+        title: Text(
+          languageProvider.isEnglish ? 'Add Expense' : 'اخراجات شامل کریں۔',
+          style: TextStyle(color: Colors.white),
+
+        ),
         backgroundColor: Colors.teal.shade800, // AppBar color
       ),
       body: Padding(
@@ -201,7 +265,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
             Row(
               children: [
                 Text(
-                  "Selected Date: ${_selectedDate.day.toString().padLeft(2, '0')}:${_selectedDate.month.toString().padLeft(2, '0')}:${_selectedDate.year}",
+                  // "Selected Date: ${_selectedDate.day.toString().padLeft(2, '0')}:${_selectedDate.month.toString().padLeft(2, '0')}:${_selectedDate.year}",
+                  "${languageProvider.isEnglish ? 'Selected Date:' : 'تاریخ منتخب کریں:'} ${_selectedDate.day.toString().padLeft(2, '0')}:${_selectedDate.month.toString().padLeft(2, '0')}:${_selectedDate.year}",
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -211,8 +276,12 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 const Spacer(),
                 ElevatedButton.icon(
                   onPressed: _pickDate,
-                  icon: const Icon(Icons.date_range),
-                  label: const Text('Select Date'),
+                  icon: const Icon(Icons.date_range,color: Colors.white,),
+                  label:  Text(
+                      // 'Select Date'
+                    languageProvider.isEnglish ? 'Select Date' : 'تاریخ منتخب کریں',
+
+                  ),
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white, backgroundColor: Colors.teal.shade400, // Text color
                     shape: RoundedRectangleBorder(
@@ -226,7 +295,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
             TextField(
               controller: _descriptionController,
               decoration: InputDecoration(
-                labelText: 'Description',
+                labelText: languageProvider.isEnglish ? 'Description' : 'تفصیل',
+
                 labelStyle: TextStyle(color: Colors.teal.shade700),
                 fillColor: Colors.white,
                 filled: true,
@@ -244,7 +314,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
             TextField(
               controller: _amountController,
               decoration: InputDecoration(
-                labelText: 'Amount',
+                labelText: languageProvider.isEnglish ? 'Amount' : 'رقم',
                 labelStyle: TextStyle(color: Colors.teal.shade700),
                 fillColor: Colors.white,
                 filled: true,
@@ -270,8 +340,9 @@ class _AddExpensePageState extends State<AddExpensePage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text(
-                'Save Expense',
+              child:  Text(
+                // 'Save Expense',
+                languageProvider.isEnglish ? 'Save Expense' : 'اخراجات محفوظ کریں',
                 style: TextStyle(
                   fontSize: 18,
                   color: Colors.white,

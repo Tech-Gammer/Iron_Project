@@ -136,17 +136,44 @@ class InvoiceProvider with ChangeNotifier {
     }
   }
 
-  Future<void> deleteInvoice(String id) async {
-    try {
-      // Delete the invoice from the Firebase database by its ID
-      await _db.child('invoices').child(id).remove();
 
-      // Refresh the invoices list after deleting
+  Future<void> deleteInvoice(String invoiceId) async {
+    try {
+      // Fetch the invoice to identify related customer and invoice number
+      final invoice = _invoices.firstWhere((inv) => inv['id'] == invoiceId);
+
+      if (invoice == null) {
+        throw Exception("Invoice not found.");
+      }
+
+      final customerId = invoice['customerId'] as String;
+      final invoiceNumber = invoice['invoiceNumber'] as String;
+
+      // Delete the invoice from the database
+      await _db.child('invoices').child(invoiceId).remove();
+
+      // Delete associated ledger entries
+      final customerLedgerRef = _db.child('ledger').child(customerId);
+
+      // Find all ledger entries related to this invoice
+      final snapshot = await customerLedgerRef.orderByChild('invoiceNumber').equalTo(invoiceNumber).get();
+
+      if (snapshot.exists) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        for (var entryKey in data.keys) {
+          await customerLedgerRef.child(entryKey).remove();
+        }
+      }
+
+      // Refresh the invoices list after deletion
       await fetchInvoices();
+
+      notifyListeners();
     } catch (e) {
-      throw Exception('Failed to delete invoice: $e');
+      throw Exception('Failed to delete invoice and ledger entries: $e');
     }
   }
+
 
   // **New Method to Handle Invoice Payment**
   Future<void> payInvoice(BuildContext context, String invoiceId, double paymentAmount) async {

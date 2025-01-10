@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           home: Dashboard(),
           theme: ThemeData(
-            fontFamily: languageProvider.isEnglish ? 'Roboto' : 'NotoNaskhArabic',
+            fontFamily: languageProvider.isEnglish ? 'Roboto' : 'JameelNoori',
           ),
         );
       },

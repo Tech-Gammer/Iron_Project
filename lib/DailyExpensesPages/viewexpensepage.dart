@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../Provider/lanprovider.dart';
 import 'addexpensepage.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -84,6 +86,8 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
 
   // Generate PDF for the expenses
   Future<void> _generatePdf() async {
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+
     final pdf = pw.Document();
 
     // Add the opening balance, expenses, and total
@@ -92,11 +96,24 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
       build: (pw.Context context) {
         return pw.Column(
           children: [
-            pw.Text("Daily Expenses Report", style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-            pw.Text("Opening Balance: ${_originalOpeningBalance.toStringAsFixed(2)} rs", style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-            pw.Text("Selected Date: ${DateFormat('dd:MM:yyyy').format(_selectedDate)}", style: pw.TextStyle(fontSize: 16)),
+            pw.Text(
+                // "Daily Expenses Report",
+            languageProvider.isEnglish ? 'Daily Expenses Report:' : 'روزانہ اخراجات کی رپورٹ',
+                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+            pw.Text(
+                // "Opening Balance: ${_originalOpeningBalance.toStringAsFixed(2)} rs",
+                languageProvider.isEnglish ? 'Opening Balance:' : 'اوپننگ بیلنس:',
+
+                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+            pw.Text(
+                // "Selected Date: ${DateFormat('dd:MM:yyyy').format(_selectedDate)}",
+                "${languageProvider.isEnglish ? 'Selected Date:' : 'تاریخ منتخب کریں:'} ${DateFormat('dd:MM:yyyy').format(_selectedDate)}",
+                style: pw.TextStyle(fontSize: 16)),
             pw.SizedBox(height: 20),
-            pw.Text("Expenses", style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+            pw.Text(
+                // "Expenses",
+                languageProvider.isEnglish ? "Expenses" : "اخراجات",
+                style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
             pw.ListView.builder(
               itemCount: expenses.length,
               itemBuilder: (context, index) {
@@ -106,7 +123,9 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
                   child: pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Text(expense["description"], style: pw.TextStyle(fontSize: 14)),
+                      pw.Text(
+                          expense["description"],
+                          style: pw.TextStyle(fontSize: 14)),
                       pw.Text("${expense["amount"].toStringAsFixed(2)} rs", style: pw.TextStyle(fontSize: 14)),
                     ],
                   ),
@@ -114,8 +133,14 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
               },
             ),
             pw.SizedBox(height: 20),
-            pw.Text("Total Expenses: ${_totalExpense.toStringAsFixed(2)} rs", style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-            pw.Text("Remaining Balance: ${_remainingBalance.toStringAsFixed(2)} rs", style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+            pw.Text(
+                // "Total Expenses: ${_totalExpense.toStringAsFixed(2)} rs",
+                "${languageProvider.isEnglish ? 'Total Expenses:' : 'کل اخراجات:'} ${_totalExpense.toStringAsFixed(2)} rs",
+                style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+            pw.Text(
+                // "Remaining Balance: ${_remainingBalance.toStringAsFixed(2)} rs",
+                "${languageProvider.isEnglish ? 'Remaining Balance:' : 'بقایا رقم:'} ${_remainingBalance.toStringAsFixed(2)} rs",
+                style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           ],
         );
       },
@@ -128,9 +153,11 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("View Daily Expenses"),
+        title: Text(languageProvider.isEnglish ? 'View Daily Expense:' : 'روزانہ کے اخراجات',style: TextStyle(color: Colors.white),),
         backgroundColor: Colors.teal.shade800,
         actions: [
           IconButton(
@@ -162,7 +189,10 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Opening Balance: ${_originalOpeningBalance.toStringAsFixed(2)} rs",
+                      // "Opening Balance: ${_originalOpeningBalance.toStringAsFixed(2)} rs",
+                      // '${languageProvider.isEnglish ? 'Opening Balance:' : 'اوپننگ بیلنس:'} ${_originalOpeningBalance.toStringAsFixed(2)} rs',
+                      '${languageProvider.isEnglish ? 'Opening Balance: ${_originalOpeningBalance.toStringAsFixed(2)} rs' : ' اوپننگ بیلنس: ${_originalOpeningBalance.toStringAsFixed(2)} روپے'}',
+
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -171,7 +201,9 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
                     ),
                     SizedBox(height: 5),
                     Text(
-                      "Selected Date: ${DateFormat('dd:MM:yyyy').format(_selectedDate)}",
+                      // "Selected Date: ${DateFormat('dd:MM:yyyy').format(_selectedDate)}",
+                      '${languageProvider.isEnglish ? 'Selected Date:' : 'تاریخ منتخب کریں:'} ${DateFormat('dd:MM:yyyy').format(_selectedDate)}',
+
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -182,8 +214,11 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
                 ),
                 ElevatedButton.icon(
                   onPressed: _pickDate,
-                  icon: const Icon(Icons.date_range),
-                  label: const Text('Change Date'),
+                  icon: const Icon(Icons.date_range,color: Colors.white,),
+                  // label: const Text('Change Date'),
+                  label: Text(
+                      '${languageProvider.isEnglish ? 'Change Date:' : 'تاریخ تبدیل کریں:'}',
+                  ),
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: Colors.teal.shade400,
@@ -199,7 +234,8 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
             expenses.isEmpty
                 ? Center(
               child: Text(
-                "No expenses found for this date.",
+                // "No expenses found for this date.",
+                '${languageProvider.isEnglish ? 'No expenses found for this date' : 'اس تاریخ کے لیے کوئی اخراجات نہیں ملے'}',
                 style: TextStyle(color: Colors.teal.shade700, fontSize: 18),
               ),
             )
@@ -246,7 +282,9 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
               child: Column(
                 children: [
                   Text(
-                    "Total Expenses: ${_totalExpense.toStringAsFixed(2)} rs",
+                    // "Total Expenses: ${_totalExpense.toStringAsFixed(2)} rs",
+                    '${languageProvider.isEnglish ? 'Total Expenses: ${_totalExpense.toStringAsFixed(2)} rs' : 'کل اخراجات: ${_totalExpense.toStringAsFixed(2)} روپے'}',
+
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -255,7 +293,10 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
                   ),
                   SizedBox(height: 10),
                   Text(
-                    "Remaining Balance: ${_remainingBalance.toStringAsFixed(2)} rs",
+                    // "Remaining Balance: ${_remainingBalance.toStringAsFixed(2)} rs",
+                    // '${languageProvider.isEnglish ? 'Remaining Balance:' : 'بقایا رقم'} ${_remainingBalance.toStringAsFixed(2)} rs',
+                    '${languageProvider.isEnglish ? 'Remaining Balance: ${_remainingBalance.toStringAsFixed(2)} rs ': 'بقایا رقم${_remainingBalance.toStringAsFixed(2)}ّروپے'}',
+
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

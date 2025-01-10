@@ -4,6 +4,9 @@ import '../Provider/lanprovider.dart';
 import 'Invoicepage.dart';
 import '../Provider/invoice provider.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 class InvoiceListPage extends StatefulWidget {
   @override
@@ -19,13 +22,14 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
   @override
   Widget build(BuildContext context) {
     final invoiceProvider = Provider.of<InvoiceProvider>(context);
-    // final languageProvider = Provider.of<LanguageProvider>(context);
     final languageProvider = Provider.of<LanguageProvider>(context);
 
     _filteredInvoices = invoiceProvider.invoices.where((invoice) {
       final searchQuery = _searchController.text.toLowerCase();
       final invoiceNumber = (invoice['invoiceNumber'] ?? '').toString().toLowerCase();
-      final matchesSearch = invoiceNumber.contains(searchQuery);
+      final customerName = (invoice['customerName'] ?? '').toString().toLowerCase();
+
+      final matchesSearch = invoiceNumber.contains(searchQuery) || customerName.contains(searchQuery);
 
       if (_selectedDateRange != null) {
         final invoiceDateStr = invoice['createdAt'];
@@ -52,12 +56,12 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(languageProvider.isEnglish ? 'Invoice List:' : 'انوائس لسٹ',),
+        title: Text(languageProvider.isEnglish ? 'Invoice List:' : 'انوائس لسٹ',style: TextStyle(color: Colors.white),),
         centerTitle: true,
         backgroundColor: Colors.teal,  // AppBar background color
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add,color: Colors.white,),
             onPressed: () {
               Navigator.push(
                 context,
@@ -65,6 +69,13 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
               );
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.print, color: Colors.white),
+            onPressed: () {
+              _printInvoices(); // Trigger the print function
+            },
+          ),
+
         ],
       ),
       body: Column(
@@ -98,7 +109,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
           // Date Range Picker
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: ElevatedButton(
+            child: ElevatedButton.icon(
               onPressed: () async {
                 DateTimeRange? pickedDateRange = await showDateRangePicker(
                   context: context,
@@ -123,14 +134,15 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                   });
                 }
               },
-              child: Text(
-                _selectedDateRange == null
-                    ? languageProvider.isEnglish ? 'Select Date:' : 'ڈیٹ منتخب کریں'
-                    : 'From: ${DateFormat('yyyy-MM-dd').format(_selectedDateRange!.start)} - To: ${DateFormat('yyyy-MM-dd').format(_selectedDateRange!.end)}',
-              ),
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.white, backgroundColor: Colors.teal.shade400, // Text color
               ),
+              icon: const Icon(Icons.date_range,color: Colors.white,),
+              label:  Text(
+              _selectedDateRange == null
+                  ? languageProvider.isEnglish ? 'Select Date' : 'ڈیٹ منتخب کریں'
+                  : 'From: ${DateFormat('yyyy-MM-dd').format(_selectedDateRange!.start)} - To: ${DateFormat('yyyy-MM-dd').format(_selectedDateRange!.end)}',
+            ),
             ),
           ),
           // Buttons to remove filters
@@ -146,7 +158,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                       _selectedDateRange = null;
                     });
                   },
-                  child: Text(languageProvider.isEnglish ? 'Clear Date Filter:' : 'انوائس لسٹ کا فلٹر ختم کریں',),
+                  child: Text(languageProvider.isEnglish ? 'Clear Date Filter' : 'انوائس لسٹ کا فلٹر ختم کریں',),
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white, backgroundColor: Colors.teal.shade400, // Text color
                   ),
@@ -154,6 +166,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
               ],
             ),
           ),
+
           // Invoice List
           Expanded(
             child: FutureBuilder(
@@ -203,7 +216,11 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min, // Ensures the row takes only as much space as needed
                         children: [
-                          Text('Rs ${invoice['grandTotal']}',
+                          Text(
+                              // 'Rs ${invoice['grandTotal']}',
+                              // '${languageProvider.isEnglish ? 'Rs' : 'روپے'} ${invoice['grandTotal']}',
+                              '${languageProvider.isEnglish ? 'Rs ${invoice['grandTotal']}' : '${invoice['grandTotal']} روپے'}',
+
                               style: TextStyle(fontSize: 20)),
                           const SizedBox(width: 10), // Adds some space between the two texts
                           Text(
@@ -273,7 +290,9 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
 
       Map<String, dynamic> invoice, InvoiceProvider invoiceProvider, LanguageProvider languageprovider) async {
     // final languageProvider = Provider.of<LanguageProvider>(context);
-    final languageProvider = Provider.of<LanguageProvider>(context);
+    // final languageProvider = Provider.of<LanguageProvider>(context);
+    final languageProvider = context.read<LanguageProvider>();
+
 
     _paymentController.clear();
     await showDialog(
@@ -295,7 +314,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Cancel'),
+              // child: const Text('Cancel'),
+              child: Text(languageProvider.isEnglish ? 'Cancel' : 'انکار'),
             ),
             TextButton(
               onPressed: () async {
@@ -308,11 +328,64 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                   // Handle invalid input
                 }
               },
-              child: const Text('Pay'),
+              // child: const Text('Pay'),
+              child: Text(languageProvider.isEnglish ? 'Pay' : 'رقم ادا کریں'),
+
             ),
           ],
         );
       },
     );
   }
+
+
+
+  Future<void> _printInvoices() async {
+    final pdf = pw.Document();
+
+    // Header for the table
+    final headers = ['Invoice Number', 'Customer Name', 'Date', 'Grand Total', 'Remaining Amount'];
+
+    // Prepare data for the table
+    final data = _filteredInvoices.map((invoice) {
+      return [
+        invoice['invoiceNumber'] ?? 'N/A',
+        invoice['customerName'] ?? 'N/A',
+        invoice['createdAt'] ?? 'N/A',
+        'Rs ${invoice['grandTotal']}',
+        'Rs ${(invoice['grandTotal'] - invoice['debitAmount']).toStringAsFixed(2)}',
+      ];
+    }).toList();
+
+    // Add page with a table
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('Invoice List',
+                  style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 10),
+              pw.Table.fromTextArray(
+                headers: headers,
+                data: data,
+                border: pw.TableBorder.all(),
+                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                cellAlignment: pw.Alignment.centerLeft,
+                cellPadding: pw.EdgeInsets.all(8),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    // Send the PDF document to the printer
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+    );
+  }
+
+
 }

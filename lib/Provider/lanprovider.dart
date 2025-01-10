@@ -9,4 +9,8 @@ class LanguageProvider with ChangeNotifier {
     _isEnglish = !_isEnglish;
     notifyListeners();
   }
+  // Method to get the correct font family based on the language
+  String get fontFamily {
+    return _isEnglish ? 'Roboto' : 'JameelNoori';  // Default font for English is 'Roboto'
+  }
 }

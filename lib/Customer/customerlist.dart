@@ -2,14 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../Provider/customerprovider.dart';
+import '../Provider/lanprovider.dart';
 import 'addcustomers.dart';
 
 class CustomerList extends StatelessWidget {
+
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Customer List', style: TextStyle(color: Colors.teal.shade800)),
+        title: Text(
+            // 'Customer List',
+            languageProvider.isEnglish ? 'Customer List' : 'کسٹمر کی فہرست', // Dynamic text based on language
+
+            style: TextStyle(color: Colors.white)
+        ),
         backgroundColor: Colors.teal,
         actions: [
           IconButton(
@@ -35,7 +43,11 @@ class CustomerList extends StatelessWidget {
 
               if (customerProvider.customers.isEmpty) {
                 return Center(
-                  child: Text('No customers found.', style: TextStyle(color: Colors.teal.shade600)),
+                  child: Text(
+                      // 'No customers found.',
+                      languageProvider.isEnglish ? 'No customers found.' : 'کوئی کسٹمر موجود نہیںٓ',
+
+                      style: TextStyle(color: Colors.teal.shade600)),
                 );
               }
 
@@ -47,12 +59,12 @@ class CustomerList extends StatelessWidget {
                     return Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: DataTable(
-                        columns: const [
-                          DataColumn(label: Text('#')),
-                          DataColumn(label: Text('Name')),
-                          DataColumn(label: Text('Address')),
-                          DataColumn(label: Text('Phone')),
-                          DataColumn(label: Text('Actions')),
+                        columns: [
+                          const DataColumn(label: Text('#')),
+                          DataColumn(label: Text(languageProvider.isEnglish ? 'Name' : 'نام',style: TextStyle(fontSize: 20),)),
+                          DataColumn(label: Text(languageProvider.isEnglish ? 'Name' : 'نام',style: TextStyle(fontSize: 20),)),
+                          DataColumn(label: Text(languageProvider.isEnglish ? 'Phone' : 'فون',style: TextStyle(fontSize: 20),)),
+                          DataColumn(label: Text(languageProvider.isEnglish ? 'Actions' : 'عمل',style: TextStyle(fontSize: 20),)),
                         ],
                         rows: customerProvider.customers
                             .asMap()
@@ -73,12 +85,12 @@ class CustomerList extends StatelessWidget {
                                     _showEditDialog(context, customer, customerProvider);
                                   },
                                 ),
-                                IconButton(
-                                  icon: Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () {
-                                    _confirmDelete(context, customer.id, customerProvider);
-                                  },
-                                ),
+                                // IconButton(
+                                //   icon: Icon(Icons.delete, color: Colors.red),
+                                //   onPressed: () {
+                                //     _confirmDelete(context, customer.id, customerProvider);
+                                //   },
+                                // ),
                               ],
                             )),
                           ]);
@@ -118,12 +130,12 @@ class CustomerList extends StatelessWidget {
                                     _showEditDialog(context, customer, customerProvider);
                                   },
                                 ),
-                                IconButton(
-                                  icon: Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () {
-                                    _confirmDelete(context, customer.id, customerProvider);
-                                  },
-                                ),
+                                // IconButton(
+                                //   icon: Icon(Icons.delete, color: Colors.red),
+                                //   onPressed: () {
+                                //     _confirmDelete(context, customer.id, customerProvider);
+                                //   },
+                                // ),
                               ],
                             ),
                           ),
@@ -153,7 +165,9 @@ class CustomerList extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Edit Customer', style: TextStyle(color: Colors.teal.shade800)),
+          title: Text(
+              'Edit Customer',
+              style: TextStyle(color: Colors.teal.shade800)),
           backgroundColor: Colors.teal.shade50,
           content: SingleChildScrollView(
             child: Column(

@@ -345,7 +345,7 @@ class _filledpageState extends State<filledpage> {
           widget.filled == null
               ? (languageProvider.isEnglish ? 'Create Filled' : 'فلڈ بنائیں')
               : (languageProvider.isEnglish ? 'Update Filled' : 'انوائس کو اپ ڈیٹ کریں'),
-          style: TextStyle(color: Colors.teal.shade800),
+          style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.teal,
         centerTitle: true,
@@ -360,7 +360,7 @@ class _filledpageState extends State<filledpage> {
               widget.filled == null
                   ? '${languageProvider.isEnglish ? 'Filled #' : 'فلڈ نمبر#'}${generateFilledNumber()}'
                   : '${languageProvider.isEnglish ? 'Filled #' : 'فلڈ نمبر#'}${widget.filled!['filledNumber']}',
-              style: TextStyle(color: Colors.teal.shade600, fontSize: 16),            ),
+              style: TextStyle(color: Colors.white, fontSize: 16),            ),
           ),
         ],
       ),

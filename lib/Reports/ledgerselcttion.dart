@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../Provider/lanprovider.dart';
 import 'FilledbypaymentType.dart';
 import 'bypaymentType.dart';
 import 'custoemrreports.dart';
@@ -29,9 +31,15 @@ class ledgerselection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Ledger Reports'),
+        title: Text(
+            // 'Ledger Reports'
+          languageProvider.isEnglish ? 'Ledger Reports' : 'لیجر رپورٹس', // Dynamic text based on language
+            style: TextStyle(color: Colors.white)
+        ),
         centerTitle: true,
         backgroundColor: Colors.teal.shade800, // AppBar color to teal
 
@@ -61,7 +69,8 @@ class ledgerselection extends StatelessWidget {
                       ),
                       SizedBox(height: 16),
                       Text(
-                        'Sarya Ledger',
+                        // 'Sarya Ledger',
+                        languageProvider.isEnglish ? 'Sarya Ledger' : 'سریا لیجر', // Dynamic text based on language
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -93,7 +102,9 @@ class ledgerselection extends StatelessWidget {
                       ),
                       SizedBox(height: 16),
                       Text(
-                        'Filled Ledger',
+                        // 'Filled Ledger',
+                        languageProvider.isEnglish ? 'Filled Ledger' : 'فلڈ لیجر', // Dynamic text based on language
+
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,

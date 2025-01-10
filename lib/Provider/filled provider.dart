@@ -136,17 +136,55 @@ class FilledProvider with ChangeNotifier {
     }
   }
 
-  Future<void> deleteFilled(String id) async {
-    try {
-      // Delete the filled from the Firebase database by its ID
-      await _db.child('filled').child(id).remove();
+  // Future<void> deleteFilled(String id) async {
+  //   try {
+  //     // Delete the filled from the Firebase database by its ID
+  //     await _db.child('filled').child(id).remove();
+  //
+  //     // Refresh the filled list after deleting
+  //     await fetchFilled();
+  //   } catch (e) {
+  //     throw Exception('Failed to delete filled: $e');
+  //   }
+  // }
 
-      // Refresh the filled list after deleting
+  Future<void> deleteFilled(String filledId) async {
+    try {
+      // Fetch the filled to identify related customer and filled number
+      final filled = _filled.firstWhere((inv) => inv['id'] == filledId);
+
+      if (filled == null) {
+        throw Exception("Filled not found.");
+      }
+
+      final customerId = filled['customerId'] as String;
+      final filledNumber = filled['filledNumber'] as String;
+
+      // Delete the filled from the database
+      await _db.child('filled').child(filledId).remove();
+
+      // Delete associated ledger entries
+      final customerLedgerRef = _db.child('filledledger').child(customerId);
+
+      // Find all ledger entries related to this filled
+      final snapshot = await customerLedgerRef.orderByChild('filledNumber').equalTo(filledNumber).get();
+
+      if (snapshot.exists) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        for (var entryKey in data.keys) {
+          await customerLedgerRef.child(entryKey).remove();
+        }
+      }
+
+      // Refresh the filled list after deletion
       await fetchFilled();
+
+      notifyListeners();
     } catch (e) {
-      throw Exception('Failed to delete filled: $e');
+      throw Exception('Failed to delete filled and ledger entries: $e');
     }
   }
+
 
   // **New Method to Handle filled Payment**
   Future<void> payFilled(BuildContext context, String filledId, double paymentAmount) async {
@@ -163,7 +201,7 @@ class FilledProvider with ChangeNotifier {
 
       if (paymentAmount > (grandTotal - currentDebit)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Payment exceeds the remaining filled balance.")),
+          const SnackBar(content: Text("Payment exceeds the remaining filled balance.")),
         );
         throw Exception("Payment exceeds the remaining filled balance.");
       }

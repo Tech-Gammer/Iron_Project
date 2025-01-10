@@ -208,7 +208,9 @@ class Dashboard extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(languageProvider.isEnglish ? 'Dashboard' : 'ڈیش بورڈ'),
+        title: Text(
+          languageProvider.isEnglish ? 'Dashboard' : 'ڈیش بورڈ',
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.language),

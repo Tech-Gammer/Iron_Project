@@ -64,7 +64,8 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
                     final pickedDateRange = await showDateRangePicker(
                       context: context,
                       firstDate: DateTime(2000),
-                      lastDate: DateTime.now(),
+                      // lastDate: DateTime.now(),
+                      lastDate: DateTime(20001)
                     );
                     if (pickedDateRange != null) {
                       setState(() {
@@ -85,49 +86,102 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
               ],
             ),
           ),
+          // Expanded(
+          //   child: ListView.builder(
+          //     itemCount: filteredEmployees.length,
+          //     itemBuilder: (context, index) {
+          //       final employeeId = filteredEmployees[index];
+          //
+          //       // Filter attendance based on date range
+          //       if (_dateRange != null) {
+          //         final currentDate = DateTime.now();
+          //         if (currentDate.isBefore(_dateRange!.start) ||
+          //             currentDate.isAfter(_dateRange!.end)) {
+          //           return const SizedBox.shrink(); // Skip this employee
+          //         }
+          //       }
+          //
+          //       return FutureBuilder<Map<String, dynamic>>(
+          //         future: employeeProvider.getAttendance(employeeId, DateTime.now()),
+          //         builder: (context, snapshot) {
+          //           if (snapshot.connectionState == ConnectionState.waiting) {
+          //             return const CircularProgressIndicator();
+          //           } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          //             final attendance = snapshot.data!;
+          //             return ListTile(
+          //               title: Text(employees[employeeId]!['name']!),
+          //               subtitle: Column(
+          //                 crossAxisAlignment: CrossAxisAlignment.start,
+          //                 children: [
+          //                   Text('Description: ${attendance['description']}'),
+          //                   Row(
+          //                     children: [
+          //                       Text('Last Attendance: ${attendance['status']}'),
+          //                       const Spacer(),
+          //                       Text(
+          //                           'Date & Time: ${attendance['date']} ${attendance['time']}'),
+          //                     ],
+          //                   ),
+          //                 ],
+          //               ),
+          //             );
+          //           } else {
+          //             return ListTile(
+          //               title: Text(employees[employeeId]!['name']!),
+          //               subtitle: const Text('No attendance marked for today'),
+          //             );
+          //           }
+          //         },
+          //       );
+          //     },
+          //   ),
+          // ),
           Expanded(
             child: ListView.builder(
               itemCount: filteredEmployees.length,
               itemBuilder: (context, index) {
                 final employeeId = filteredEmployees[index];
 
-                // Filter attendance based on date range
-                if (_dateRange != null) {
-                  final currentDate = DateTime.now();
-                  if (currentDate.isBefore(_dateRange!.start) ||
-                      currentDate.isAfter(_dateRange!.end)) {
-                    return const SizedBox.shrink(); // Skip this employee
-                  }
-                }
-
-                return FutureBuilder<Map<String, dynamic>>(
-                  future: employeeProvider.getAttendance(employeeId, DateTime.now()),
+                return FutureBuilder<Map<String, Map<String, dynamic>>>(
+                  future: _dateRange != null
+                      ? employeeProvider.getAttendanceForDateRange(employeeId, _dateRange!)
+                      : Future.value({}), // Empty map if no range is selected
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const CircularProgressIndicator();
-                    } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                      final attendance = snapshot.data!;
-                      return ListTile(
+                    } else if (snapshot.hasData) {
+                      final attendanceData = snapshot.data!;
+                      if (attendanceData.isEmpty) {
+                        return ListTile(
+                          title: Text(employees[employeeId]!['name']!),
+                          subtitle: const Text('No attendance marked for the selected range'),
+                        );
+                      }
+
+                      // Display attendance for each date
+                      return ExpansionTile(
                         title: Text(employees[employeeId]!['name']!),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Description: ${attendance['description']}'),
-                            Row(
+                        children: attendanceData.entries.map((entry) {
+                          final date = entry.key;
+                          final attendance = entry.value;
+
+                          return ListTile(
+                            title: Text('Date: $date'),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Last Attendance: ${attendance['status']}'),
-                                const Spacer(),
-                                Text(
-                                    'Date & Time: ${attendance['date']} ${attendance['time']}'),
+                                Text('Status: ${attendance['status'] ?? 'N/A'}'),
+                                Text('Description: ${attendance['description'] ?? 'N/A'}'),
+                                Text('Time: ${attendance['time'] ?? 'N/A'}'),
                               ],
                             ),
-                          ],
-                        ),
+                          );
+                        }).toList(),
                       );
                     } else {
                       return ListTile(
                         title: Text(employees[employeeId]!['name']!),
-                        subtitle: const Text('No attendance marked for today'),
+                        subtitle: const Text('Error fetching attendance'),
                       );
                     }
                   },
@@ -135,24 +189,110 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
               },
             ),
           ),
+
         ],
       ),
     );
   }
 
 
+  // Future<void> _generateAndPrintPdf(
+  //     List<String> filteredEmployees,
+  //     EmployeeProvider employeeProvider,
+  //     Map<String, Map<String, String>> employees) async {
+  //
+  //   final pdf = pw.Document();
+  //
+  //   // Wait for all attendance data asynchronously before generating the PDF
+  //   final employeeAttendances = await Future.wait(
+  //     filteredEmployees.map((employeeId) async {
+  //       final attendance = await employeeProvider.getAttendance(employeeId, DateTime.now());
+  //       return MapEntry(employeeId, attendance);
+  //     }),
+  //   );
+  //
+  //   pdf.addPage(
+  //     pw.Page(
+  //       build: (pw.Context context) {
+  //         return pw.Column(
+  //           crossAxisAlignment: pw.CrossAxisAlignment.start,
+  //           children: [
+  //             pw.Text(
+  //               'Attendance Report',
+  //               style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+  //             ),
+  //             pw.SizedBox(height: 16),
+  //             // Creating table headers
+  //             pw.Table(
+  //               border: pw.TableBorder.all(width: 1, color: PdfColors.black),
+  //               children: [
+  //                 pw.TableRow(
+  //                   children: [
+  //                     pw.Text('Date', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+  //                     pw.Text('Employee Name', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+  //                     // pw.Text('Time', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+  //                     pw.Text('Description', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+  //                     pw.Text('Status', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+  //
+  //                   ],
+  //                 ),
+  //                 // Adding table rows for each employee attendance
+  //                 ...employeeAttendances.map((entry) {
+  //                   final employeeId = entry.key;
+  //                   final attendance = entry.value;
+  //                   final employeeName = employees[employeeId]!['name']!;
+  //
+  //                   // If attendance data is empty
+  //                   if (attendance.isEmpty) {
+  //                     return pw.TableRow(
+  //                       children: [
+  //                         pw.Text('N/A'),
+  //                         pw.Text(employeeName),
+  //                         pw.Text('No attendance data'),
+  //                         // pw.Text('N/A'),
+  //                         pw.Text('N/A'),
+  //                       ],
+  //                     );
+  //                   }
+  //                   // If attendance data is available
+  //                   return pw.TableRow(
+  //                     children: [
+  //                       pw.Text('${attendance['date'] ?? 'N/A'} ${attendance['time'] ?? 'N/A'}'),
+  //                       pw.Text(employeeName),
+  //                       // pw.Text(attendance['time'] ?? 'N/A'),
+  //                       pw.Text(attendance['description'] ?? 'N/A'),
+  //                       pw.Text(attendance['status'] ?? 'N/A'),
+  //                     ],
+  //                   );
+  //                 }).toList(),
+  //               ],
+  //             ),
+  //           ],
+  //         );
+  //       },
+  //     ),
+  //   );
+  //
+  //   await Printing.layoutPdf(
+  //     onLayout: (PdfPageFormat format) async => pdf.save(),
+  //   );
+  // }
+
   Future<void> _generateAndPrintPdf(
       List<String> filteredEmployees,
       EmployeeProvider employeeProvider,
       Map<String, Map<String, String>> employees) async {
-
     final pdf = pw.Document();
 
-    // Wait for all attendance data asynchronously before generating the PDF
     final employeeAttendances = await Future.wait(
       filteredEmployees.map((employeeId) async {
-        final attendance = await employeeProvider.getAttendance(employeeId, DateTime.now());
-        return MapEntry(employeeId, attendance);
+        if (_dateRange != null) {
+          return MapEntry(
+            employeeId,
+            await employeeProvider.getAttendanceForDateRange(employeeId, _dateRange!),
+          );
+        }
+        return MapEntry(employeeId, {});
       }),
     );
 
@@ -167,7 +307,6 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
                 style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
               ),
               pw.SizedBox(height: 16),
-              // Creating table headers
               pw.Table(
                 border: pw.TableBorder.all(width: 1, color: PdfColors.black),
                 children: [
@@ -175,40 +314,29 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
                     children: [
                       pw.Text('Date', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                       pw.Text('Employee Name', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      // pw.Text('Time', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Description', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                       pw.Text('Status', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-
+                      pw.Text('Description', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                     ],
                   ),
-                  // Adding table rows for each employee attendance
-                  ...employeeAttendances.map((entry) {
+                  ...employeeAttendances.expand((entry) {
                     final employeeId = entry.key;
-                    final attendance = entry.value;
+                    final attendanceData = entry.value;
                     final employeeName = employees[employeeId]!['name']!;
 
-                    // If attendance data is empty
-                    if (attendance.isEmpty) {
+                    return attendanceData.entries.map((dateEntry) {
+                      final date = dateEntry.key;
+                      final attendance = dateEntry.value;
+
                       return pw.TableRow(
                         children: [
-                          pw.Text('N/A'),
+                          pw.Text(date),
+                          // pw.Text('${attendance['date'] ?? 'N/A'} ${attendance['time'] ?? 'N/A'}'),
                           pw.Text(employeeName),
-                          pw.Text('No attendance data'),
-                          // pw.Text('N/A'),
-                          pw.Text('N/A'),
+                          pw.Text(attendance['status'] ?? 'N/A'),
+                          pw.Text(attendance['description'] ?? 'N/A'),
                         ],
                       );
-                    }
-                    // If attendance data is available
-                    return pw.TableRow(
-                      children: [
-                        pw.Text('${attendance['date'] ?? 'N/A'} ${attendance['time'] ?? 'N/A'}'),
-                        pw.Text(employeeName),
-                        // pw.Text(attendance['time'] ?? 'N/A'),
-                        pw.Text(attendance['description'] ?? 'N/A'),
-                        pw.Text(attendance['status'] ?? 'N/A'),
-                      ],
-                    );
+                    });
                   }).toList(),
                 ],
               ),
@@ -222,6 +350,5 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
       onLayout: (PdfPageFormat format) async => pdf.save(),
     );
   }
-
 
 }

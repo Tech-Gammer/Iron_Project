@@ -29,6 +29,7 @@ class _InvoicePageState extends State<InvoicePage> {
   TextEditingController _discountController = TextEditingController();
   List<Map<String, dynamic>> _invoiceRows = [];
   String? _invoiceId; // For editing existing invoices
+  late bool _isReadOnly;
 
   String generateInvoiceNumber() {
     // Generate a timestamp as invoice number (in milliseconds)
@@ -294,6 +295,8 @@ class _InvoicePageState extends State<InvoicePage> {
     super.initState();
     // Fetch the customers when the page is initialized
     Provider.of<CustomerProvider>(context, listen: false).fetchCustomers();
+    _isReadOnly = widget.invoice != null; // Set read-only if invoice is passed
+
     if (widget.invoice != null) {
       // Populate fields for editing
       final invoice = widget.invoice!;
@@ -345,10 +348,11 @@ class _InvoicePageState extends State<InvoicePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.invoice == null
+          // widget.invoice == null
+          _isReadOnly
               ? (languageProvider.isEnglish ? 'Create Invoice' : 'انوائس بنائیں')
               : (languageProvider.isEnglish ? 'Update Invoice' : 'انوائس کو اپ ڈیٹ کریں'),
-          style: TextStyle(color: Colors.teal.shade800),
+          style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.teal,
         centerTitle: true,
@@ -363,7 +367,7 @@ class _InvoicePageState extends State<InvoicePage> {
               widget.invoice == null
                   ? '${languageProvider.isEnglish ? 'Invoice #' : 'انوائس نمبر#'}${generateInvoiceNumber()}'
                   : '${languageProvider.isEnglish ? 'Invoice #' : 'انوائس نمبر#'}${widget.invoice!['invoiceNumber']}',
-              style: TextStyle(color: Colors.teal.shade600, fontSize: 16),            ),
+              style: TextStyle(color: Colors.white, fontSize: 16),            ),
           ),
         ],
       ),
@@ -388,7 +392,8 @@ class _InvoicePageState extends State<InvoicePage> {
                     isExpanded: true,
                     value: _selectedCustomerId,
                     hint: Text(languageProvider.isEnglish ? 'Choose a customer' : 'ایک کسٹمر منتخب کریں'),
-                    onChanged: (String? newValue) {
+                    // onChanged: (String? newValue) {
+                    onChanged: _isReadOnly ? null : (String? newValue) {
                       setState(() {
                         _selectedCustomerId = newValue;
                         _selectedCustomerName = customerProvider.customers
@@ -467,6 +472,7 @@ class _InvoicePageState extends State<InvoicePage> {
                                 child: TextField(
                                   // controller: TextEditingController(text: _invoiceRows[i]['rate'].toString()),
                                   controller: _invoiceRows[i]['rateController'],
+                                  enabled: !_isReadOnly, // Disable in read-only mode
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),  // This allows only numeric input
@@ -487,6 +493,8 @@ class _InvoicePageState extends State<InvoicePage> {
                                 child: TextField(
                                   // controller: TextEditingController(text: _invoiceRows[i]['qty'].toString()),
                                   controller: _invoiceRows[i]['qtyController'],
+                                  enabled: !_isReadOnly, // Disable in read-only mode
+
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly,  // This allows only numeric input
@@ -506,6 +514,8 @@ class _InvoicePageState extends State<InvoicePage> {
                                 child: TextField(
                                   // controller: TextEditingController(text: _invoiceRows[i]['weight'].toString()),
                                   controller: _invoiceRows[i]['weightController'],
+                                  enabled: !_isReadOnly, // Disable in read-only mode
+
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,4}')),  // This allows only numeric input
@@ -525,6 +535,8 @@ class _InvoicePageState extends State<InvoicePage> {
                                 child: TextField(
                                   // controller: TextEditingController(text: _invoiceRows[i]['description']),
                                   controller: _invoiceRows[i]['descriptionController'],
+                                  enabled: !_isReadOnly, // Disable in read-only mode
+
                                   onChanged: (value) {
                                     _updateRow(i, 'description', value);
                                   },
@@ -571,6 +583,7 @@ class _InvoicePageState extends State<InvoicePage> {
                   Text(languageProvider.isEnglish ? 'Discount (Amount):' : 'رعایت (رقم):', style: const TextStyle(fontSize: 18)),
                   TextField(
                     controller: _discountController,
+                    enabled: !_isReadOnly, // Disable in read-only mode
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
                       setState(() {
@@ -620,7 +633,7 @@ class _InvoicePageState extends State<InvoicePage> {
                                     value: 'instant',
                                     groupValue: _paymentType,
                                     title: Text(languageProvider.isEnglish ? 'Instant Payment' : 'فوری ادائیگی'),
-                                    onChanged: (value) {
+                                    onChanged: _isReadOnly ? null : (value) {
                                       setState(() {
                                         _paymentType = value!;
                                         _instantPaymentMethod = null; // Reset instant payment method
@@ -632,7 +645,7 @@ class _InvoicePageState extends State<InvoicePage> {
                                     value: 'udhaar',
                                     groupValue: _paymentType,
                                     title: Text(languageProvider.isEnglish ? 'Udhaar Payment' : 'ادھار ادائیگی'),
-                                    onChanged: (value) {
+                                    onChanged: _isReadOnly ? null : (value) {
                                       setState(() {
                                         _paymentType = value!;
                                       });
@@ -649,7 +662,7 @@ class _InvoicePageState extends State<InvoicePage> {
                                       value: 'cash',
                                       groupValue: _instantPaymentMethod,
                                       title: Text(languageProvider.isEnglish ? 'Cash Payment' : 'نقد ادائیگی'),
-                                      onChanged: (value) {
+                                      onChanged: _isReadOnly ? null : (value) {
                                         setState(() {
                                           _instantPaymentMethod = value!;
                                         });
@@ -659,7 +672,7 @@ class _InvoicePageState extends State<InvoicePage> {
                                       value: 'online',
                                       groupValue: _instantPaymentMethod,
                                       title: Text(languageProvider.isEnglish ? 'Online Bank Transfer' : 'آن لائن بینک ٹرانسفر'),
-                                      onChanged: (value) {
+                                      onChanged: _isReadOnly ? null : (value) {
                                         setState(() {
                                           _instantPaymentMethod = value!;
                                         });
@@ -694,6 +707,7 @@ class _InvoicePageState extends State<InvoicePage> {
                       ],
                     ),
                   ),
+                  if (!_isReadOnly)
                   ElevatedButton  (
                     onPressed: () async {
                       // Validate customer selection
