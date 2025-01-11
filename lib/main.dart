@@ -11,7 +11,6 @@ import 'Provider/invoice provider.dart';
 import 'Provider/lanprovider.dart';
 import 'dashboard.dart';
 import 'firebase_options.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +27,7 @@ void main() async{
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => CustomerProvider()), // Add CustomerProvider
       ],
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
@@ -45,7 +44,7 @@ class MyApp extends StatelessWidget {
       builder: (context, languageProvider, child) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          home: Dashboard(),
+          home: const Dashboard(),
           theme: ThemeData(
             fontFamily: languageProvider.isEnglish ? 'Roboto' : 'JameelNoori',
           ),

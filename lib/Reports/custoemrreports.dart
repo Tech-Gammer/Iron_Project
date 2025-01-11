@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../Provider/lanprovider.dart';
 import '../Provider/reportprovider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -26,11 +27,16 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+
     return ChangeNotifierProvider(
       create: (_) => CustomerReportProvider()..fetchCustomerReport(widget.customerId),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Customer Ledger For Sarya'),
+          title:  Text(
+              // 'Customer Ledger For Sarya'
+            languageProvider.isEnglish ? 'Customer Ledger For Sarya' : 'سریا کے لیے کسٹمر لیجر', style: TextStyle(color: Colors.white),
+          ),
           backgroundColor: Colors.teal,  // Customize the AppBar color
         ),
         body: Consumer<CustomerReportProvider>(
@@ -71,7 +77,9 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                             ),
                           ),
                           Text(
-                            'Phone Number: ${widget.customerPhone}',
+                            // 'Phone Number: ${widget.customerPhone}',
+                            '${languageProvider.isEnglish ? 'Phone Number:' : 'فون نمبر:'} ${widget.customerPhone}',
+
                             style: TextStyle(color: Colors.teal.shade600),  // Subtext color
                           ),
                           const SizedBox(height: 10),
@@ -103,7 +111,11 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                             }
                           },
                           icon: const Icon(Icons.date_range),
-                          label: const Text('Select Date Range'),
+                          label: Text(
+                              // 'Select Date Range'
+                            languageProvider.isEnglish ? 'Select Date Range' : 'تاریخ منتخب کریں',
+
+                          ),
                           style: ElevatedButton.styleFrom(
                             foregroundColor: Colors.white, backgroundColor: Colors.teal.shade400, // Text color
                             shape: RoundedRectangleBorder(
@@ -118,7 +130,10 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                                 selectedDateRange = null;
                               });
                             },
-                            child: const Text('Clear Filter', style: TextStyle(color: Colors.teal)),
+                            child: Text(
+                                // 'Clear Filter',
+                                languageProvider.isEnglish ? 'Clear Filter' : 'فلٹر صاف کریں',
+                                style: TextStyle(color: Colors.teal)),
                           ),
                       ],
                     ),
@@ -133,10 +148,17 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _buildSummaryItem('Total Debit (-)', 'Rs ${report['debit']?.toStringAsFixed(2)}', context),
-                            _buildSummaryItem('Total Credit (+)', 'Rs ${report['credit']?.toStringAsFixed(2)}', context),
                             _buildSummaryItem(
-                              'Net Balance',
+                                // 'Total Debit (-)',
+                                languageProvider.isEnglish ? 'Total Debit (-)' : '(-)کل ڈیبٹ ',
+                                'Rs ${report['debit']?.toStringAsFixed(2)}', context),
+                            _buildSummaryItem(
+                                // 'Total Credit (+)',
+                                languageProvider.isEnglish ? 'Total Credit (-)' : '(-)کل کریڈٹ ',
+                                'Rs ${report['credit']?.toStringAsFixed(2)}', context),
+                            _buildSummaryItem(
+                              // 'Net Balance',
+                              languageProvider.isEnglish ? 'Net Balance' : 'کل رقم ',
                               'Rs ${report['balance']?.toStringAsFixed(2)}',
                               context,
                               isHighlight: true,
@@ -159,13 +181,36 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                           headingRowHeight: 60,  // Increase heading row height
                           dataRowHeight: 60,  // Increase data row height
                           columnSpacing: 20,  // Increase column spacing
-                          columns: const [
-                            DataColumn(label: Text('Date')),
-                            DataColumn(label: Text('Invoice Number')),
-                            DataColumn(label: Text('Transaction Type')),
-                            DataColumn(label: Text('Debit (-)')),
-                            DataColumn(label: Text('Credit (+)')),
-                            DataColumn(label: Text('Balance')),
+                          columns: [
+                            DataColumn(label: Text(
+                                // 'Date'
+                              languageProvider.isEnglish ? 'Date' : 'ڈیٹ',
+
+                            )),
+                            DataColumn(label: Text(
+                                // 'Invoice Number'
+                              languageProvider.isEnglish ? 'Invoice Number' : 'انوائس نمبر',
+
+                            )),
+                            DataColumn(label: Text(
+                                // 'Transaction Type'
+                              languageProvider.isEnglish ? 'Transaction Type' : 'لین دین کی قسم ',
+
+                            )),
+                            DataColumn(label: Text(
+                                // 'Debit (-)'
+                              languageProvider.isEnglish ? 'Debit (-)' : '(-)ڈیبٹ',
+                            )),
+                            DataColumn(label: Text(
+                                // 'Credit (+)'
+                              languageProvider.isEnglish ? 'Credit (+)' : '(+)کریڈٹ',
+
+                            )),
+                            DataColumn(label: Text(
+                                // 'Balance'
+                              languageProvider.isEnglish ? 'Balance' : 'رقم',
+
+                            )),
                           ],
                           rows: transactions.map((transaction) {
                             return DataRow(
