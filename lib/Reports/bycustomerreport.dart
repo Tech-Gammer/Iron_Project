@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:provider/provider.dart';
+
+import '../Provider/lanprovider.dart';
 
 class byCustomerReport extends StatefulWidget {
   final String customerId;
@@ -17,6 +20,7 @@ class byCustomerReport extends StatefulWidget {
 }
 
 class _byCustomerReportState extends State<byCustomerReport> {
+
   double? remainingBalance;
 
   @override
@@ -55,9 +59,17 @@ class _byCustomerReportState extends State<byCustomerReport> {
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Customer Report'),
+        // title: Text('Customer Report'),
+        title: Text(
+          languageProvider.isEnglish ? 'Customer Report' : 'کسٹمر رپورٹ',
+          style: TextStyle(
+            color: Colors.white
+          ),// Dynamic text based on language
+
+        ),
         backgroundColor: Colors.teal,
       ),
       body: Padding(

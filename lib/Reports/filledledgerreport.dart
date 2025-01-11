@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../Provider/filledreportprovider.dart';
+import '../Provider/lanprovider.dart';
 import '../Provider/reportprovider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -27,11 +28,18 @@ class _FilledLedgerReportPageState extends State<FilledLedgerReportPage> {
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+
     return ChangeNotifierProvider(
       create: (_) => FilledCustomerReportProvider()..fetchCustomerReport(widget.customerId),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Customer Report'),
+          title: Text(
+              // 'Customer Report'
+            languageProvider.isEnglish ? 'Customer Report' : 'کسٹمر رپورٹ',
+            style: const TextStyle(color: Colors.white),
+
+          ),
           backgroundColor: Colors.teal,  // Customize the AppBar color
         ),
         body: Consumer<FilledCustomerReportProvider>(
@@ -72,7 +80,8 @@ class _FilledLedgerReportPageState extends State<FilledLedgerReportPage> {
                             ),
                           ),
                           Text(
-                            'Phone Number: ${widget.customerPhone}',
+                            // 'Phone Number: ${widget.customerPhone}',
+                            '${languageProvider.isEnglish ? 'Phone Number:' : 'فون نمبر:'} ${widget.customerPhone}',
                             style: TextStyle(color: Colors.teal.shade600),  // Subtext color
                           ),
                           const SizedBox(height: 10),
@@ -104,7 +113,10 @@ class _FilledLedgerReportPageState extends State<FilledLedgerReportPage> {
                             }
                           },
                           icon: const Icon(Icons.date_range),
-                          label: const Text('Select Date Range'),
+                          label: Text(
+                              // 'Select Date Range'
+                            languageProvider.isEnglish ? 'Select Date Range' : 'تاریخ منتخب کریں',
+                          ),
                           style: ElevatedButton.styleFrom(
                             foregroundColor: Colors.white, backgroundColor: Colors.teal.shade400, // Text color
                             shape: RoundedRectangleBorder(
@@ -119,7 +131,10 @@ class _FilledLedgerReportPageState extends State<FilledLedgerReportPage> {
                                 selectedDateRange = null;
                               });
                             },
-                            child: const Text('Clear Filter', style: TextStyle(color: Colors.teal)),
+                            child: Text(
+                                // 'Clear Filter',
+                                languageProvider.isEnglish ? 'Clear Filter' : 'فلٹر صاف کریں',
+                                style: const TextStyle(color: Colors.teal)),
                           ),
                       ],
                     ),
@@ -134,10 +149,17 @@ class _FilledLedgerReportPageState extends State<FilledLedgerReportPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _buildSummaryItem('Total Debit (-)', 'Rs ${report['debit']?.toStringAsFixed(2)}', context),
-                            _buildSummaryItem('Total Credit (+)', 'Rs ${report['credit']?.toStringAsFixed(2)}', context),
                             _buildSummaryItem(
-                              'Net Balance',
+                                // 'Total Debit (-)',
+                                languageProvider.isEnglish ? 'Total Debit (-)' : '(-)کل ڈیبٹ ',
+                                'Rs ${report['debit']?.toStringAsFixed(2)}', context),
+                            _buildSummaryItem(
+                                // 'Total Credit (+)',
+                                languageProvider.isEnglish ? 'Total Credit (-)' : '(-)کل کریڈٹ ',
+                                'Rs ${report['credit']?.toStringAsFixed(2)}', context),
+                            _buildSummaryItem(
+                              // 'Net Balance',
+                              languageProvider.isEnglish ? 'Net Balance' : 'کل رقم ',
                               'Rs ${report['balance']?.toStringAsFixed(2)}',
                               context,
                               isHighlight: true,
@@ -160,13 +182,42 @@ class _FilledLedgerReportPageState extends State<FilledLedgerReportPage> {
                           headingRowHeight: 60,  // Increase heading row height
                           dataRowHeight: 60,  // Increase data row height
                           columnSpacing: 20,  // Increase column spacing
-                          columns: const [
-                            DataColumn(label: Text('Date')),
-                            DataColumn(label: Text('Filled Number')),
-                            DataColumn(label: Text('Transaction Type')),
-                            DataColumn(label: Text('Debit (-)')),
-                            DataColumn(label: Text('Credit (+)')),
-                            DataColumn(label: Text('Balance')),
+                          columns: [
+                            // DataColumn(label: Text('Date')),
+                            // DataColumn(label: Text('Filled Number')),
+                            // DataColumn(label: Text('Transaction Type')),
+                            // DataColumn(label: Text('Debit (-)')),
+                            // DataColumn(label: Text('Credit (+)')),
+                            // DataColumn(label: Text('Balance')),
+                            DataColumn(label: Text(
+                              // 'Date'
+                              languageProvider.isEnglish ? 'Date' : 'ڈیٹ',
+
+                            )),
+                            DataColumn(label: Text(
+                              // 'Invoice Number'
+                              languageProvider.isEnglish ? 'Invoice Number' : 'انوائس نمبر',
+
+                            )),
+                            DataColumn(label: Text(
+                              // 'Transaction Type'
+                              languageProvider.isEnglish ? 'Transaction Type' : 'لین دین کی قسم ',
+
+                            )),
+                            DataColumn(label: Text(
+                              // 'Debit (-)'
+                              languageProvider.isEnglish ? 'Debit (-)' : '(-)ڈیبٹ',
+                            )),
+                            DataColumn(label: Text(
+                              // 'Credit (+)'
+                              languageProvider.isEnglish ? 'Credit (+)' : '(+)کریڈٹ',
+
+                            )),
+                            DataColumn(label: Text(
+                              // 'Balance'
+                              languageProvider.isEnglish ? 'Balance' : 'رقم',
+
+                            )),
                           ],
                           rows: transactions.map((transaction) {
                             return DataRow(
@@ -188,7 +239,12 @@ class _FilledLedgerReportPageState extends State<FilledLedgerReportPage> {
                     Center(
                       child: ElevatedButton(
                         onPressed: () => _generateAndPrintPDF(report, transactions),
-                        child: const Text('Generate PDF and Print'),
+                        child: Text(
+                            // 'Generate PDF and Print'
+                          languageProvider.isEnglish ? 'Generate PDF and Print' : 'پی ڈی ایف بنائیں اور پرنٹ کریں۔',
+                          style: TextStyle(color: Colors.white),
+
+                        ),
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.teal.shade400),
                       ),
                     ),
@@ -225,6 +281,7 @@ class _FilledLedgerReportPageState extends State<FilledLedgerReportPage> {
   Future<void> _generateAndPrintPDF(Map<String, dynamic> report, List<Map<String, dynamic>> transactions) async {
     final pdf = pw.Document();
     final font = await PdfGoogleFonts.robotoRegular();
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
 
     // Calculate total debit, total credit, and balance (balance = credit - debit)
     double totalDebit = 0.0;
@@ -247,14 +304,30 @@ class _FilledLedgerReportPageState extends State<FilledLedgerReportPage> {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text('Customer Ledegr for Filled', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              pw.Text(
+                  // 'Customer Ledegr for Filled',
+                  languageProvider.isEnglish ? 'Customer Ledegr for Sarya' : 'سریا کے لیے کسٹمر لیڈیگر',
+
+                  style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 20),
-              pw.Text('Customer Name: ${widget.customerName}', style: pw.TextStyle(fontSize: 18)),
-              pw.Text('Phone Number: ${widget.customerPhone}', style: pw.TextStyle(fontSize: 18)),
+              pw.Text(
+                  // 'Customer Name: ${widget.customerName}',
+                  '${languageProvider.isEnglish ? 'Customer Name:' : 'گاہک کا نام:'} ${widget.customerName}',
+                  style: pw.TextStyle(fontSize: 18)),
+              pw.Text(
+                  // 'Phone Number: ${widget.customerPhone}',
+                  '${languageProvider.isEnglish ? 'Phone Number:' : 'فون نمبر:'} ${widget.customerPhone}',
+                  style: pw.TextStyle(fontSize: 18)),
               pw.SizedBox(height: 20),
-              pw.Text('Print Date: $printDate', style: pw.TextStyle(fontSize: 16, color: PdfColors.grey)),
+              pw.Text(
+                  // 'Print Date: $printDate',
+                  '${languageProvider.isEnglish ? 'Print Date:' : 'پرنٹ کی تاریخ:'} $printDate',
+                  style: pw.TextStyle(fontSize: 16, color: PdfColors.grey)),
               pw.SizedBox(height: 20),
-              pw.Text('Transactions:', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+              pw.Text(
+                  // 'Transactions:',
+                  languageProvider.isEnglish ? 'Transactions' : 'لین دین',
+                  style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
               pw.Table.fromTextArray(
                 context: context,
                 data: [

@@ -6,6 +6,8 @@ import '../Provider/customerprovider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+
+import '../Provider/lanprovider.dart';
 class PaymentTypeReportPage extends StatefulWidget {
   final String? customerId;
   final String? customerName;
@@ -173,21 +175,40 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
 
   Future<void> _generateAndPrintPDF() async {
     final pdf = pw.Document();
+    final languageProvider = Provider.of<LanguageProvider>(context,listen: false);
 
     pdf.addPage(
       pw.Page(
         build: (pw.Context context) {
           return pw.Column(
             children: [
-              pw.Text('Payment Type Report For Sarya', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              pw.Text(
+                  // 'Payment Type Report For Sarya',
+                  languageProvider.isEnglish ? 'Payment Type Report For Sarya' : 'سریا کے لیے ادائیگی کی قسم کی رپورٹ', // Dynamic text based on language
+
+                  style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 20),
-              pw.Text('Customer: ${_selectedCustomerName ?? 'All'}'),
+              pw.Text(
+                  'Customer: ${_selectedCustomerName ?? 'All'}'
+              ),
               // pw.Text('Phone: ${widget.customerPhone ?? 'All'}'),
               pw.SizedBox(height: 20),
               pw.Table.fromTextArray(
                 context: context,
                 data: [
-                  ['Customer', 'Payment Type', 'Payment Method', 'Amount', 'Date'],
+                  [
+                    // 'Customer',
+                    languageProvider.isEnglish ? 'Customer' : 'کسٹمر', // Dynamic text based on language
+                    // 'Payment Type',
+                    languageProvider.isEnglish ? 'Payment Type' : 'ادائیگی کی قسم', // Dynamic text based on language
+                    // 'Payment Method',
+                    languageProvider.isEnglish ? 'Payment Method' : 'ادائیگی کی طریقہ', // Dynamic text based on language
+                    // 'Amount',
+                    languageProvider.isEnglish ? 'Amount' : 'رقم', // Dynamic text based on language
+                    // 'Date'
+                    languageProvider.isEnglish ? 'Date' : 'تاریخ', // Dynamic text based on language
+
+                  ],
                   ..._reportData.map((invoice) {
                     return [
                       invoice['customerName'] ?? 'N/A',
@@ -200,7 +221,11 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                 ],
               ),
               pw.SizedBox(height: 20),
-              pw.Text('Total Amount: Rs ${_calculateTotalAmount().toStringAsFixed(2)}'),
+              pw.Text(
+                  // 'Total Amount: Rs ${_calculateTotalAmount().toStringAsFixed(2)}'
+                '${languageProvider.isEnglish ? 'Total Amount: Rs ${_calculateTotalAmount().toStringAsFixed(2)}' : 'کل رقم:${_calculateTotalAmount().toStringAsFixed(2)}روپے' }'
+
+              ),
             ],
           );
         },
@@ -215,9 +240,15 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Payment Type Report'),
+         title: Text(
+             // 'Payment Type Report'
+             languageProvider.isEnglish ? 'Payment Type Report' : 'ادائیگی کی قسم کی رپورٹ', // Dynamic text based on language
+             style: TextStyle(color: Colors.white)
+         ),
         backgroundColor: Colors.teal,
       ),
       body: Padding(
@@ -281,6 +312,9 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                     _selectedCustomerName == null
                         ? 'Select Customer'
                         : 'Selected: $_selectedCustomerName', // Display selected customer name
+                    style: TextStyle(
+                      color: Colors.white
+                    ),
                   ),
                 ),
                 SizedBox(width: 15),
@@ -294,7 +328,11 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                     ),
                   ),
                   child: Text(
-                      _selectedDateRange == null ? 'Select Date Range' : 'Date Range Selected'),
+                      _selectedDateRange == null ? 'Select Date Range' : 'Date Range Selected',
+                    style: TextStyle(
+                      color: Colors.white
+                    ),
+                  ),
                 ),
                 SizedBox(width: 15),
                 // Clear filter button
@@ -306,7 +344,11 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: Text('Clear Filters'),
+                  child: Text(
+                      // 'Clear Filters'
+                    languageProvider.isEnglish ? 'Clear Filters' : 'فلٹرز صاف کریں۔', // Dynamic text based on language
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),
@@ -377,11 +419,31 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                       columnSpacing: 25.0,  // Increase spacing between columns
                       dataRowHeight: 60,   // Increase row height
                       columns: [
-                        DataColumn(label: Text('Customer', style: TextStyle(color: Colors.teal.shade800))),
-                        DataColumn(label: Text('Payment Type', style: TextStyle(color: Colors.teal.shade800))),
-                        DataColumn(label: Text('Payment Method', style: TextStyle(color: Colors.teal.shade800))),
-                        DataColumn(label: Text('Amount', style: TextStyle(color: Colors.teal.shade800))),
-                        DataColumn(label: Text('Date', style: TextStyle(color: Colors.teal.shade800))),
+                        DataColumn(label: Text(
+                            // 'Customer',
+                            languageProvider.isEnglish ? 'Customer' : 'کسٹمر', // Dynamic text based on language
+
+                            style: TextStyle(color: Colors.teal.shade800))),
+                        DataColumn(label: Text(
+                            // 'Payment Type',
+                            languageProvider.isEnglish ? 'Payment Type' : 'ادائیگی کی قسم', // Dynamic text based on language
+
+                            style: TextStyle(color: Colors.teal.shade800))),
+                        DataColumn(label: Text(
+                            // 'Payment Method',
+                            languageProvider.isEnglish ? 'Payment Method' : 'ادائیگی کی طریقہ', // Dynamic text based on language
+
+                            style: TextStyle(color: Colors.teal.shade800))),
+                        DataColumn(label: Text(
+                            // 'Amount',
+                            languageProvider.isEnglish ? 'Amount' : 'رقم', // Dynamic text based on language
+
+                            style: TextStyle(color: Colors.teal.shade800))),
+                        DataColumn(label: Text(
+                            // 'Date',
+                            languageProvider.isEnglish ? 'Date' : 'تاریخ', // Dynamic text based on language
+
+                            style: TextStyle(color: Colors.teal.shade800))),
                       ],
                       rows: _reportData.isNotEmpty
                           ? _reportData.map((invoice) {
@@ -403,8 +465,11 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  Text('Total: ${_calculateTotalAmount().toStringAsFixed(2)}rs',
-                  style: TextStyle(
+                  Text(
+                    // 'Total: ${_calculateTotalAmount().toStringAsFixed(2)}rs',
+                    languageProvider.isEnglish ? 'Total: ${_calculateTotalAmount().toStringAsFixed(2)}rs' : 'کل رقم:${_calculateTotalAmount().toStringAsFixed(2)}روپے', // Dynamic text based on language
+
+                    style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.teal.shade800
@@ -415,7 +480,11 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
             // Button to generate and print the PDF
             ElevatedButton(
               onPressed: _generateAndPrintPDF,
-              child: Text('Generate and Print PDF'),
+              child: Text(
+                  // 'Generate and Print PDF'
+                languageProvider.isEnglish ? 'Generate and Print PDF' : 'پی ڈی ایف بنائیں اور پرنٹ کریں۔', // Dynamic text based on language
+
+              ),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.teal.shade400),
             ),
           ],
