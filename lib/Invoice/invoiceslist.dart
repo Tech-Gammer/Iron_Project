@@ -192,19 +192,20 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                         '${languageProvider.isEnglish ? 'Invoice #' : 'انوائس نمبر'} ${invoice['invoiceNumber']}',
 
                       ),
-                      subtitle: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Text('Customer: ${invoice['customerName']?? 'Unknown'}'),
                           Text(
                               '${languageProvider.isEnglish ? 'Customer' : 'کسٹمر کا نام'} ${invoice['customerName']}',
                             ),
-                          const SizedBox(width: 20,),
                           // Text('Date and Time: ${invoice['createdAt']}'),
                           Text(
-                            '${languageProvider.isEnglish ? 'Date and Time' : 'ڈیٹ & ٹائم'} ${invoice['createdAt']}',
+                            '${languageProvider.isEnglish ? 'Date and Time' : 'ڈیٹ & ٹائم'}',
                           ),
-                          const SizedBox(width: 20,),
+                          Text(
+                              '${invoice['createdAt']}',style: TextStyle(fontSize: 12)
+                          ),
                           IconButton(
                             icon: const Icon(Icons.payment),
                             onPressed: () {
@@ -213,16 +214,14 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                           ),
                         ],
                       ),
-                      trailing: Row(
+                      trailing: Column(
                         mainAxisSize: MainAxisSize.min, // Ensures the row takes only as much space as needed
+                        crossAxisAlignment: CrossAxisAlignment.end,
+
                         children: [
                           Text(
-                              // 'Rs ${invoice['grandTotal']}',
-                              // '${languageProvider.isEnglish ? 'Rs' : 'روپے'} ${invoice['grandTotal']}',
                               '${languageProvider.isEnglish ? 'Rs ${invoice['grandTotal']}' : '${invoice['grandTotal']} روپے'}',
-
-                              style: TextStyle(fontSize: 20)),
-                          const SizedBox(width: 10), // Adds some space between the two texts
+                              style: TextStyle(fontSize: 16)),
                           Text(
                             // 'Remaining: Rs ${remainingAmount.toStringAsFixed(2)}',
                             '${languageProvider.isEnglish ? 'remainingAmount' : 'بقایا رقم'} ${remainingAmount.toStringAsFixed(2)}',

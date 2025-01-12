@@ -1,6 +1,7 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:iron_project_new/Invoice/invoiceslist.dart';
 import 'package:provider/provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -853,7 +854,11 @@ class _InvoicePageState extends State<InvoicePage> {
                         await _generateAndPrintPDF(invoiceNumber);
 
                         // Navigate back
-                        Navigator.pop(context);
+                        // Navigator.pop(context);
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => InvoiceListPage()),
+                        );
                       } catch (e) {
                         // Show error message
                         print(e);
