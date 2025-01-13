@@ -27,20 +27,24 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
     _fetchExpenses();
   }
 
-  // Fetch the original opening balance for the selected date
-  void _fetchOpeningBalance() {
-    String formattedDate = DateFormat('dd:MM:yyyy').format(_selectedDate);
-    dbRef.child("originalOpeningBalance").child(formattedDate).get().then((snapshot) {
-      if (snapshot.exists) {
-        setState(() {
-          _originalOpeningBalance = snapshot.value as double;
-          _remainingBalance = _originalOpeningBalance; // Initially set remaining balance to original balance
-        });
-      }
+  void _updateRemainingBalance() {
+    setState(() {
+      _remainingBalance = _originalOpeningBalance - _totalExpense;
     });
   }
 
-  // Fetch expenses for the selected date
+  // Fetch the original opening balance for the selected date
+  void _fetchOpeningBalance() async {
+    String formattedDate = DateFormat('dd:MM:yyyy').format(_selectedDate);
+    final snapshot = await dbRef.child("originalOpeningBalance").child(formattedDate).get();
+    if (snapshot.exists) {
+      setState(() {
+        _originalOpeningBalance = snapshot.value as double;
+      });
+      _updateRemainingBalance(); // Calculate remaining balance
+    }
+  }
+
   void _fetchExpenses() {
     String formattedDate = DateFormat('dd:MM:yyyy').format(_selectedDate);
     dbRef.child(formattedDate).child("expenses").onValue.listen((event) {
@@ -62,12 +66,11 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
       setState(() {
         expenses = loadedExpenses;
         _totalExpense = totalExpense;
-        _remainingBalance = _originalOpeningBalance - _totalExpense; // Update remaining balance
       });
+      _updateRemainingBalance(); // Recalculate remaining balance
     });
   }
 
-  // Pick date for expenses view
   void _pickDate() async {
     final pickedDate = await showDatePicker(
       context: context,

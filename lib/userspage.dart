@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:provider/provider.dart';
+
+import 'Provider/lanprovider.dart';
 
 class UsersPage extends StatefulWidget {
   @override
@@ -50,10 +53,14 @@ class _UsersPageState extends State<UsersPage> {
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Users"),
+        title: Text(languageProvider.isEnglish ? 'Users Profile:' : 'صارفین کا پروفائل:',style: TextStyle(color: Colors.white),),
+        backgroundColor: Colors.teal.shade800,
       ),
+
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _usersList.isEmpty
