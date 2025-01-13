@@ -184,7 +184,7 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Show original opening balance and selected date
+            // Show original opening balance and selected dates
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -213,22 +213,22 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
                         color: Colors.teal.shade700,
                       ),
                     ),
-                  ],
-                ),
-                ElevatedButton.icon(
-                  onPressed: _pickDate,
-                  icon: const Icon(Icons.date_range,color: Colors.white,),
-                  // label: const Text('Change Date'),
-                  label: Text(
-                      '${languageProvider.isEnglish ? 'Change Date:' : 'تاریخ تبدیل کریں:'}',
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.teal.shade400,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                    ElevatedButton.icon(
+                      onPressed: _pickDate,
+                      icon: const Icon(Icons.date_range,color: Colors.white,),
+                      // label: const Text('Change Date'),
+                      label: Text(
+                        '${languageProvider.isEnglish ? 'Change Date:' : 'تاریخ تبدیل کریں:'}',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.teal.shade400,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
