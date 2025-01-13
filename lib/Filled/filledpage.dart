@@ -29,6 +29,7 @@ class _filledpageState extends State<filledpage> {
   TextEditingController _discountController = TextEditingController();
   List<Map<String, dynamic>> _filledRows = [];
   String? _filledId; // For editing existing filled
+  late bool _isReadOnly;
 
   String generateFilledNumber() {
     // Generate a timestamp as filled number (in milliseconds)
@@ -113,7 +114,7 @@ class _filledpageState extends State<filledpage> {
                   children: [
                     pw.Image(logoImage, width: 70, height: 70), // Adjust width and height as needed
                     pw.Text(
-                      languageProvider.isEnglish ? 'Filled' : 'انوائس',
+                      'Filled',
                       style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
                     ),
                   ],
@@ -121,23 +122,23 @@ class _filledpageState extends State<filledpage> {
                 pw.Divider(),
                 // Customer Information
                 pw.Text(
-                  '${languageProvider.isEnglish ? 'Customer Name:' : 'کسٹمر کا نام:'} ${selectedCustomer.name}',
+                  'Customer Name: ${selectedCustomer.name}',
                   style: const pw.TextStyle(fontSize: 14),
                 ),
                 pw.Text(
-                  '${languageProvider.isEnglish ? 'Customer Number:' : 'کسٹمر نمبر:'} ${selectedCustomer.phone}',
+                  'Customer Number: ${selectedCustomer.phone}',
                   style: const pw.TextStyle(fontSize: 14),
                 ),
                 pw.Text(
-                  '${languageProvider.isEnglish ? 'Customer Address:' : 'کسٹمر پتہ:'} ${selectedCustomer.address ?? ''}',
+                  'Customer Address ${selectedCustomer.address}',
                   style: const pw.TextStyle(fontSize: 14),
                 ),
                 pw.Text(
-                  '${languageProvider.isEnglish ? 'Date:' : 'تاریخ:'} $formattedDate',
+                  'Date: $formattedDate',
                   style: const pw.TextStyle(fontSize: 8),
                 ),
                 pw.Text(
-                  '${languageProvider.isEnglish ? 'Time:' : 'وقت:'} $formattedTime',
+                  'Time: $formattedTime',
                   style: const pw.TextStyle(fontSize: 8),
                 ),
                 pw.SizedBox(height: 10),
@@ -145,30 +146,25 @@ class _filledpageState extends State<filledpage> {
                 pw.Table.fromTextArray(
                   headers: [
                     pw.Text(
-                      languageProvider.isEnglish ? 'Description' : 'تفصیل',
+                      'Description',
                       style: const pw.TextStyle(fontSize: 8),  // Reduced font size
                     ),
-                    // pw.Text(
-                    //   languageProvider.isEnglish ? 'Sarya Weight' : 'سرئے کا وزن',
-                    //   style: const pw.TextStyle(fontSize: 10),  // Reduced font size
-                    // ),
                     pw.Text(
-                      languageProvider.isEnglish ? 'Sarya Qty' : 'سرئے کی مقدار',
+                      'Qty(Pcs)',
                       style: const pw.TextStyle(fontSize: 10),  // Reduced font size
                     ),
                     pw.Text(
-                      languageProvider.isEnglish ? 'Sarya Rate' : 'سرئے کی قیمت',
+                      'Rate',
                       style: const pw.TextStyle(fontSize: 10),  // Reduced font size
                     ),
                     pw.Text(
-                      languageProvider.isEnglish ? 'Total' : 'کل',
+                      'Total',
                       style: const pw.TextStyle(fontSize: 10),  // Reduced font size
                     ),
                   ],
                   data: _filledRows.map((row) {
                     return [
                       pw.Text(row['description'], style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
-                      // pw.Text(row['weight'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
                       pw.Text(row['qty'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
                       pw.Text(row['rate'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
                       pw.Text(row['total'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
@@ -180,14 +176,14 @@ class _filledpageState extends State<filledpage> {
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('${languageProvider.isEnglish ? 'Sub Total:' : 'کل رقم:'}'),
+                    pw.Text('Sub Total:'),
                     pw.Text(_calculateSubtotal().toStringAsFixed(2)),
                   ],
                 ),
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('${languageProvider.isEnglish ? 'Discount:' : 'رعایت:'}'),
+                    pw.Text('Discount:'),
                     pw.Text(_discount.toStringAsFixed(2)),
                   ],
                 ),
@@ -195,7 +191,7 @@ class _filledpageState extends State<filledpage> {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      '${languageProvider.isEnglish ? 'Grand Total:' : 'مجموعی کل:'}',
+                      'Grand Total:',
                       style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
                     ),
                     pw.Text(
@@ -206,12 +202,12 @@ class _filledpageState extends State<filledpage> {
                 ),
                 pw.SizedBox(height: 20),
                 // Footer
-                // Previous Balance Section (Remaining Balance)
+                // Previous Balance Section (Remaining Balance)ss
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      languageProvider.isEnglish ? 'Previous Balance:' : 'پچھلا بیلنس:',
+                      'Previous Balance:',
                       style: const pw.TextStyle(fontSize: 14),
                     ),
                     pw.Text(
@@ -291,6 +287,8 @@ class _filledpageState extends State<filledpage> {
     super.initState();
     // Fetch the customers when the page is initialized
     Provider.of<CustomerProvider>(context, listen: false).fetchCustomers();
+    _isReadOnly = widget.filled != null; // Set read-only if invoice is passed
+
     if (widget.filled != null) {
       // Populate fields for editing
       final filled = widget.filled!;
@@ -342,7 +340,7 @@ class _filledpageState extends State<filledpage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.filled == null
+          _isReadOnly
               ? (languageProvider.isEnglish ? 'Create Filled' : 'فلڈ بنائیں')
               : (languageProvider.isEnglish ? 'Update Filled' : 'انوائس کو اپ ڈیٹ کریں'),
           style: TextStyle(color: Colors.white),
@@ -385,7 +383,7 @@ class _filledpageState extends State<filledpage> {
                     isExpanded: true,
                     value: _selectedCustomerId,
                     hint: Text(languageProvider.isEnglish ? 'Choose a customer' : 'ایک کسٹمر منتخب کریں'),
-                    onChanged: (String? newValue) {
+                    onChanged:_isReadOnly ? null :  (String? newValue) {
                       setState(() {
                         _selectedCustomerId = newValue;
                         _selectedCustomerName = customerProvider.customers
@@ -463,6 +461,8 @@ class _filledpageState extends State<filledpage> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: TextField(
                                   controller: _filledRows[i]['rateController'],
+                                  enabled: !_isReadOnly, // Disable in read-only mode
+
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),  // This allows only numeric input
@@ -482,6 +482,8 @@ class _filledpageState extends State<filledpage> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: TextField(
                                   controller: _filledRows[i]['qtyController'],
+                                  enabled: !_isReadOnly, // Disable in read-only mode
+
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly,  // This allows only numeric input
@@ -500,6 +502,8 @@ class _filledpageState extends State<filledpage> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: TextField(
                                   controller: _filledRows[i]['descriptionController'],
+                                  enabled: !_isReadOnly, // Disable in read-only mode
+
                                   onChanged: (value) {
                                     _updateRow(i, 'description', value);
                                   },
@@ -546,6 +550,8 @@ class _filledpageState extends State<filledpage> {
                   Text(languageProvider.isEnglish ? 'Discount (Amount):' : 'رعایت (رقم):', style: const TextStyle(fontSize: 18)),
                   TextField(
                     controller: _discountController,
+                    enabled: !_isReadOnly, // Disable in read-only mode
+
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
                       setState(() {
@@ -595,7 +601,7 @@ class _filledpageState extends State<filledpage> {
                                     value: 'instant',
                                     groupValue: _paymentType,
                                     title: Text(languageProvider.isEnglish ? 'Instant Payment' : 'فوری ادائیگی'),
-                                    onChanged: (value) {
+                                    onChanged:_isReadOnly ? null : (value) {
                                       setState(() {
                                         _paymentType = value!;
                                         _instantPaymentMethod = null; // Reset instant payment method
@@ -607,7 +613,7 @@ class _filledpageState extends State<filledpage> {
                                     value: 'udhaar',
                                     groupValue: _paymentType,
                                     title: Text(languageProvider.isEnglish ? 'Udhaar Payment' : 'ادھار ادائیگی'),
-                                    onChanged: (value) {
+                                    onChanged:_isReadOnly ? null :  (value) {
                                       setState(() {
                                         _paymentType = value!;
                                       });
@@ -624,7 +630,7 @@ class _filledpageState extends State<filledpage> {
                                       value: 'cash',
                                       groupValue: _instantPaymentMethod,
                                       title: Text(languageProvider.isEnglish ? 'Cash Payment' : 'نقد ادائیگی'),
-                                      onChanged: (value) {
+                                      onChanged: _isReadOnly ? null : (value) {
                                         setState(() {
                                           _instantPaymentMethod = value!;
                                         });
@@ -634,7 +640,7 @@ class _filledpageState extends State<filledpage> {
                                       value: 'online',
                                       groupValue: _instantPaymentMethod,
                                       title: Text(languageProvider.isEnglish ? 'Online Bank Transfer' : 'آن لائن بینک ٹرانسفر'),
-                                      onChanged: (value) {
+                                      onChanged: _isReadOnly ? null : (value) {
                                         setState(() {
                                           _instantPaymentMethod = value!;
                                         });
@@ -669,7 +675,8 @@ class _filledpageState extends State<filledpage> {
                       ],
                     ),
                   ),
-                  ElevatedButton  (
+                  if (!_isReadOnly)
+                    ElevatedButton  (
                     onPressed: () async {
                       // Validate customer selection
                       if (_selectedCustomerId == null || _selectedCustomerName == null) {

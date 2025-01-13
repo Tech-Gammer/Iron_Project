@@ -100,22 +100,22 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
         return pw.Column(
           children: [
             pw.Text(
-                // "Daily Expenses Report",
-            languageProvider.isEnglish ? 'Daily Expenses Report:' : 'روزانہ اخراجات کی رپورٹ',
+                "Daily Expenses Report",
+            // languageProvider.isEnglish ? 'Daily Expenses Report:' : 'روزانہ اخراجات کی رپورٹ',
                 style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
             pw.Text(
-                // "Opening Balance: ${_originalOpeningBalance.toStringAsFixed(2)} rs",
-                languageProvider.isEnglish ? 'Opening Balance:' : 'اوپننگ بیلنس:',
+                "Opening Balance: ${_originalOpeningBalance.toStringAsFixed(2)} rs",
+                // languageProvider.isEnglish ? 'Opening Balance:' : 'اوپننگ بیلنس:',
 
                 style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
             pw.Text(
-                // "Selected Date: ${DateFormat('dd:MM:yyyy').format(_selectedDate)}",
-                "${languageProvider.isEnglish ? 'Selected Date:' : 'تاریخ منتخب کریں:'} ${DateFormat('dd:MM:yyyy').format(_selectedDate)}",
+                "Selected Date: ${DateFormat('dd:MM:yyyy').format(_selectedDate)}",
+                // "${languageProvider.isEnglish ? 'Selected Date:' : 'تاریخ منتخب کریں:'} ${DateFormat('dd:MM:yyyy').format(_selectedDate)}",
                 style: pw.TextStyle(fontSize: 16)),
             pw.SizedBox(height: 20),
             pw.Text(
-                // "Expenses",
-                languageProvider.isEnglish ? "Expenses" : "اخراجات",
+                "Expenses",
+                // languageProvider.isEnglish ? "Expenses" : "اخراجات",
                 style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
             pw.ListView.builder(
               itemCount: expenses.length,
@@ -137,12 +137,12 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
             ),
             pw.SizedBox(height: 20),
             pw.Text(
-                // "Total Expenses: ${_totalExpense.toStringAsFixed(2)} rs",
-                "${languageProvider.isEnglish ? 'Total Expenses:' : 'کل اخراجات:'} ${_totalExpense.toStringAsFixed(2)} rs",
+                "Total Expenses: ${_totalExpense.toStringAsFixed(2)} rs",
+                // "${languageProvider.isEnglish ? 'Total Expenses:' : 'کل اخراجات:'} ${_totalExpense.toStringAsFixed(2)} rs",
                 style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
             pw.Text(
-                // "Remaining Balance: ${_remainingBalance.toStringAsFixed(2)} rs",
-                "${languageProvider.isEnglish ? 'Remaining Balance:' : 'بقایا رقم:'} ${_remainingBalance.toStringAsFixed(2)} rs",
+                "Remaining Balance: ${_remainingBalance.toStringAsFixed(2)} rs",
+                // "${languageProvider.isEnglish ? 'Remaining Balance:' : 'بقایا رقم:'} ${_remainingBalance.toStringAsFixed(2)} rs",
                 style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           ],
         );

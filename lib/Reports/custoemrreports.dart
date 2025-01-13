@@ -300,29 +300,29 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                  // 'Customer Ledegr for Sarya',
-                  languageProvider.isEnglish ? 'Customer Ledegr for Sarya' : 'سریا کے لیے کسٹمر لیڈیگر',
+                  'Customer Ledegr for Sarya',
+                  // languageProvider.isEnglish ? 'Customer Ledegr for Sarya' : 'سریا کے لیے کسٹمر لیڈیگر',
 
                   style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 20),
               pw.Text(
-                  // 'Customer Name: ${widget.customerName}',
-                  '${languageProvider.isEnglish ? 'Customer Name:' : 'گاہک کا نام:'} ${widget.customerName}',
+                  'Customer Name: ${widget.customerName}',
+                  // '${languageProvider.isEnglish ? 'Customer Name:' : 'گاہک کا نام:'} ${widget.customerName}',
 
                   style: pw.TextStyle(fontSize: 18)),
               pw.Text(
-                  // 'Phone Number: ${widget.customerPhone}',
-                  '${languageProvider.isEnglish ? 'Phone Number:' : 'فون نمبر:'} ${widget.customerPhone}',
+                  'Phone Number: ${widget.customerPhone}',
+                  // '${languageProvider.isEnglish ? 'Phone Number:' : 'فون نمبر:'} ${widget.customerPhone}',
                   style: pw.TextStyle(fontSize: 18)),
               pw.SizedBox(height: 20),
               pw.Text(
-                  // 'Print Date: $printDate',
-                  '${languageProvider.isEnglish ? 'Print Date:' : 'پرنٹ کی تاریخ:'} $printDate',
+                  'Print Date: $printDate',
+                  // '${languageProvider.isEnglish ? 'Print Date:' : 'پرنٹ کی تاریخ:'} $printDate',
                   style: pw.TextStyle(fontSize: 16, color: PdfColors.grey)),
               pw.SizedBox(height: 20),
               pw.Text(
-                  // 'Transactions:',
-                  languageProvider.isEnglish ? 'Transactions' : 'لین دین',
+                  'Transactions:',
+                  // languageProvider.isEnglish ? 'Transactions' : 'لین دین',
 
                   style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
               pw.Table.fromTextArray(

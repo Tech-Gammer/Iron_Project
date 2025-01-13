@@ -116,7 +116,8 @@ class _InvoicePageState extends State<InvoicePage> {
                   children: [
                     pw.Image(logoImage, width: 70, height: 70), // Adjust width and height as needed
                     pw.Text(
-                      languageProvider.isEnglish ? 'Invoice' : 'انوائس',
+                      // languageProvider.isEnglish ? 'Invoice' : 'انوائس',
+                      'Invoice',
                       style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
                     ),
                   ],
@@ -124,23 +125,28 @@ class _InvoicePageState extends State<InvoicePage> {
                 pw.Divider(),
                 // Customer Information
                 pw.Text(
-                  '${languageProvider.isEnglish ? 'Customer Name:' : 'کسٹمر کا نام:'} ${selectedCustomer.name}',
+                  // '${languageProvider.isEnglish ? 'Customer Name:' : 'کسٹمر کا نام:'} ${selectedCustomer.name}',
+                  'Customer Name: ${selectedCustomer.name}',
                   style: const pw.TextStyle(fontSize: 14),
                 ),
                 pw.Text(
-                  '${languageProvider.isEnglish ? 'Customer Number:' : 'کسٹمر نمبر:'} ${selectedCustomer.phone}',
+                  // '${languageProvider.isEnglish ? 'Customer Number:' : 'کسٹمر نمبر:'} ${selectedCustomer.phone}',
+                  'Customer Number: ${selectedCustomer.phone}',
                   style: const pw.TextStyle(fontSize: 14),
                 ),
                 pw.Text(
-                  '${languageProvider.isEnglish ? 'Customer Address:' : 'کسٹمر پتہ:'} ${selectedCustomer.address ?? ''}',
+                  // '${languageProvider.isEnglish ? 'Customer Address:' : 'کسٹمر پتہ:'} ${selectedCustomer.address ?? ''}',
+                  'Customer Address ${selectedCustomer.address}',
                   style: const pw.TextStyle(fontSize: 14),
                 ),
                 pw.Text(
-                  '${languageProvider.isEnglish ? 'Date:' : 'تاریخ:'} $formattedDate',
+                  // '${languageProvider.isEnglish ? 'Date:' : 'تاریخ:'} $formattedDate',
+                  'Date: $formattedDate',
                   style: const pw.TextStyle(fontSize: 8),
                 ),
                 pw.Text(
-                  '${languageProvider.isEnglish ? 'Time:' : 'وقت:'} $formattedTime',
+                  // '${languageProvider.isEnglish ? 'Time:' : 'وقت:'} $formattedTime',
+                  'Time: $formattedTime',
                   style: const pw.TextStyle(fontSize: 8),
                 ),
                 pw.SizedBox(height: 10),
@@ -148,23 +154,28 @@ class _InvoicePageState extends State<InvoicePage> {
                 pw.Table.fromTextArray(
                   headers: [
                     pw.Text(
-                      languageProvider.isEnglish ? 'Description' : 'تفصیل',
+                      // languageProvider.isEnglish ? 'Description' : 'تفصیل',
+                      'Description',
                       style: const pw.TextStyle(fontSize: 8),  // Reduced font size
                     ),
                     pw.Text(
-                      languageProvider.isEnglish ? 'Sarya Weight' : 'سرئے کا وزن',
+                      // languageProvider.isEnglish ? 'Sarya Weight' : 'سرئے کا وزن',
+                      'Weight',
                       style: const pw.TextStyle(fontSize: 10),  // Reduced font size
                     ),
                     pw.Text(
-                      languageProvider.isEnglish ? 'Sarya Qty' : 'سرئے کی مقدار',
+                      // languageProvider.isEnglish ? 'Sarya Qty' : 'سرئے کی مقدار',
+                        'Qty(Pcs)',
                       style: const pw.TextStyle(fontSize: 10),  // Reduced font size
                     ),
                     pw.Text(
-                      languageProvider.isEnglish ? 'Sarya Rate' : 'سرئے کی قیمت',
+                      // languageProvider.isEnglish ? 'Sarya Rate' : 'سرئے کی قیمت',
+                        'Rate',
                       style: const pw.TextStyle(fontSize: 10),  // Reduced font size
                     ),
                     pw.Text(
-                      languageProvider.isEnglish ? 'Total' : 'کل',
+                      // languageProvider.isEnglish ? 'Total' : 'کل',
+                      'Total',
                       style: const pw.TextStyle(fontSize: 10),  // Reduced font size
                     ),
                   ],
@@ -172,7 +183,7 @@ class _InvoicePageState extends State<InvoicePage> {
                     return [
                       pw.Text(row['description'], style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
                       pw.Text(row['weight'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
-                      pw.Text(row['qty'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
+                      pw.Text(row['qty'].toStringAsFixed(0), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
                       pw.Text(row['rate'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
                       pw.Text(row['total'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
                     ];
@@ -183,14 +194,16 @@ class _InvoicePageState extends State<InvoicePage> {
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('${languageProvider.isEnglish ? 'Sub Total:' : 'کل رقم:'}'),
+                    // pw.Text('${languageProvider.isEnglish ? 'Sub Total:' : 'کل رقم:'}'),
+                    pw.Text('Sub Total:'),
                     pw.Text(_calculateSubtotal().toStringAsFixed(2)),
                   ],
                 ),
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('${languageProvider.isEnglish ? 'Discount:' : 'رعایت:'}'),
+                    // pw.Text('${languageProvider.isEnglish ? 'Discount:' : 'رعایت:'}'),
+                    pw.Text('Discount:'),
                     pw.Text(_discount.toStringAsFixed(2)),
                   ],
                 ),
@@ -198,7 +211,8 @@ class _InvoicePageState extends State<InvoicePage> {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      '${languageProvider.isEnglish ? 'Grand Total:' : 'مجموعی کل:'}',
+                      // '${languageProvider.isEnglish ? 'Grand Total:' : 'مجموعی کل:'}',
+                     'Grand Total:',
                       style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
                     ),
                     pw.Text(
@@ -214,7 +228,9 @@ class _InvoicePageState extends State<InvoicePage> {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      languageProvider.isEnglish ? 'Previous Balance:' : 'پچھلا بیلنس:',
+                      // languageProvider.isEnglish ? 'Previous Balance:' : 'پچھلا بیلنس:',
+                     'Previous Balance:',
+
                       style: const pw.TextStyle(fontSize: 14),
                     ),
                     pw.Text(
@@ -268,7 +284,7 @@ class _InvoicePageState extends State<InvoicePage> {
         }
       }
 
-      // If no ledger entry exists, return 0 as default
+      // If no ledger entry exists, return 0 as defaults
       return 0.0;
     } catch (e) {
       print("Error fetching remaining balance: $e");

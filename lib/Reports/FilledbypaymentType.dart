@@ -184,8 +184,8 @@ class _FilledPaymentTypeReportPageState extends State<FilledPaymentTypeReportPag
           return pw.Column(
             children: [
               pw.Text(
-                  // 'Payment Type Report For Filled',
-                  languageProvider.isEnglish ? 'Payment Type Report For Filled' : 'فلڈ کے لیے ادائیگی کی قسم کی رپورٹ', // Dynamic text based on language
+                  'Payment Type Report For Filled',
+                  // languageProvider.isEnglish ? 'Payment Type Report For Filled' : 'فلڈ کے لیے ادائیگی کی قسم کی رپورٹ', // Dynamic text based on language
 
                   style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 20),
@@ -196,16 +196,16 @@ class _FilledPaymentTypeReportPageState extends State<FilledPaymentTypeReportPag
                 context: context,
                 data: [
                   [
-                    // 'Customer',
-                    languageProvider.isEnglish ? 'Customer' : 'کسٹمر', // Dynamic text based on language
-                    // 'Payment Type',
-                    languageProvider.isEnglish ? 'Payment Type' : 'ادائیگی کی قسم', // Dynamic text based on language
-                    // 'Payment Method',
-                    languageProvider.isEnglish ? 'Payment Method' : 'ادائیگی کی طریقہ', // Dynamic text based on language
-                    // 'Amount',
-                    languageProvider.isEnglish ? 'Amount' : 'رقم', // Dynamic text based on language
-                    // 'Date'
-                    languageProvider.isEnglish ? 'Date' : 'تاریخ', // Dynamic text based on language
+                    'Customer',
+                    // languageProvider.isEnglish ? 'Customer' : 'کسٹمر', // Dynamic text based on language
+                    'Payment Type',
+                    // languageProvider.isEnglish ? 'Payment Type' : 'ادائیگی کی قسم', // Dynamic text based on language
+                    'Payment Method',
+                    // languageProvider.isEnglish ? 'Payment Method' : 'ادائیگی کی طریقہ', // Dynamic text based on language
+                    'Amount',
+                    // languageProvider.isEnglish ? 'Amount' : 'رقم', // Dynamic text based on language
+                    'Date'
+                    // languageProvider.isEnglish ? 'Date' : 'تاریخ', // Dynamic text based on language
 
                   ],
                   ..._reportData.map((filled) {
@@ -221,8 +221,8 @@ class _FilledPaymentTypeReportPageState extends State<FilledPaymentTypeReportPag
               ),
               pw.SizedBox(height: 20),
               pw.Text(
-                  // 'Total Amount: Rs ${_calculateTotalAmount().toStringAsFixed(2)}'
-                  '${languageProvider.isEnglish ? 'Total Amount: Rs ${_calculateTotalAmount().toStringAsFixed(2)}' : 'کل رقم:${_calculateTotalAmount().toStringAsFixed(2)}روپے' }'
+                  'Total Amount: Rs ${_calculateTotalAmount().toStringAsFixed(2)}'
+                  // '${languageProvider.isEnglish ? 'Total Amount: Rs ${_calculateTotalAmount().toStringAsFixed(2)}' : 'کل رقم:${_calculateTotalAmount().toStringAsFixed(2)}روپے' }'
 
               ),
             ],
