@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iron_project_new/userspage.dart';
 import 'package:provider/provider.dart';
 import 'Customer/customerlist.dart';
 import 'DailyExpensesPages/viewexpensepage.dart';
@@ -11,6 +12,7 @@ import 'Invoice/invoiceslist.dart';
 import 'Provider/lanprovider.dart';
 import 'Reports/ledgerselcttion.dart';
 import 'Reports/reportselecttionpage.dart';
+
 
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
@@ -51,7 +53,7 @@ class Dashboard extends StatelessWidget {
             // Web view
             return Row(
               children: [
-                _buildSidebar(languageProvider),
+                _buildSidebar(context, languageProvider),
                 Expanded(child: _buildContent(context,languageProvider)),
               ],
             );
@@ -100,29 +102,38 @@ class Dashboard extends StatelessWidget {
             leading: const Icon(Icons.home),
             title: Text(languageProvider.isEnglish ? 'Home' : 'ہوم'),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.push(context, MaterialPageRoute(builder: (context)=>Dashboard()));
             },
           ),
           ListTile(
             leading: const Icon(Icons.account_balance_wallet),
             title: Text(languageProvider.isEnglish ? 'Transactions' : 'لین دین'),
             onTap: () {
-              Navigator.pop(context);
-            },
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ledgerselection(),
+                ),
+              );              },
           ),
           ListTile(
             leading: const Icon(Icons.settings),
             title: Text(languageProvider.isEnglish ? 'Settings' : 'ترتیبات'),
             onTap: () {
-              Navigator.pop(context);
-            },
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UsersPage(),
+                ),
+              );
+              },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSidebar(LanguageProvider languageProvider) {
+  Widget _buildSidebar(BuildContext context, LanguageProvider languageProvider) {
     return Container(
       width: 200,
       color: Colors.blue[50],
@@ -132,21 +143,33 @@ class Dashboard extends StatelessWidget {
             leading: const Icon(Icons.home),
             title: Text(languageProvider.isEnglish ? 'Home' : 'ہوم'),
             onTap: () {
-              // Navigate to Home
-            },
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => Dashboard()),
+              );
+              },
           ),
           ListTile(
             leading: const Icon(Icons.account_balance_wallet),
             title: Text(languageProvider.isEnglish ? 'Transactions' : 'لین دین'),
             onTap: () {
-              // Navigate to Transactions
-            },
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ledgerselection(),
+                ),
+              );            },
           ),
           ListTile(
             leading: const Icon(Icons.settings),
             title: Text(languageProvider.isEnglish ? 'Settings' : 'ترتیبات'),
             onTap: () {
-              // Navigate to Settings
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UsersPage(),
+                ),
+              );
             },
           ),
         ],
@@ -210,7 +233,9 @@ class Dashboard extends StatelessWidget {
             );
           }),
           _buildDashboardCard(
-              Icons.settings, languageProvider.isEnglish ? 'Settings' : 'ترتیبات', Colors.orange,(){}),
+              Icons.settings, languageProvider.isEnglish ? 'Settings' : 'ترتیبات', Colors.orange,(){
+                Navigator.push(context, MaterialPageRoute(builder: (context)=>UsersPage()));
+          }),
         ],
       ),
     );
