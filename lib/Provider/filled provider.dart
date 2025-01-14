@@ -281,6 +281,98 @@ class FilledProvider with ChangeNotifier {
     }).toList();
   }
 
+  Future<void> payFilledWithSeparateMethod(
+      BuildContext context, String filledId, double paymentAmount, String paymentMethod) async {
+    try {
+      // Fetch the current filled data from the database
+      final filledSnapshot = await _db.child('filled').child(filledId).get();
+      if (!filledSnapshot.exists) {
+        throw Exception("Filled not found.");
+      }
+
+      // Convert the retrieved data to Map<String, dynamic>
+      final filled = Map<String, dynamic>.from(filledSnapshot.value as Map);
+
+      // Get the current payment amounts (default to 0.0 if not set)
+      final currentCashPaid = (filled['cashPaidAmount'] ?? 0.0) as double;
+      final currentOnlinePaid = (filled['onlinePaidAmount'] ?? 0.0) as double;
+      final grandTotal = (filled['grandTotal'] ?? 0.0) as double;
+
+      // Calculate the total paid so far
+      final totalPaid = currentCashPaid + currentOnlinePaid;
+
+      // Check if the new payment exceeds the remaining balance
+      if (paymentAmount > (grandTotal - totalPaid)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Payment exceeds the remaining filled balance.")),
+        );
+        throw Exception("Payment exceeds the remaining filled balance.");
+      }
+
+      // Add the new payment to the appropriate field
+      double updatedCashPaid = currentCashPaid;
+      double updatedOnlinePaid = currentOnlinePaid;
+
+      if (paymentMethod == 'Cash') {
+        updatedCashPaid += paymentAmount;
+        // Save the cash payment in a child node with date
+        await _db.child('filled').child(filledId).child('cashPayments').push().set({
+          'amount': paymentAmount,
+          'date': DateTime.now().toIso8601String(),
+        });
+      } else if (paymentMethod == 'Online') {
+        updatedOnlinePaid += paymentAmount;
+        // Save the online payment in a child node with date
+        await _db.child('filled').child(filledId).child('onlinePayments').push().set({
+          'amount': paymentAmount,
+          'date': DateTime.now().toIso8601String(),
+        });
+      }
+
+      // Get the current debit amount (default to 0.0 if not set)
+      final currentDebit = (filled['debitAmount'] ?? 0.0) as double;
+
+      // Check if the payment amount exceeds the remaining balance
+      if (paymentAmount > (grandTotal - currentDebit)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Payment exceeds the remaining filled balance.")),
+        );
+        throw Exception("Payment exceeds the remaining filled balance.");
+      }
+
+      // Update the filled with the new payment data
+      final updatedDebit = currentDebit + paymentAmount;
+      final debitAt = DateTime.now().toIso8601String();
+
+      await _db.child('filled').child(filledId).update({
+        'cashPaidAmount': updatedCashPaid,
+        'onlinePaidAmount': updatedOnlinePaid,
+        'debitAmount': updatedDebit, // Make sure this is updated
+        'debitAt': debitAt,
+      });
+
+      // Update the ledger with the calculated remaining balance
+      await _updateCustomerLedger(
+        filled['customerId'],
+        creditAmount: 0.0,
+        debitAmount: paymentAmount,
+        remainingBalance: grandTotal - updatedDebit,
+        filledNumber: filled['filledNumber'],
+      );
+
+      // Refresh the filled list
+      await fetchFilled();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Payment of Rs. $paymentAmount recorded successfully as $paymentMethod.')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save payment: ${e.toString()}')),
+      );
+      throw Exception('Failed to save payment: $e');
+    }
+  }
 
 
 

@@ -136,86 +136,6 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
     }
   }
 
-//   Future<void> _fetchReportData() async {
-//     try {
-//       DatabaseReference _invoicesRef = _db.ref('invoices');  // Reference to 'invoices' node
-//
-//       final invoicesSnapshot = await _invoicesRef.get();  // Fetch data
-//
-//       if (!invoicesSnapshot.exists) {
-//         throw Exception("No invoices found.");
-//       }
-//
-//       List<Map<String, dynamic>> reportData = [];
-//
-//       // Iterate through all invoices
-//       for (var invoiceSnapshot in invoicesSnapshot.children) {
-//         final invoiceId = invoiceSnapshot.key;
-//         final invoice = Map<String, dynamic>.from(invoiceSnapshot.value as Map);
-//
-//         // Filter by customer ID if selected
-//         if (_selectedCustomerId != null && invoice['customerId'] != _selectedCustomerId) {
-//           continue;
-//         }
-//
-//         // Filter by payment type if selected
-//         if (_selectedPaymentType != 'all' && invoice['paymentType'] != _selectedPaymentType) {
-//           continue;
-//         }
-//
-//         // Filter by date range if selected
-//         if (_selectedDateRange != null) {
-//           DateTime invoiceDate = DateTime.parse(invoice['createdAt']);
-//           if (invoiceDate.isBefore(_selectedDateRange!.start) || invoiceDate.isAfter(_selectedDateRange!.end)) {
-//             continue;
-//           }
-//         }
-//
-//         // Fetch and process cash payments
-//         final cashPayments = invoice['cashPayments'] != null
-//             ? Map<String, dynamic>.from(invoice['cashPayments'])
-//             : {};
-//         for (var payment in cashPayments.values) {
-//           reportData.add({
-//             'invoiceId': invoiceId,
-//             'customerId': invoice['customerId'],
-//             'customerName': invoice['customerName'],
-//             'paymentType': invoice['paymentType'],
-//             'paymentMethod': 'Cash',
-//             'amount': payment['amount'],
-//             'date': payment['date'],
-//             'createdAt': invoice['createdAt'],
-//           });
-//         }
-//
-//         // Fetch and process online payments
-//         final onlinePayments = invoice['onlinePayments'] != null
-//             ? Map<String, dynamic>.from(invoice['onlinePayments'])
-//             : {};
-//         for (var payment in onlinePayments.values) {
-//           reportData.add({
-//             'invoiceId': invoiceId,
-//             'customerId': invoice['customerId'],
-//             'customerName': invoice['customerName'],
-//             'paymentType': invoice['paymentType'],
-//             'paymentMethod': 'Online',
-//             'amount': payment['amount'],
-//             'date': payment['date'],
-//             'createdAt': invoice['createdAt'],
-//           });
-//         }
-//       }
-//
-//       // Update the report data with the fetched information
-//       setState(() {
-//         _reportData = reportData;
-//       });
-//     } catch (e) {
-//       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to fetch report: $e')));
-//     }
-//   }
-
-
   Future<void> _selectDateRange(BuildContext context) async {
     final DateTimeRange? picked = await showDateRangePicker(
       context: context,
@@ -291,9 +211,10 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
 // Method to calculate the total amount
   double _calculateTotalAmount() {
     return _reportData.fold(0.0, (sum, invoice) {
-      return sum + (invoice['grandTotal'] ?? 0.0);
+      return sum + (invoice['amount'] ?? 0.0); // Use 'amount' field for total calculation
     });
   }
+
 
   Future<void> _generateAndPrintPDF() async {
     final pdf = pw.Document();
@@ -336,7 +257,7 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                       invoice['customerName'] ?? 'N/A',
                       invoice['paymentType'] ?? 'N/A',
                       invoice['paymentMethod'] ?? 'N/A',
-                      'Rs ${invoice['grandTotal']}',
+                      'Rs ${invoice['amount']}',
                       DateFormat.yMMMd().format(DateTime.parse(invoice['createdAt'])),
                     ];
                   }).toList(),
