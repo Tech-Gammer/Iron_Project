@@ -450,135 +450,323 @@ class _InvoicePageState extends State<InvoicePage> {
                   // Display columns for the invoice details
                   Text(languageProvider.isEnglish ? 'Invoice Details:' : 'انوائس کی تفصیلات:',
                     style: TextStyle(color: Colors.teal.shade800, fontSize: 18),                  ),
-                  Table(
-                    border: TableBorder.all(),
-                    columnWidths: const {
-                      0: FlexColumnWidth(2),
-                      1: FlexColumnWidth(2),
-                      2: FlexColumnWidth(2),
-                      3: FlexColumnWidth(2),
-                      4: FlexColumnWidth(3),
-                      5: FlexColumnWidth(1), // For Delete button column
-                    },
-                    children: [
-                      TableRow(
-                        children: [
-                           TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Total' : 'کل', textAlign: TextAlign.center))),
-                           TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Sarya Rate' : 'سرئے کی قیمت', textAlign: TextAlign.center))),
-                           TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Sarya Qty' : 'سرئے کی مقدار', textAlign: TextAlign.center))),
-                           TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Sarya Weight(Kg)' : 'سرئے کا وزن(کلوگرام)', textAlign: TextAlign.center))),
-                           TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Description' : 'تفصیل', textAlign: TextAlign.center))),
-                           TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Delete' : 'حذف کریں', textAlign: TextAlign.center))),
-                        ],
+                  // Table(
+                  //   border: TableBorder.all(),
+                  //   columnWidths: const {
+                  //     0: FlexColumnWidth(2),
+                  //     1: FlexColumnWidth(2),
+                  //     2: FlexColumnWidth(2),
+                  //     3: FlexColumnWidth(2),
+                  //     4: FlexColumnWidth(3),
+                  //     5: FlexColumnWidth(1), // For Delete button column
+                  //   },
+                  //   children: [
+                  //     TableRow(
+                  //       children: [
+                  //          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Total' : 'کل', textAlign: TextAlign.center))),
+                  //          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Sarya Rate' : 'سرئے کی قیمت', textAlign: TextAlign.center))),
+                  //          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Sarya Qty' : 'سرئے کی مقدار', textAlign: TextAlign.center))),
+                  //          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Sarya Weight(Kg)' : 'سرئے کا وزن(کلوگرام)', textAlign: TextAlign.center))),
+                  //          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Description' : 'تفصیل', textAlign: TextAlign.center))),
+                  //          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Delete' : 'حذف کریں', textAlign: TextAlign.center))),
+                  //       ],
+                  //     ),
+                  //     // Generate a row for each item in _invoiceRows
+                  //     for (int i = 0; i < _invoiceRows.length; i++)
+                  //       TableRow(
+                  //         children: [
+                  //           // Total
+                  //           TableCell(
+                  //             child: Padding(
+                  //               padding: const EdgeInsets.all(8.0),
+                  //               child: Text(_invoiceRows[i]['total']?.toStringAsFixed(2) ?? '0.00', textAlign: TextAlign.center),
+                  //             ),
+                  //           ),
+                  //           // Sarya Rate
+                  //           TableCell(
+                  //             child: Padding(
+                  //               padding: const EdgeInsets.all(8.0),
+                  //               child: TextField(
+                  //                 // controller: TextEditingController(text: _invoiceRows[i]['rate'].toString()),
+                  //                 controller: _invoiceRows[i]['rateController'],
+                  //                 enabled: !_isReadOnly, // Disable in read-only mode
+                  //                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  //                 inputFormatters: [
+                  //                   FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),  // This allows only numeric input
+                  //                 ],
+                  //                 onChanged: (value) {
+                  //                   _updateRow(i, 'rate', double.tryParse(value) ?? 0.0);
+                  //                 },
+                  //                 decoration: InputDecoration(hintText: languageProvider.isEnglish ? 'Rate' : 'قیمت',
+                  //                   hintStyle: TextStyle(color: Colors.teal.shade600),
+                  //                 ),
+                  //               ),
+                  //             ),
+                  //           ),
+                  //           // Sarya Qty
+                  //           TableCell(
+                  //             child: Padding(
+                  //               padding: const EdgeInsets.all(8.0),
+                  //               child: TextField(
+                  //                 // controller: TextEditingController(text: _invoiceRows[i]['qty'].toString()),
+                  //                 controller: _invoiceRows[i]['qtyController'],
+                  //                 enabled: !_isReadOnly, // Disable in read-only mode
+                  //
+                  //                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  //                 inputFormatters: [
+                  //                   FilteringTextInputFormatter.digitsOnly,  // This allows only numeric input
+                  //                 ],
+                  //                 onChanged: (value) {
+                  //                   _updateRow(i, 'qty', double.tryParse(value) ?? 0.0);
+                  //                 },
+                  //                 decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Qty' : 'مقدار',
+                  //                   hintStyle: TextStyle(color: Colors.teal.shade600),),
+                  //               ),
+                  //             ),
+                  //           ),
+                  //           // Sarya Weight
+                  //           TableCell(
+                  //             child: Padding(
+                  //               padding: const EdgeInsets.all(8.0),
+                  //               child: TextField(
+                  //                 // controller: TextEditingController(text: _invoiceRows[i]['weight'].toString()),
+                  //                 controller: _invoiceRows[i]['weightController'],
+                  //                 enabled: !_isReadOnly, // Disable in read-only mode
+                  //
+                  //                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  //                 inputFormatters: [
+                  //                   FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,4}')),  // This allows only numeric input
+                  //                 ],
+                  //                 onChanged: (value) {
+                  //                   _updateRow(i, 'weight', double.tryParse(value) ?? 0.0);
+                  //                 },
+                  //                 decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Weight' : 'وزن',
+                  //                   hintStyle: TextStyle(color: Colors.teal.shade600),),
+                  //               ),
+                  //             ),
+                  //           ),
+                  //           // Description
+                  //           TableCell(
+                  //             child: Padding(
+                  //               padding: const EdgeInsets.all(8.0),
+                  //               child: TextField(
+                  //                 // controller: TextEditingController(text: _invoiceRows[i]['description']),
+                  //                 controller: _invoiceRows[i]['descriptionController'],
+                  //                 enabled: !_isReadOnly, // Disable in read-only mode
+                  //
+                  //                 onChanged: (value) {
+                  //                   _updateRow(i, 'description', value);
+                  //                 },
+                  //                 decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Description' : 'تفصیل',
+                  //                   hintStyle: TextStyle(color: Colors.teal.shade600),),
+                  //               ),
+                  //             ),
+                  //           ),
+                  //           // Delete Button
+                  //           TableCell(
+                  //             child: Padding(
+                  //               padding: const EdgeInsets.all(8.0),
+                  //               child: IconButton(
+                  //                 icon: const Icon(Icons.delete,color: Colors.red,),
+                  //                 onPressed: () {
+                  //                   _deleteRow(i); // Delete the current row
+                  //                 },
+                  //               ),
+                  //             ),
+                  //           ),
+                  //         ],
+                  //       ),
+                  //   ],
+                  // ),
+                  // add row button
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal, // Enable horizontal scrolling
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: MediaQuery.of(context).size.width, // Ensures table takes up at least screen width
                       ),
-                      // Generate a row for each item in _invoiceRows
-                      for (int i = 0; i < _invoiceRows.length; i++)
-                        TableRow(
-                          children: [
-                            // Total
-                            TableCell(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(_invoiceRows[i]['total']?.toStringAsFixed(2) ?? '0.00', textAlign: TextAlign.center),
-                              ),
-                            ),
-                            // Sarya Rate
-                            TableCell(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: TextField(
-                                  // controller: TextEditingController(text: _invoiceRows[i]['rate'].toString()),
-                                  controller: _invoiceRows[i]['rateController'],
-                                  enabled: !_isReadOnly, // Disable in read-only mode
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),  // This allows only numeric input
-                                  ],
-                                  onChanged: (value) {
-                                    _updateRow(i, 'rate', double.tryParse(value) ?? 0.0);
-                                  },
-                                  decoration: InputDecoration(hintText: languageProvider.isEnglish ? 'Rate' : 'قیمت',
-                                    hintStyle: TextStyle(color: Colors.teal.shade600),
+                      child: Table(
+                        border: TableBorder.all(),
+                        columnWidths: const {
+                          0: FlexColumnWidth(3),
+                          1: FlexColumnWidth(3),
+                          2: FlexColumnWidth(3),
+                          3: FlexColumnWidth(3),
+                          4: FlexColumnWidth(5),
+                          5: FlexColumnWidth(3), // For Delete button column
+                        },
+                        children: [
+                          TableRow(
+                            children: [
+                              TableCell(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    languageProvider.isEnglish ? 'Total' : 'کل',
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               ),
-                            ),
-                            // Sarya Qty
-                            TableCell(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: TextField(
-                                  // controller: TextEditingController(text: _invoiceRows[i]['qty'].toString()),
-                                  controller: _invoiceRows[i]['qtyController'],
-                                  enabled: !_isReadOnly, // Disable in read-only mode
-
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.digitsOnly,  // This allows only numeric input
-                                  ],
-                                  onChanged: (value) {
-                                    _updateRow(i, 'qty', double.tryParse(value) ?? 0.0);
-                                  },
-                                  decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Qty' : 'مقدار',
-                                    hintStyle: TextStyle(color: Colors.teal.shade600),),
+                              TableCell(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    languageProvider.isEnglish ? 'Sarya Rate' : 'سرئے کی قیمت',
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
                               ),
-                            ),
-                            // Sarya Weight
-                            TableCell(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: TextField(
-                                  // controller: TextEditingController(text: _invoiceRows[i]['weight'].toString()),
-                                  controller: _invoiceRows[i]['weightController'],
-                                  enabled: !_isReadOnly, // Disable in read-only mode
-
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,4}')),  // This allows only numeric input
-                                  ],
-                                  onChanged: (value) {
-                                    _updateRow(i, 'weight', double.tryParse(value) ?? 0.0);
-                                  },
-                                  decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Weight' : 'وزن',
-                                    hintStyle: TextStyle(color: Colors.teal.shade600),),
+                              TableCell(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    languageProvider.isEnglish ? 'Sarya Qty' : 'سرئے کی مقدار',
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
                               ),
-                            ),
-                            // Description
-                            TableCell(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: TextField(
-                                  // controller: TextEditingController(text: _invoiceRows[i]['description']),
-                                  controller: _invoiceRows[i]['descriptionController'],
-                                  enabled: !_isReadOnly, // Disable in read-only mode
-
-                                  onChanged: (value) {
-                                    _updateRow(i, 'description', value);
-                                  },
-                                  decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Description' : 'تفصیل',
-                                    hintStyle: TextStyle(color: Colors.teal.shade600),),
+                              TableCell(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    languageProvider.isEnglish ? 'Sarya Weight(Kg)' : 'سرئے کا وزن(کلوگرام)',
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
                               ),
-                            ),
-                            // Delete Button
-                            TableCell(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: IconButton(
-                                  icon: const Icon(Icons.delete,color: Colors.red,),
-                                  onPressed: () {
-                                    _deleteRow(i); // Delete the current row
-                                  },
+                              TableCell(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    languageProvider.isEnglish ? 'Description' : 'تفصیل',
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
                               ),
+                              TableCell(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    languageProvider.isEnglish ? 'Delete' : 'حذف کریں',
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          // Generate a row for each item in _invoiceRows
+                          for (int i = 0; i < _invoiceRows.length; i++)
+                            TableRow(
+                              children: [
+                                // Total
+                                TableCell(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      _invoiceRows[i]['total']?.toStringAsFixed(2) ?? '0.00',
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                                // Sarya Rate
+                                TableCell(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: TextField(
+                                      controller: _invoiceRows[i]['rateController'],
+                                      enabled: !_isReadOnly,
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                                      ],
+                                      onChanged: (value) {
+                                        _updateRow(i, 'rate', double.tryParse(value) ?? 0.0);
+                                      },
+                                      decoration: InputDecoration(
+                                        hintText: languageProvider.isEnglish ? 'Rate' : 'قیمت',
+                                        hintStyle: TextStyle(color: Colors.teal.shade600),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // Sarya Qty
+                                TableCell(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: TextField(
+                                      controller: _invoiceRows[i]['qtyController'],
+                                      enabled: !_isReadOnly,
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                      ],
+                                      onChanged: (value) {
+                                        _updateRow(i, 'qty', double.tryParse(value) ?? 0.0);
+                                      },
+                                      decoration: InputDecoration(
+                                        hintText: languageProvider.isEnglish ? 'Qty' : 'مقدار',
+                                        hintStyle: TextStyle(color: Colors.teal.shade600),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // Sarya Weight
+                                TableCell(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: TextField(
+                                      controller: _invoiceRows[i]['weightController'],
+                                      enabled: !_isReadOnly,
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,4}')),
+                                      ],
+                                      onChanged: (value) {
+                                        _updateRow(i, 'weight', double.tryParse(value) ?? 0.0);
+                                      },
+                                      decoration: InputDecoration(
+                                        hintText: languageProvider.isEnglish ? 'Weight' : 'وزن',
+                                        hintStyle: TextStyle(color: Colors.teal.shade600),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // Description
+                                TableCell(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: TextField(
+                                      controller: _invoiceRows[i]['descriptionController'],
+                                      enabled: !_isReadOnly,
+                                      onChanged: (value) {
+                                        _updateRow(i, 'description', value);
+                                      },
+                                      decoration: InputDecoration(
+                                        hintText: languageProvider.isEnglish ? 'Description' : 'تفصیل',
+                                        hintStyle: TextStyle(color: Colors.teal.shade600),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // Delete Button
+                                TableCell(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: IconButton(
+                                      icon: const Icon(Icons.delete, color: Colors.red),
+                                      onPressed: () {
+                                        _deleteRow(i);
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
-                  // add row button
+
                   IconButton(onPressed: (){
                     _addNewRow();
                   }, icon: const Icon(Icons.add, color: Colors.teal)),

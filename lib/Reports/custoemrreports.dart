@@ -25,6 +25,7 @@ class CustomerReportPage extends StatefulWidget {
 class _CustomerReportPageState extends State<CustomerReportPage> {
   DateTimeRange? selectedDateRange;
 
+
   @override
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
@@ -174,59 +175,63 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.teal.shade700),
                     ),
                     const SizedBox(height: 10),
-                    Center(
-                      child: SizedBox(
-                        width: double.infinity,  // Make the table take full width
-                        child: DataTable(
-                          headingRowHeight: 60,  // Increase heading row height
-                          dataRowHeight: 60,  // Increase data row height
-                          columnSpacing: 20,  // Increase column spacing
-                          columns: [
-                            DataColumn(label: Text(
-                                // 'Date'
-                              languageProvider.isEnglish ? 'Date' : 'ڈیٹ',
+                    SizedBox(
+                      width: double.infinity,  // Make the table take full width
+                      child: Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            headingRowHeight: 60,  // Increase heading row height
+                            dataRowHeight: 60,  // Increase data row height
+                            columnSpacing: 20,  // Increase column spacing
+                            columns: [
+                              DataColumn(label: Text(
+                                  // 'Date'
+                                languageProvider.isEnglish ? 'Date' : 'ڈیٹ',
 
-                            )),
-                            DataColumn(label: Text(
-                                // 'Invoice Number'
-                              languageProvider.isEnglish ? 'Invoice Number' : 'انوائس نمبر',
+                              )),
+                              DataColumn(label: Text(
+                                  // 'Invoice Number'
+                                languageProvider.isEnglish ? 'Invoice Number' : 'انوائس نمبر',
 
-                            )),
-                            DataColumn(label: Text(
-                                // 'Transaction Type'
-                              languageProvider.isEnglish ? 'Transaction Type' : 'لین دین کی قسم ',
+                              )),
+                              DataColumn(label: Text(
+                                  // 'Transaction Type'
+                                languageProvider.isEnglish ? 'Transaction Type' : 'لین دین کی قسم ',
 
-                            )),
-                            DataColumn(label: Text(
-                                // 'Debit (-)'
-                              languageProvider.isEnglish ? 'Debit (-)' : '(-)ڈیبٹ',
-                            )),
-                            DataColumn(label: Text(
-                                // 'Credit (+)'
-                              languageProvider.isEnglish ? 'Credit (+)' : '(+)کریڈٹ',
+                              )),
+                              DataColumn(label: Text(
+                                  // 'Debit (-)'
+                                languageProvider.isEnglish ? 'Debit (-)' : '(-)ڈیبٹ',
+                              )),
+                              DataColumn(label: Text(
+                                  // 'Credit (+)'
+                                languageProvider.isEnglish ? 'Credit (+)' : '(+)کریڈٹ',
 
-                            )),
-                            DataColumn(label: Text(
-                                // 'Balance'
-                              languageProvider.isEnglish ? 'Balance' : 'رقم',
+                              )),
+                              DataColumn(label: Text(
+                                  // 'Balance'
+                                languageProvider.isEnglish ? 'Balance' : 'رقم',
 
-                            )),
-                          ],
-                          rows: transactions.map((transaction) {
-                            return DataRow(
-                              cells: [
-                                DataCell(Text(transaction['date'] ?? 'N/A')),
-                                DataCell(Text(transaction['invoiceNumber'] ?? 'N/A')),
-                                DataCell(Text(transaction['credit'] != 0.0 ? 'Invoice' : (transaction['debit'] != 0.0 ? 'Bill' : '-'))),
-                                DataCell(Text(transaction['debit'] != 0.0 ? 'Rs ${transaction['debit']?.toStringAsFixed(2)}' : '-')),
-                                DataCell(Text(transaction['credit'] != 0.0 ? 'Rs ${transaction['credit']?.toStringAsFixed(2)}' : '-')),
-                                DataCell(Text('Rs ${transaction['balance']?.toStringAsFixed(2)}')),
-                              ],
-                            );
-                          }).toList(),
+                              )),
+                            ],
+                            rows: transactions.map((transaction) {
+                              return DataRow(
+                                cells: [
+                                  DataCell(Text(transaction['date'] ?? 'N/A')),
+                                  DataCell(Text(transaction['invoiceNumber'] ?? 'N/A')),
+                                  DataCell(Text(transaction['credit'] != 0.0 ? 'Invoice' : (transaction['debit'] != 0.0 ? 'Bill' : '-'))),
+                                  DataCell(Text(transaction['debit'] != 0.0 ? 'Rs ${transaction['debit']?.toStringAsFixed(2)}' : '-')),
+                                  DataCell(Text(transaction['credit'] != 0.0 ? 'Rs ${transaction['credit']?.toStringAsFixed(2)}' : '-')),
+                                  DataCell(Text('Rs ${transaction['balance']?.toStringAsFixed(2)}')),
+                                ],
+                              );
+                            }).toList(),
+                          ),
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 20),
                     // Button to Generate PDF and Print
                     Center(

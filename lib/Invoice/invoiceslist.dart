@@ -224,7 +224,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                               style: TextStyle(fontSize: 16)),
                           Text(
                             // 'Remaining: Rs ${remainingAmount.toStringAsFixed(2)}',
-                            '${languageProvider.isEnglish ? 'remainingAmount' : 'بقایا رقم'} ${remainingAmount.toStringAsFixed(2)}',
+                            '${languageProvider.isEnglish ? 'Remaining Amount' : 'بقایا رقم'} ${remainingAmount.toStringAsFixed(2)}',
 
                             style: TextStyle(fontSize: 16, color: Colors.red),
                           ),

@@ -175,20 +175,15 @@ class _FilledLedgerReportPageState extends State<FilledLedgerReportPage> {
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.teal.shade700),
                     ),
                     const SizedBox(height: 10),
-                    Center(
-                      child: SizedBox(
-                        width: double.infinity,  // Make the table take full width
+                    SizedBox(
+                      width: double.infinity,  // Make the table take full width
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
                         child: DataTable(
                           headingRowHeight: 60,  // Increase heading row height
                           dataRowHeight: 60,  // Increase data row height
                           columnSpacing: 20,  // Increase column spacing
                           columns: [
-                            // DataColumn(label: Text('Date')),
-                            // DataColumn(label: Text('Filled Number')),
-                            // DataColumn(label: Text('Transaction Type')),
-                            // DataColumn(label: Text('Debit (-)')),
-                            // DataColumn(label: Text('Credit (+)')),
-                            // DataColumn(label: Text('Balance')),
                             DataColumn(label: Text(
                               // 'Date'
                               languageProvider.isEnglish ? 'Date' : 'ڈیٹ',

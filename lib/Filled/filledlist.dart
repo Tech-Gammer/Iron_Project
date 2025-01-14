@@ -187,15 +187,23 @@ class _filledListpageState extends State<filledListpage> {
                         '${languageProvider.isEnglish ? 'Filled #' : 'فلڈ نمبر'} ${filled['filledNumber']}',
 
                       ),
-                      subtitle: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             '${languageProvider.isEnglish ? 'Customer' : 'کسٹمر کا نام'} ${filled['customerName']}',
                           ),                          const SizedBox(width: 20,),
+                          // Text(
+                          //   '${languageProvider.isEnglish ? 'Date and Time' : 'ڈیٹ & ٹائم'} ${filled['createdAt']}',
+                          // ),
+                          //
                           Text(
-                            '${languageProvider.isEnglish ? 'Date and Time' : 'ڈیٹ & ٹائم'} ${filled['createdAt']}',
-                          ),                          const SizedBox(width: 20,),
+                            '${languageProvider.isEnglish ? 'Date and Time' : 'ڈیٹ & ٹائم'}',
+                          ),
+                          Text(
+                              '${filled['createdAt']}',style: TextStyle(fontSize: 12)
+                          ),
+                          const SizedBox(width: 20,),
                           IconButton(
                             icon: const Icon(Icons.payment),
                             onPressed: () {
@@ -204,14 +212,14 @@ class _filledListpageState extends State<filledListpage> {
                           ),
                         ],
                       ),
-                      trailing: Row(
+                      trailing: Column(
                         mainAxisSize: MainAxisSize.min, // Ensures the row takes only as much space as needed
-                        children: [
+                        crossAxisAlignment: CrossAxisAlignment.end,                        children: [
                           Text(
                               // 'Rs ${filled['grandTotal']}',
                               '${languageProvider.isEnglish ? 'Rs' : 'روپے'} ${filled['grandTotal']}',
 
-                              style: TextStyle(fontSize: 20)
+                              style: TextStyle(fontSize: 16)
                           ),
                           const SizedBox(width: 10), // Adds some space between the two texts
                           // Text(
@@ -220,7 +228,7 @@ class _filledListpageState extends State<filledListpage> {
                           // ),
                           Text(
                             // 'Remaining: Rs ${remainingAmount.toStringAsFixed(2)}',
-                            '${languageProvider.isEnglish ? 'remainingAmount' : 'بقایا رقم'} ${remainingAmount.toStringAsFixed(2)}',
+                            '${languageProvider.isEnglish ? 'Remaining Amount' : 'بقایا رقم'} ${remainingAmount.toStringAsFixed(2)}',
 
                             style: TextStyle(fontSize: 16, color: Colors.red),
                           ),
