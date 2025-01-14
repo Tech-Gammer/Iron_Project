@@ -29,9 +29,9 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
   String? _selectedCustomerName; // Store selected customer name
   DateTimeRange? _selectedDateRange; // Date range picker
   String? _selectedPaymentMethod = 'all'; // Filter by payment method (online, cash)
+  FirebaseDatabase _db = FirebaseDatabase.instance;  // Initialize Firebase Database
 
   List<Map<String, dynamic>> _reportData = [];
-
   @override
   void initState() {
     super.initState();
@@ -42,7 +42,7 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
   Future<void> _fetchTodayReportData() async {
     final DateTime now = DateTime.now();
     final DateTime startOfDay = DateTime(now.year, now.month, now.day); // Midnight of today
-    final DateTime endOfDay = startOfDay.add(Duration(days: 1)).subtract(Duration(milliseconds: 1)); // Last millisecond of today
+    final DateTime endOfDay = startOfDay.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1)); // Last millisecond of today
 
     // Set the selected date range to today
     _selectedDateRange = DateTimeRange(start: startOfDay, end: endOfDay);
@@ -51,49 +51,171 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
     _fetchReportData();
   }
 
-  // Fetching report data based on filters
+// Fetch report data based on filters
+  // Fetch report data based on filters
   Future<void> _fetchReportData() async {
-    final DatabaseReference invoiceRef = FirebaseDatabase.instance.ref().child('invoices');
-    Query query = invoiceRef;
+    try {
+      DatabaseReference _invoicesRef = _db.ref('invoices'); // Reference to 'invoices' node
 
-    // Filter by paymentType if selected
-    if (_selectedPaymentType != 'all') {
-      query = query.orderByChild('paymentType').equalTo(_selectedPaymentType);
-    }
+      final invoicesSnapshot = await _invoicesRef.get(); // Fetch data
 
-    // Fetch the data from Firebase based on the paymentType filter
-    final snapshot = await query.get();
-    if (snapshot.exists) {
-      final data = snapshot.value as Map<dynamic, dynamic>;
+      if (!invoicesSnapshot.exists) {
+        throw Exception("No invoices found.");
+      }
 
-      // Now, filter the data by paymentMethod, customerId, and date range in the code
-      List<Map<String, dynamic>> filteredData = data.values
-          .where((invoice) {
-        bool matchesCustomer = _selectedCustomerId == null || invoice['customerId'] == _selectedCustomerId;
-        bool matchesDateRange = _selectedDateRange == null ||
-            (DateTime.parse(invoice['createdAt']).isAfter(_selectedDateRange!.start) &&
-                DateTime.parse(invoice['createdAt']).isBefore(_selectedDateRange!.end));
+      List<Map<String, dynamic>> reportData = [];
 
-        // Apply paymentMethod filter only if the paymentType is 'instant'
-        bool matchesPaymentMethod = (_selectedPaymentType != 'instant' ||
-            (_selectedPaymentMethod == 'all' || invoice['paymentMethod'] == _selectedPaymentMethod));
+      // Iterate through all invoices
+      for (var invoiceSnapshot in invoicesSnapshot.children) {
+        final invoiceId = invoiceSnapshot.key;
+        final invoice = Map<String, dynamic>.from(invoiceSnapshot.value as Map);
 
-        return matchesCustomer && matchesDateRange && matchesPaymentMethod;
-      })
-          .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e))
-          .toList();
+        // Filter by customer ID if selected
+        if (_selectedCustomerId != null && invoice['customerId'] != _selectedCustomerId) {
+          continue;
+        }
 
+        // Filter by payment type if selected
+        if (_selectedPaymentType != 'all' && invoice['paymentType'] != _selectedPaymentType) {
+          continue;
+        }
+
+        // Filter by date range if selected
+        if (_selectedDateRange != null) {
+          DateTime invoiceDate = DateTime.parse(invoice['createdAt']);
+          if (invoiceDate.isBefore(_selectedDateRange!.start) || invoiceDate.isAfter(_selectedDateRange!.end)) {
+            continue;
+          }
+        }
+
+        // Fetch and process cash payments if the selected payment method includes 'cash'
+        if (_selectedPaymentMethod == 'all' || _selectedPaymentMethod == 'cash') {
+          final cashPayments = invoice['cashPayments'] != null
+              ? Map<String, dynamic>.from(invoice['cashPayments'])
+              : {};
+          for (var payment in cashPayments.values) {
+            reportData.add({
+              'invoiceId': invoiceId,
+              'customerId': invoice['customerId'],
+              'customerName': invoice['customerName'],
+              'paymentType': invoice['paymentType'],
+              'paymentMethod': 'Cash',
+              'amount': payment['amount'],
+              'date': payment['date'],
+              'createdAt': invoice['createdAt'],
+            });
+          }
+        }
+
+        // Fetch and process online payments if the selected payment method includes 'online'
+        if (_selectedPaymentMethod == 'all' || _selectedPaymentMethod == 'online') {
+          final onlinePayments = invoice['onlinePayments'] != null
+              ? Map<String, dynamic>.from(invoice['onlinePayments'])
+              : {};
+          for (var payment in onlinePayments.values) {
+            reportData.add({
+              'invoiceId': invoiceId,
+              'customerId': invoice['customerId'],
+              'customerName': invoice['customerName'],
+              'paymentType': invoice['paymentType'],
+              'paymentMethod': 'Online',
+              'amount': payment['amount'],
+              'date': payment['date'],
+              'createdAt': invoice['createdAt'],
+            });
+          }
+        }
+      }
+
+      // Update the report data with the fetched information
       setState(() {
-        _reportData = filteredData;
+        _reportData = reportData;
       });
-    } else {
-      setState(() {
-        _reportData = [];
-      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to fetch report: $e')));
     }
   }
 
-  // Show date range picker
+//   Future<void> _fetchReportData() async {
+//     try {
+//       DatabaseReference _invoicesRef = _db.ref('invoices');  // Reference to 'invoices' node
+//
+//       final invoicesSnapshot = await _invoicesRef.get();  // Fetch data
+//
+//       if (!invoicesSnapshot.exists) {
+//         throw Exception("No invoices found.");
+//       }
+//
+//       List<Map<String, dynamic>> reportData = [];
+//
+//       // Iterate through all invoices
+//       for (var invoiceSnapshot in invoicesSnapshot.children) {
+//         final invoiceId = invoiceSnapshot.key;
+//         final invoice = Map<String, dynamic>.from(invoiceSnapshot.value as Map);
+//
+//         // Filter by customer ID if selected
+//         if (_selectedCustomerId != null && invoice['customerId'] != _selectedCustomerId) {
+//           continue;
+//         }
+//
+//         // Filter by payment type if selected
+//         if (_selectedPaymentType != 'all' && invoice['paymentType'] != _selectedPaymentType) {
+//           continue;
+//         }
+//
+//         // Filter by date range if selected
+//         if (_selectedDateRange != null) {
+//           DateTime invoiceDate = DateTime.parse(invoice['createdAt']);
+//           if (invoiceDate.isBefore(_selectedDateRange!.start) || invoiceDate.isAfter(_selectedDateRange!.end)) {
+//             continue;
+//           }
+//         }
+//
+//         // Fetch and process cash payments
+//         final cashPayments = invoice['cashPayments'] != null
+//             ? Map<String, dynamic>.from(invoice['cashPayments'])
+//             : {};
+//         for (var payment in cashPayments.values) {
+//           reportData.add({
+//             'invoiceId': invoiceId,
+//             'customerId': invoice['customerId'],
+//             'customerName': invoice['customerName'],
+//             'paymentType': invoice['paymentType'],
+//             'paymentMethod': 'Cash',
+//             'amount': payment['amount'],
+//             'date': payment['date'],
+//             'createdAt': invoice['createdAt'],
+//           });
+//         }
+//
+//         // Fetch and process online payments
+//         final onlinePayments = invoice['onlinePayments'] != null
+//             ? Map<String, dynamic>.from(invoice['onlinePayments'])
+//             : {};
+//         for (var payment in onlinePayments.values) {
+//           reportData.add({
+//             'invoiceId': invoiceId,
+//             'customerId': invoice['customerId'],
+//             'customerName': invoice['customerName'],
+//             'paymentType': invoice['paymentType'],
+//             'paymentMethod': 'Online',
+//             'amount': payment['amount'],
+//             'date': payment['date'],
+//             'createdAt': invoice['createdAt'],
+//           });
+//         }
+//       }
+//
+//       // Update the report data with the fetched information
+//       setState(() {
+//         _reportData = reportData;
+//       });
+//     } catch (e) {
+//       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to fetch report: $e')));
+//     }
+//   }
+
+
   Future<void> _selectDateRange(BuildContext context) async {
     final DateTimeRange? picked = await showDateRangePicker(
       context: context,
@@ -105,7 +227,7 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
           data: ThemeData.light().copyWith(
             primaryColor: Colors.teal,
             hintColor: Colors.teal,
-            buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
+            buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
           ),
           child: child!,
         );
@@ -130,7 +252,7 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Select a Customer'),
+          title: const Text('Select a Customer'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: customerProvider.customers.map((customer) {
@@ -236,8 +358,6 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
     await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context);
@@ -247,7 +367,7 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
          title: Text(
              // 'Payment Type Report'
              languageProvider.isEnglish ? 'Payment Type Report' : 'ادائیگی کی قسم کی رپورٹ', // Dynamic text based on language
-             style: TextStyle(color: Colors.white)
+             style: const TextStyle(color: Colors.white)
          ),
         backgroundColor: Colors.teal,
       ),
@@ -298,7 +418,7 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                     }).toList(),
                   ),
                 ),
-                SizedBox(width: 15),
+                const SizedBox(width: 15),
                 // Customer dropdown or filter
                 ElevatedButton(
                   onPressed: () => _selectCustomer(context),
@@ -312,12 +432,12 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                     _selectedCustomerName == null
                         ? 'Select Customer'
                         : 'Selected: $_selectedCustomerName', // Display selected customer name
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white
                     ),
                   ),
                 ),
-                SizedBox(width: 15),
+                const SizedBox(width: 15),
                 // Date range picker
                 ElevatedButton(
                   onPressed: () => _selectDateRange(context),
@@ -329,12 +449,12 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                   ),
                   child: Text(
                       _selectedDateRange == null ? 'Select Date Range' : 'Date Range Selected',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white
                     ),
                   ),
                 ),
-                SizedBox(width: 15),
+                const SizedBox(width: 15),
                 // Clear filter button
                 ElevatedButton(
                   onPressed: _clearFilters,
@@ -347,12 +467,12 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                   child: Text(
                       // 'Clear Filters'
                     languageProvider.isEnglish ? 'Clear Filters' : 'فلٹرز صاف کریں۔', // Dynamic text based on language
-                    style: TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // Payment method dropdown (only for instant payments)
             if (_selectedPaymentType == 'instant')
               Row(
@@ -390,11 +510,10 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                       }).toList(),
                     ),
                   ),
-                  SizedBox(width: 15),
+                  const SizedBox(width: 15),
                 ],
               ),
-            SizedBox(height: 20),
-            // Table for showing report data
+            const SizedBox(height: 20),
             Expanded(
               child: SingleChildScrollView(
                 child: Container(
@@ -419,48 +538,30 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                       columnSpacing: 25.0,  // Increase spacing between columns
                       dataRowHeight: 60,   // Increase row height
                       columns: [
-                        DataColumn(label: Text(
-                            // 'Customer',
-                            languageProvider.isEnglish ? 'Customer' : 'کسٹمر', // Dynamic text based on language
-
-                            style: TextStyle(color: Colors.teal.shade800))),
-                        DataColumn(label: Text(
-                            // 'Payment Type',
-                            languageProvider.isEnglish ? 'Payment Type' : 'ادائیگی کی قسم', // Dynamic text based on language
-
-                            style: TextStyle(color: Colors.teal.shade800))),
-                        DataColumn(label: Text(
-                            // 'Payment Method',
-                            languageProvider.isEnglish ? 'Payment Method' : 'ادائیگی کی طریقہ', // Dynamic text based on language
-
-                            style: TextStyle(color: Colors.teal.shade800))),
-                        DataColumn(label: Text(
-                            // 'Amount',
-                            languageProvider.isEnglish ? 'Amount' : 'رقم', // Dynamic text based on language
-
-                            style: TextStyle(color: Colors.teal.shade800))),
-                        DataColumn(label: Text(
-                            // 'Date',
-                            languageProvider.isEnglish ? 'Date' : 'تاریخ', // Dynamic text based on language
-
-                            style: TextStyle(color: Colors.teal.shade800))),
+                        DataColumn(label: Text('Customer', style: TextStyle(color: Colors.teal.shade800))),
+                        DataColumn(label: Text('Payment Type', style: TextStyle(color: Colors.teal.shade800))),
+                        DataColumn(label: Text('Invoice ID', style: TextStyle(color: Colors.teal.shade800))),
+                        DataColumn(label: Text('Payment Method', style: TextStyle(color: Colors.teal.shade800))),
+                        DataColumn(label: Text('Amount', style: TextStyle(color: Colors.teal.shade800))),
+                        DataColumn(label: Text('Date', style: TextStyle(color: Colors.teal.shade800))),
                       ],
-                      rows: _reportData.isNotEmpty
-                          ? _reportData.map((invoice) {
+                      rows: _reportData.map((invoice) {
+                        print(invoice);
                         return DataRow(cells: [
                           DataCell(Text(invoice['customerName'] ?? 'N/A')),
                           DataCell(Text(invoice['paymentType'] ?? 'N/A')),
+                          DataCell(Text(invoice['invoiceId'] ?? 'N/A')),
                           DataCell(Text(invoice['paymentMethod'] ?? 'N/A')),
-                          DataCell(Text(invoice['grandTotal'].toString())),
-                          DataCell(Text(DateFormat.yMMMd().format(DateTime.parse(invoice['createdAt'])))),
+                          DataCell(Text(invoice['amount'].toString())),
+                          DataCell(Text(DateFormat.yMMMd().format(DateTime.parse(invoice['date'])))),
                         ]);
-                      }).toList()
-                          : [],
+                      }).toList(),
                     ),
                   ),
                 ),
               ),
             ),
+
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(

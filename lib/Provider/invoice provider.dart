@@ -175,56 +175,6 @@ class InvoiceProvider with ChangeNotifier {
   }
 
 
-  // **New Method to Handle Invoice Payment**
-  Future<void> payInvoice(BuildContext context, String invoiceId, double paymentAmount) async {
-    try {
-      // Find the selected invoice
-      final invoice = _invoices.firstWhere((inv) => inv['id'] == invoiceId);
-
-      if (invoice['debitAmount'] == null) {
-        invoice['debitAmount'] = 0.0;
-      }
-
-      final currentDebit = invoice['debitAmount'] as double;
-      final grandTotal = invoice['grandTotal'] as double;
-
-      if (paymentAmount > (grandTotal - currentDebit)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Payment exceeds the remaining invoice balance.")),
-        );
-        throw Exception("Payment exceeds the remaining invoice balance.");
-      }
-
-      // Update invoice data
-      final updatedDebit = currentDebit + paymentAmount;
-      final debitAt = DateTime.now().toIso8601String();
-
-      await _db.child('invoices').child(invoiceId).update({
-        'debitAmount': updatedDebit, // **Update paid amount**
-        'debitAt': debitAt, // **Update last payment date**
-      });
-
-      // Update the ledger with the calculated remaining balance
-      await _updateCustomerLedger(
-        invoice['customerId'],
-        creditAmount: 0.0,
-        debitAmount: paymentAmount,
-        remainingBalance: grandTotal - updatedDebit,
-        invoiceNumber: invoice['invoiceNumber'],
-      );
-
-      // Refresh the invoices list
-      await fetchInvoices();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Payment of Rs. $paymentAmount recorded successfully.')),
-      );
-    } catch (e) {
-      throw Exception('Failed to pay invoice: $e');
-    }
-  }
-
-  // **Updated Method to Handle Customer Ledger**
   Future<void> _updateCustomerLedger(
       String customerId, {
         required double creditAmount,
@@ -271,6 +221,97 @@ class InvoiceProvider with ChangeNotifier {
   }
 
 
+  Future<void> payInvoiceWithSeparateMethod(
+      BuildContext context, String invoiceId, double paymentAmount, String paymentMethod) async {
+    try {
+      // Fetch the current invoice data from the database
+      final invoiceSnapshot = await _db.child('invoices').child(invoiceId).get();
+      if (!invoiceSnapshot.exists) {
+        throw Exception("Invoice not found.");
+      }
 
+      // Convert the retrieved data to Map<String, dynamic>
+      final invoice = Map<String, dynamic>.from(invoiceSnapshot.value as Map);
+
+      // Get the current payment amounts (default to 0.0 if not set)
+      final currentCashPaid = (invoice['cashPaidAmount'] ?? 0.0) as double;
+      final currentOnlinePaid = (invoice['onlinePaidAmount'] ?? 0.0) as double;
+      final grandTotal = (invoice['grandTotal'] ?? 0.0) as double;
+
+      // Calculate the total paid so far
+      final totalPaid = currentCashPaid + currentOnlinePaid;
+
+      // Check if the new payment exceeds the remaining balance
+      if (paymentAmount > (grandTotal - totalPaid)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Payment exceeds the remaining invoice balance.")),
+        );
+        throw Exception("Payment exceeds the remaining invoice balance.");
+      }
+
+      // Add the new payment to the appropriate field
+      double updatedCashPaid = currentCashPaid;
+      double updatedOnlinePaid = currentOnlinePaid;
+
+      if (paymentMethod == 'Cash') {
+        updatedCashPaid += paymentAmount;
+        // Save the cash payment in a child node with date
+        await _db.child('invoices').child(invoiceId).child('cashPayments').push().set({
+          'amount': paymentAmount,
+          'date': DateTime.now().toIso8601String(),
+        });
+      } else if (paymentMethod == 'Online') {
+        updatedOnlinePaid += paymentAmount;
+        // Save the online payment in a child node with date
+        await _db.child('invoices').child(invoiceId).child('onlinePayments').push().set({
+          'amount': paymentAmount,
+          'date': DateTime.now().toIso8601String(),
+        });
+      }
+
+      // Get the current debit amount (default to 0.0 if not set)
+      final currentDebit = (invoice['debitAmount'] ?? 0.0) as double;
+
+      // Check if the payment amount exceeds the remaining balance
+      if (paymentAmount > (grandTotal - currentDebit)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Payment exceeds the remaining invoice balance.")),
+        );
+        throw Exception("Payment exceeds the remaining invoice balance.");
+      }
+
+      // Update the invoice with the new payment data
+      final updatedDebit = currentDebit + paymentAmount;
+      final debitAt = DateTime.now().toIso8601String();
+
+      await _db.child('invoices').child(invoiceId).update({
+        'cashPaidAmount': updatedCashPaid,
+        'onlinePaidAmount': updatedOnlinePaid,
+        'debitAmount': updatedDebit, // Make sure this is updated
+        'debitAt': debitAt,
+      });
+
+      // Update the ledger with the calculated remaining balance
+      await _updateCustomerLedger(
+        invoice['customerId'],
+        creditAmount: 0.0,
+        debitAmount: paymentAmount,
+        remainingBalance: grandTotal - updatedDebit,
+        invoiceNumber: invoice['invoiceNumber'],
+      );
+
+      // Refresh the invoices list
+      await fetchInvoices();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Payment of Rs. $paymentAmount recorded successfully as $paymentMethod.')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save payment: ${e.toString()}')),
+      );
+      throw Exception('Failed to save payment: $e');
+    }
+  }
 
 }

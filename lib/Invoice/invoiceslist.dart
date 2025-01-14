@@ -285,59 +285,59 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
     );
   }
 
-  Future<void> _showInvoicePaymentDialog(
-
-      Map<String, dynamic> invoice, InvoiceProvider invoiceProvider, LanguageProvider languageprovider) async {
-    // final languageProvider = Provider.of<LanguageProvider>(context);
-    // final languageProvider = Provider.of<LanguageProvider>(context);
-    final languageProvider = context.read<LanguageProvider>();
-
-
-    _paymentController.clear();
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          // title: const Text('Pay Invoice'),
-          title: Text(languageProvider.isEnglish ? 'Pay Invoice' : 'انوائس کی رقم ادا کریں'),
-          content: TextField(
-            controller: _paymentController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              // labelText: 'Enter Payment Amount',
-              labelText: languageProvider.isEnglish ? 'Enter Payment Amount' : 'رقم لکھیں'
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              // child: const Text('Cancel'),
-              child: Text(languageProvider.isEnglish ? 'Cancel' : 'انکار'),
-            ),
-            TextButton(
-              onPressed: () async {
-                final amount = double.tryParse(_paymentController.text);
-                if (amount != null && amount > 0) {
-                  // await invoiceProvider.addDebit(invoice['id'], amount);
-                  await invoiceProvider.payInvoice(context, invoice['id'], amount);
-                  Navigator.of(context).pop();
-                } else {
-                  // Handle invalid input
-                }
-              },
-              // child: const Text('Pay'),
-              child: Text(languageProvider.isEnglish ? 'Pay' : 'رقم ادا کریں'),
-
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-
+  // Future<void> _showInvoicePaymentDialog(
+  //
+  //     Map<String, dynamic> invoice, InvoiceProvider invoiceProvider, LanguageProvider languageprovider) async {
+  //   // final languageProvider = Provider.of<LanguageProvider>(context);
+  //   // final languageProvider = Provider.of<LanguageProvider>(context);
+  //   final languageProvider = context.read<LanguageProvider>();
+  //
+  //
+  //   _paymentController.clear();
+  //   await showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return AlertDialog(
+  //         // title: const Text('Pay Invoice'),
+  //         title: Text(languageProvider.isEnglish ? 'Pay Invoice' : 'انوائس کی رقم ادا کریں'),
+  //         content: TextField(
+  //           controller: _paymentController,
+  //           keyboardType: TextInputType.number,
+  //           decoration: InputDecoration(
+  //             // labelText: 'Enter Payment Amount',
+  //             labelText: languageProvider.isEnglish ? 'Enter Payment Amount' : 'رقم لکھیں'
+  //           ),
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () {
+  //               Navigator.of(context).pop();
+  //             },
+  //             // child: const Text('Cancel'),
+  //             child: Text(languageProvider.isEnglish ? 'Cancel' : 'انکار'),
+  //           ),
+  //           TextButton(
+  //             onPressed: () async {
+  //               final amount = double.tryParse(_paymentController.text);
+  //               if (amount != null && amount > 0) {
+  //                 // await invoiceProvider.addDebit(invoice['id'], amount);
+  //                 await invoiceProvider.payInvoice(context, invoice['id'], amount);
+  //                 Navigator.of(context).pop();
+  //               } else {
+  //                 // Handle invalid input
+  //               }
+  //             },
+  //             // child: const Text('Pay'),
+  //             child: Text(languageProvider.isEnglish ? 'Pay' : 'رقم ادا کریں'),
+  //
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
+  //
+  //
 
   Future<void> _printInvoices() async {
     final pdf = pw.Document();
@@ -386,5 +386,107 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
     );
   }
 
+  Future<void> _showInvoicePaymentDialog(
+      Map<String, dynamic> invoice,
+      InvoiceProvider invoiceProvider,
+      LanguageProvider languageProvider) async {
+    String? selectedPaymentMethod; // To hold the selected payment method
+    _paymentController.clear();
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text(
+                languageProvider.isEnglish ? 'Pay Invoice' : 'انوائس کی رقم ادا کریں',
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    value: selectedPaymentMethod,
+                    items: [
+                      DropdownMenuItem(
+                        value: 'Cash',
+                        child: Text(languageProvider.isEnglish ? 'Cash' : 'نقدی'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Online',
+                        child: Text(languageProvider.isEnglish ? 'Online' : 'آن لائن'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        selectedPaymentMethod = value;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      labelText: languageProvider.isEnglish ? 'Select Payment Method' : 'ادائیگی کا طریقہ منتخب کریں',
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _paymentController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: languageProvider.isEnglish ? 'Enter Payment Amount' : 'رقم لکھیں',
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(languageProvider.isEnglish ? 'Cancel' : 'انکار'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (selectedPaymentMethod == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(languageProvider.isEnglish
+                              ? 'Please select a payment method.'
+                              : 'براہ کرم ادائیگی کا طریقہ منتخب کریں۔'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    final amount = double.tryParse(_paymentController.text);
+                    if (amount != null && amount > 0) {
+                      await invoiceProvider.payInvoiceWithSeparateMethod(
+                        context,
+                        invoice['id'],
+                        amount,
+                        selectedPaymentMethod!,
+                      );
+                      Navigator.of(context).pop();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(languageProvider.isEnglish
+                              ? 'Please enter a valid payment amount.'
+                              : 'براہ کرم ایک درست رقم درج کریں۔'),
+                        ),
+                      );
+                    }
+                  },
+                  child: Text(languageProvider.isEnglish ? 'Pay' : 'رقم ادا کریں'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
 
 }
+
