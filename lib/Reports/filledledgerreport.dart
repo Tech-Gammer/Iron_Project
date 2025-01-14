@@ -36,7 +36,7 @@ class _FilledLedgerReportPageState extends State<FilledLedgerReportPage> {
         appBar: AppBar(
           title: Text(
               // 'Customer Report'
-            languageProvider.isEnglish ? 'Customer Report' : 'کسٹمر رپورٹ',
+            languageProvider.isEnglish ? 'Customer Ledger for Filled' : 'فلڈ کے لیے کسٹمر لیجر',
             style: const TextStyle(color: Colors.white),
 
           ),

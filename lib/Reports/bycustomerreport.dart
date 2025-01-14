@@ -83,6 +83,7 @@ class _byCustomerReportState extends State<byCustomerReport> {
 
         ),
         backgroundColor: Colors.teal,
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

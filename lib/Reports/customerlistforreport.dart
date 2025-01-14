@@ -93,9 +93,9 @@ class _CustomerListPageState extends State<CustomerListPage> {
         title: Text(
           // 'Customer List For Sarya Ledger',
           languageProvider.isEnglish ? 'Customer List For Sarya Ledger' : 'سریا لیجر کے لیے صارفین کی فہرست',
-
           style: TextStyle(
-            color: Colors.white
+            color: Colors.white,
+            fontSize: 20
           ),
         ),
         backgroundColor: Colors.teal, // AppBar background color

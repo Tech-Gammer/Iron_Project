@@ -87,9 +87,9 @@ class _FilledcustomerlistpageState extends State<Filledcustomerlistpage> {
         title: Text(
           // 'Customer List For Filled ledger',
           languageProvider.isEnglish ? 'Customer List For Filled Ledger' : 'فلڈ لیجر کے لیے صارفین کی فہرست',
-
           style: TextStyle(
             color: Colors.white, // Title text color
+            fontSize: 20
           ),
         ),
         backgroundColor: Colors.teal, // AppBar background color

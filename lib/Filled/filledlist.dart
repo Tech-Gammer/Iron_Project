@@ -54,7 +54,7 @@ class _filledListpageState extends State<filledListpage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(languageProvider.isEnglish ? 'Filled List:' : 'فلڈ لسٹ',style: TextStyle(color: Colors.white),),
+        title: Text(languageProvider.isEnglish ? 'Filled List' : 'فلڈ لسٹ',style: TextStyle(color: Colors.white),),
         centerTitle: true,
         backgroundColor: Colors.teal,  // AppBar background color
         actions: [

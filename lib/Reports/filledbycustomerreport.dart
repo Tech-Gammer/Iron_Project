@@ -67,8 +67,9 @@ class _filledbycustomerreportState extends State<filledbycustomerreport> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Customer Report'),
+        title: Text('Customer Report',style: TextStyle(color: Colors.white),),
         backgroundColor: Colors.teal,
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

@@ -41,7 +41,7 @@ class ledgerselection extends StatelessWidget {
             style: TextStyle(color: Colors.white)
         ),
         centerTitle: true,
-        backgroundColor: Colors.teal.shade800, // AppBar color to teal
+        backgroundColor: Colors.teal, // AppBar color to teal
 
       ),
       body: Padding(

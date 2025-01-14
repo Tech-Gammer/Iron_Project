@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../Provider/customerprovider.dart';
+import '../Provider/lanprovider.dart';
 
 class AddCustomer extends StatefulWidget {
   @override
@@ -15,10 +16,16 @@ class _AddCustomerState extends State<AddCustomer> {
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Customer', style: TextStyle(color: Colors.teal.shade800)),
+        title: Text(
+            // 'Add Customer',
+            languageProvider.isEnglish ? 'Add Customer' : 'کسٹمر شامل کریں۔',
+            style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.teal,
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -28,7 +35,9 @@ class _AddCustomerState extends State<AddCustomer> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Customer Details',
+                // 'Customer Details',
+                languageProvider.isEnglish ? 'Customer Details' : 'کسٹمر کی تفصیلات',
+
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -38,7 +47,8 @@ class _AddCustomerState extends State<AddCustomer> {
               SizedBox(height: 20),
               TextFormField(
                 decoration: InputDecoration(
-                  labelText: 'Name',
+                  labelText: languageProvider.isEnglish ? 'Name' : 'نام',
+
                   labelStyle: TextStyle(color: Colors.teal.shade600),
                   border: OutlineInputBorder(),
                   focusedBorder: OutlineInputBorder(
@@ -52,7 +62,7 @@ class _AddCustomerState extends State<AddCustomer> {
               SizedBox(height: 16),
               TextFormField(
                 decoration: InputDecoration(
-                  labelText: 'Address',
+                  labelText:  languageProvider.isEnglish ? 'Address' : 'پتہ',
                   labelStyle: TextStyle(color: Colors.teal.shade600),
                   border: OutlineInputBorder(),
                   focusedBorder: OutlineInputBorder(
@@ -66,7 +76,7 @@ class _AddCustomerState extends State<AddCustomer> {
               SizedBox(height: 16),
               TextFormField(
                 decoration: InputDecoration(
-                  labelText: 'Phone Number',
+                  labelText: languageProvider.isEnglish ? 'ُPhone Number' : 'موبائل نمبر',
                   labelStyle: TextStyle(color: Colors.teal.shade600),
                   border: OutlineInputBorder(),
                   focusedBorder: OutlineInputBorder(
@@ -85,11 +95,24 @@ class _AddCustomerState extends State<AddCustomer> {
               Align(
                 alignment: Alignment.center,
                 child: ElevatedButton(
-                  onPressed: () => _saveCustomer(context),
-                  child: Text('Save'),
                   style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white, backgroundColor: Colors.teal.shade400,
+                    backgroundColor: Colors.teal,
+                    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
+                  onPressed: () => _saveCustomer(context),
+                  child: Text(
+                    // 'Save',
+                    languageProvider.isEnglish ? 'Save' : 'محفوظ کریں۔',
+
+                    style: const TextStyle(
+                    fontSize: 18,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),),
+
                 ),
               ),
             ],

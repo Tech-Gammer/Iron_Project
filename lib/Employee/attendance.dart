@@ -5,6 +5,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../Provider/employeeprovider.dart';
+import '../Provider/lanprovider.dart';
 
 class AttendanceReportPage extends StatefulWidget {
   @override
@@ -19,6 +20,7 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
   Widget build(BuildContext context) {
     final employeeProvider = Provider.of<EmployeeProvider>(context);
     final employees = employeeProvider.employees;
+    final languageProvider = Provider.of<LanguageProvider>(context);
 
     // Filter employees by name
     final filteredEmployees = employees.keys.where((employeeId) {
@@ -28,11 +30,15 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Attendance Report'),
-        backgroundColor: Colors.teal.shade800,
-        actions: [
+        title: Text(
+          // 'Attendance Report',
+            languageProvider.isEnglish ? 'Attendance Report' : 'حاضری کی رپورٹ',
+          style: const TextStyle(color: Colors.white),),
+        backgroundColor: Colors.teal,
+        centerTitle: true,
+                actions: [
           IconButton(
-            icon: const Icon(Icons.print),
+            icon: const Icon(Icons.print,color: Colors.white,),
             onPressed: () => _generateAndPrintPdf(filteredEmployees, employeeProvider, employees),
           ),
         ],
@@ -46,8 +52,8 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
               children: [
                 Expanded(
                   child: TextField(
-                    decoration: const InputDecoration(
-                      labelText: 'Search by Name',
+                    decoration:  InputDecoration(
+                      labelText: languageProvider.isEnglish ? 'Search by Name' : 'نام سے تلاش کریں۔',
                       prefixIcon: Icon(Icons.search),
                       border: OutlineInputBorder(),
                     ),
@@ -74,7 +80,10 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
                     }
                   },
                   icon: const Icon(Icons.date_range),
-                  label: const Text('Select Date Range'),
+                  label:  Text(
+    // 'Select Date Range'
+    languageProvider.isEnglish ? 'Select Date Range' : 'تاریخ کی حد منتخب کریں۔',
+    ),
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: Colors.teal.shade400,
@@ -86,56 +95,7 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
               ],
             ),
           ),
-          // Expanded(
-          //   child: ListView.builder(
-          //     itemCount: filteredEmployees.length,
-          //     itemBuilder: (context, index) {
-          //       final employeeId = filteredEmployees[index];
-          //
-          //       // Filter attendance based on date range
-          //       if (_dateRange != null) {
-          //         final currentDate = DateTime.now();
-          //         if (currentDate.isBefore(_dateRange!.start) ||
-          //             currentDate.isAfter(_dateRange!.end)) {
-          //           return const SizedBox.shrink(); // Skip this employee
-          //         }
-          //       }
-          //
-          //       return FutureBuilder<Map<String, dynamic>>(
-          //         future: employeeProvider.getAttendance(employeeId, DateTime.now()),
-          //         builder: (context, snapshot) {
-          //           if (snapshot.connectionState == ConnectionState.waiting) {
-          //             return const CircularProgressIndicator();
-          //           } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-          //             final attendance = snapshot.data!;
-          //             return ListTile(
-          //               title: Text(employees[employeeId]!['name']!),
-          //               subtitle: Column(
-          //                 crossAxisAlignment: CrossAxisAlignment.start,
-          //                 children: [
-          //                   Text('Description: ${attendance['description']}'),
-          //                   Row(
-          //                     children: [
-          //                       Text('Last Attendance: ${attendance['status']}'),
-          //                       const Spacer(),
-          //                       Text(
-          //                           'Date & Time: ${attendance['date']} ${attendance['time']}'),
-          //                     ],
-          //                   ),
-          //                 ],
-          //               ),
-          //             );
-          //           } else {
-          //             return ListTile(
-          //               title: Text(employees[employeeId]!['name']!),
-          //               subtitle: const Text('No attendance marked for today'),
-          //             );
-          //           }
-          //         },
-          //       );
-          //     },
-          //   ),
-          // ),
+
           Expanded(
             child: ListView.builder(
               itemCount: filteredEmployees.length,
@@ -154,11 +114,14 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
                       if (attendanceData.isEmpty) {
                         return ListTile(
                           title: Text(employees[employeeId]!['name']!),
-                          subtitle: const Text('No attendance marked for the selected range'),
+                          subtitle:  Text(
+                          // 'No attendance marked for the selected range'
+                          languageProvider.isEnglish ? 'No attendance marked for the selected range' : 'منتخب کردہ رینج کے لیے کوئی حاضری نشان زد نہیں ہے۔',
+                          )
                         );
                       }
 
-                      // Display attendance for each date
+                      // Display attendance for each dates
                       return ExpansionTile(
                         title: Text(employees[employeeId]!['name']!),
                         children: attendanceData.entries.map((entry) {
@@ -181,7 +144,11 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
                     } else {
                       return ListTile(
                         title: Text(employees[employeeId]!['name']!),
-                        subtitle: const Text('Error fetching attendance'),
+                        subtitle:  Text(
+                            // 'Error fetching attendance'
+                          languageProvider.isEnglish ? 'Error fetching attendance' : 'حاضری حاصل کرنے میں خرابی۔',
+
+                        ),
                       );
                     }
                   },
@@ -196,87 +163,6 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
   }
 
 
-  // Future<void> _generateAndPrintPdf(
-  //     List<String> filteredEmployees,
-  //     EmployeeProvider employeeProvider,
-  //     Map<String, Map<String, String>> employees) async {
-  //
-  //   final pdf = pw.Document();
-  //
-  //   // Wait for all attendance data asynchronously before generating the PDF
-  //   final employeeAttendances = await Future.wait(
-  //     filteredEmployees.map((employeeId) async {
-  //       final attendance = await employeeProvider.getAttendance(employeeId, DateTime.now());
-  //       return MapEntry(employeeId, attendance);
-  //     }),
-  //   );
-  //
-  //   pdf.addPage(
-  //     pw.Page(
-  //       build: (pw.Context context) {
-  //         return pw.Column(
-  //           crossAxisAlignment: pw.CrossAxisAlignment.start,
-  //           children: [
-  //             pw.Text(
-  //               'Attendance Report',
-  //               style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
-  //             ),
-  //             pw.SizedBox(height: 16),
-  //             // Creating table headers
-  //             pw.Table(
-  //               border: pw.TableBorder.all(width: 1, color: PdfColors.black),
-  //               children: [
-  //                 pw.TableRow(
-  //                   children: [
-  //                     pw.Text('Date', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-  //                     pw.Text('Employee Name', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-  //                     // pw.Text('Time', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-  //                     pw.Text('Description', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-  //                     pw.Text('Status', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-  //
-  //                   ],
-  //                 ),
-  //                 // Adding table rows for each employee attendance
-  //                 ...employeeAttendances.map((entry) {
-  //                   final employeeId = entry.key;
-  //                   final attendance = entry.value;
-  //                   final employeeName = employees[employeeId]!['name']!;
-  //
-  //                   // If attendance data is empty
-  //                   if (attendance.isEmpty) {
-  //                     return pw.TableRow(
-  //                       children: [
-  //                         pw.Text('N/A'),
-  //                         pw.Text(employeeName),
-  //                         pw.Text('No attendance data'),
-  //                         // pw.Text('N/A'),
-  //                         pw.Text('N/A'),
-  //                       ],
-  //                     );
-  //                   }
-  //                   // If attendance data is available
-  //                   return pw.TableRow(
-  //                     children: [
-  //                       pw.Text('${attendance['date'] ?? 'N/A'} ${attendance['time'] ?? 'N/A'}'),
-  //                       pw.Text(employeeName),
-  //                       // pw.Text(attendance['time'] ?? 'N/A'),
-  //                       pw.Text(attendance['description'] ?? 'N/A'),
-  //                       pw.Text(attendance['status'] ?? 'N/A'),
-  //                     ],
-  //                   );
-  //                 }).toList(),
-  //               ],
-  //             ),
-  //           ],
-  //         );
-  //       },
-  //     ),
-  //   );
-  //
-  //   await Printing.layoutPdf(
-  //     onLayout: (PdfPageFormat format) async => pdf.save(),
-  //   );
-  // }
 
   Future<void> _generateAndPrintPdf(
       List<String> filteredEmployees,

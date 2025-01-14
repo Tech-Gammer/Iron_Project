@@ -212,10 +212,11 @@ class _FilledPaymentTypeReportPageState extends State<FilledPaymentTypeReportPag
   }
 // Method to calculate the total amount
   double _calculateTotalAmount() {
-    return _reportData.fold(0.0, (sum, filled) {
-      return sum + (filled['grandTotal'] ?? 0.0);
+    return _reportData.fold(0.0, (sum, invoice) {
+      return sum + (invoice['amount'] ?? 0.0); // Use 'amount' field for total calculation
     });
   }
+
 
   Future<void> _generateAndPrintPDF() async {
     final pdf = pw.Document();

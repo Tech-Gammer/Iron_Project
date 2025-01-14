@@ -523,9 +523,10 @@ class _filledpageState extends State<filledpage> {
       appBar: AppBar(
         title: Text(
           _isReadOnly
-              ? (languageProvider.isEnglish ? 'Create Filled' : 'فلڈ بنائیں')
-              : (languageProvider.isEnglish ? 'Update Filled' : 'انوائس کو اپ ڈیٹ کریں'),
-          style: TextStyle(color: Colors.white),
+              ? (languageProvider.isEnglish ? 'Update Filled' : 'فلڈ بنائیں')
+              : (languageProvider.isEnglish ? 'Create Filled' : 'انوائس کو اپ ڈیٹ کریں'),
+          style: TextStyle(color: Colors.white,
+          ),
         ),
         backgroundColor: Colors.teal,
         centerTitle: true,
@@ -535,12 +536,12 @@ class _filledpageState extends State<filledpage> {
             _generateAndPrintPDF(filledNumber);
           }, icon: Icon(Icons.print, color: Colors.white)),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Text(
               widget.filled == null
                   ? '${languageProvider.isEnglish ? 'Filled #' : 'فلڈ نمبر#'}${generateFilledNumber()}'
                   : '${languageProvider.isEnglish ? 'Filled #' : 'فلڈ نمبر#'}${widget.filled!['filledNumber']}',
-              style: TextStyle(color: Colors.white, fontSize: 16),            ),
+              style: TextStyle(color: Colors.white, fontSize: 14),            ),
           ),
         ],
       ),

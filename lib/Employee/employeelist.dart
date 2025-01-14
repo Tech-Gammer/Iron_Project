@@ -14,9 +14,10 @@ class EmployeeListPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        // title: const Text('Employee List'),
-        title: Text(languageProvider.isEnglish ? 'Employee List:' : 'ملازمین کی فہرست',style: TextStyle(color: Colors.white),),
-
+        // title: const Text('Employee List'),sss
+        title: Text(languageProvider.isEnglish ? 'Employee List' : 'ملازمین کی فہرست',style: TextStyle(color: Colors.white),),
+        backgroundColor: Colors.teal,
+        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.add,color: Colors.white,),
@@ -37,7 +38,6 @@ class EmployeeListPage extends StatelessWidget {
             },
           ),
         ],
-        backgroundColor: Colors.teal.shade800,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

@@ -256,8 +256,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
           style: TextStyle(color: Colors.white),
 
         ),
-        backgroundColor: Colors.teal.shade800, // AppBar color
-      ),
+        backgroundColor: Colors.teal,
+        centerTitle: true,      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -334,7 +334,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
             ElevatedButton(
               onPressed: _saveExpense,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal.shade800, // Button background color
+                backgroundColor: Colors.teal, // Button background color
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),

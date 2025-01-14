@@ -39,11 +39,12 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
     final snapshot = await dbRef.child("originalOpeningBalance").child(formattedDate).get();
     if (snapshot.exists) {
       setState(() {
-        _originalOpeningBalance = snapshot.value as double;
+        _originalOpeningBalance = (snapshot.value as num).toDouble();
       });
-      _updateRemainingBalance(); // Calculate remaining balance
+      _updateRemainingBalance();
     }
   }
+
 
   void _fetchExpenses() {
     String formattedDate = DateFormat('dd:MM:yyyy').format(_selectedDate);
@@ -56,20 +57,21 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
         loadedExpenses.add({
           "id": key,
           "description": value["description"] ?? "No Description",
-          "amount": value["amount"] ?? 0.0,
+          "amount": (value["amount"] as num).toDouble(),
           "date": value["date"] ?? formattedDate,
         });
 
-        totalExpense += value["amount"] ?? 0.0; // Sum of all expenses
+        totalExpense += (value["amount"] as num).toDouble();
       });
 
       setState(() {
         expenses = loadedExpenses;
         _totalExpense = totalExpense;
       });
-      _updateRemainingBalance(); // Recalculate remaining balance
+      _updateRemainingBalance();
     });
   }
+
 
   void _pickDate() async {
     final pickedDate = await showDatePicker(
@@ -161,7 +163,9 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(languageProvider.isEnglish ? 'View Daily Expense:' : 'روزانہ کے اخراجات',style: TextStyle(color: Colors.white),),
-        backgroundColor: Colors.teal.shade800,
+        backgroundColor: Colors.teal,
+        centerTitle: true,
+
         actions: [
           IconButton(
             icon: const Icon(Icons.add),

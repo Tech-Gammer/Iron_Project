@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../Provider/employeeprovider.dart';
+import '../Provider/lanprovider.dart';
 
 class AddEmployeePage extends StatefulWidget {
   final String? employeeId; // Null for adding, non-null for editing
@@ -50,7 +51,7 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
         String newId = provider.employees.length.toString();
         provider.addOrUpdateEmployee(newId, employeeData);
       } else {
-        // Update existing employee
+        // Update existing employees
         provider.addOrUpdateEmployee(widget.employeeId!, employeeData);
       }
 
@@ -64,10 +65,19 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.employeeId == null ? 'Add Employee' : 'Edit Employee'),
-        backgroundColor: Colors.teal.shade800,
+        title: Text(
+          // widget.employeeId == null ? 'Add Employee' : 'Edit Employee',style: TextStyle(color: Colors.white),
+          widget.employeeId == null
+              ? (languageProvider.isEnglish ? 'Add Employee' : 'ملازم شامل کریں')
+              : (languageProvider.isEnglish ? 'Edit Employee' : 'ملازم کو ترمیم کریں'),
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.teal,
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -79,7 +89,7 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  labelText: 'Name',
+                  labelText: languageProvider.isEnglish ? 'Name' : 'نام',
                   labelStyle: TextStyle(color: Colors.teal.shade700),
                   fillColor: Colors.white,
                   filled: true,
@@ -94,8 +104,9 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a name';
-                  }
+                    return languageProvider.isEnglish
+                        ? 'Please enter a name'
+                        : 'براہ کرم نام درج کریں';                  }
                   return null;
                 },
               ),
@@ -103,7 +114,7 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
               TextFormField(
                 controller: _addressController,
                 decoration: InputDecoration(
-                  labelText: 'Address',
+                  labelText: languageProvider.isEnglish ? 'Address' : 'پتہ',
                   labelStyle: TextStyle(color: Colors.teal.shade700),
                   fillColor: Colors.white,
                   filled: true,
@@ -118,8 +129,9 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter an address';
-                  }
+                    return languageProvider.isEnglish
+                        ? 'Please enter an address'
+                        : 'براہ کرم پتہ درج کریں';                  }
                   return null;
                 },
               ),
@@ -127,7 +139,9 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
               TextFormField(
                 controller: _phoneController,
                 decoration: InputDecoration(
-                  labelText: 'Phone Number',
+                  labelText: languageProvider.isEnglish
+                      ? 'Phone Number'
+                      : 'فون نمبر',
                   labelStyle: TextStyle(color: Colors.teal.shade700),
                   fillColor: Colors.white,
                   filled: true,
@@ -142,8 +156,9 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a phone number';
-                  }
+                    return languageProvider.isEnglish
+                        ? 'Please enter a phone number'
+                        : 'براہ کرم فون نمبر درج کریں';                  }
                   return null;
                 },
               ),
@@ -151,14 +166,17 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
               ElevatedButton(
                 onPressed: _saveEmployee,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal.shade800,
+                  backgroundColor: Colors.teal,
                   padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 child: Text(
-                  widget.employeeId == null ? 'Add Employee' : 'Save Changes',
+                  // widget.employeeId == null ? 'Add Employee' : 'Save Changes',s
+                  widget.employeeId == null
+                      ? (languageProvider.isEnglish ? 'Add Employee' : 'ملازم شامل کریں')
+                      : (languageProvider.isEnglish ? 'Save Changes' : 'تبدیلیاں محفوظ کریں'),
                   style: const TextStyle(
                     fontSize: 18,
                     color: Colors.white,

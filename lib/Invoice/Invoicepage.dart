@@ -551,9 +551,10 @@ class _InvoicePageState extends State<InvoicePage> {
         title: Text(
           // widget.invoice == null
           _isReadOnly
-              ? (languageProvider.isEnglish ? 'Create Invoice' : 'انوائس بنائیں')
-              : (languageProvider.isEnglish ? 'Update Invoice' : 'انوائس کو اپ ڈیٹ کریں'),
-          style: TextStyle(color: Colors.white),
+              ? (languageProvider.isEnglish ? 'Update Invoice' : 'انوائس بنائیں')
+              : (languageProvider.isEnglish ? 'Create Invoice' : 'انوائس کو اپ ڈیٹ کریں'),
+          style: TextStyle(color: Colors.white,
+          ),
         ),
         backgroundColor: Colors.teal,
         centerTitle: true,
@@ -563,12 +564,12 @@ class _InvoicePageState extends State<InvoicePage> {
             _generateAndPrintPDF(invoiceNumber);
           }, icon: Icon(Icons.print, color: Colors.white)),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Text(
               widget.invoice == null
                   ? '${languageProvider.isEnglish ? 'Invoice #' : 'انوائس نمبر#'}${generateInvoiceNumber()}'
                   : '${languageProvider.isEnglish ? 'Invoice #' : 'انوائس نمبر#'}${widget.invoice!['invoiceNumber']}',
-              style: TextStyle(color: Colors.white, fontSize: 16),            ),
+              style: TextStyle(color: Colors.white, fontSize: 14),            ),
           ),
         ],
       ),
@@ -576,7 +577,7 @@ class _InvoicePageState extends State<InvoicePage> {
         child: Consumer<CustomerProvider>(
           builder: (context, customerProvider, child) {
             if (customerProvider.customers.isEmpty) {
-              return const Center(child: CircularProgressIndicator()); // Show loading indicator if customers are still being fetched
+              return const Center(child: CircularProgressIndicator()); // Shows loading indicator if customers are still being fetched
             }
 
             return Padding(
