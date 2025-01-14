@@ -28,21 +28,31 @@ class _filledbycustomerreportState extends State<filledbycustomerreport> {
 
   Future<void> _getCustomerBalance(String customerId) async {
     try {
-      final DatabaseReference filledledgerRef = FirebaseDatabase.instance.ref().child('filledledger').child(customerId);
+      final DatabaseReference ledgerRef = FirebaseDatabase.instance.ref().child('filledledger').child(customerId);
 
-      // Query to get the latest filledledger entry
-      final snapshot = await filledledgerRef.orderByChild('createdAt').limitToLast(1).get();
+      // Query to get the latest ledger entry
+      final snapshot = await ledgerRef.orderByChild('createdAt').limitToLast(1).get();
 
       if (snapshot.exists) {
         final data = snapshot.value as Map<dynamic, dynamic>;
+        // Since data is a map, we need to access the correct values.
         final lastTransaction = data.values.first;
-        setState(() {
-          // Extract the remainingBalance from the latest transaction
-          remainingBalance = lastTransaction['remainingBalance'] ?? 0.0;
-        });
+        if (lastTransaction is Map) {
+          setState(() {
+            // Extract and safely convert the remainingBalance
+            var balance = lastTransaction['remainingBalance'];
+            if (balance is int) {
+              remainingBalance = balance.toDouble();  // Convert int to double
+            } else if (balance is double) {
+              remainingBalance = balance;  // If already a double, use it as is
+            } else {
+              remainingBalance = 0.0;  // Default to 0.0 if it's neither int nor double
+            }
+          });
+        }
       } else {
         setState(() {
-          remainingBalance = 0.0; // If no filledledger entries exist, set balance to 0
+          remainingBalance = 0.0; // If no ledger entries exist, set balance to 0
         });
       }
     } catch (e) {

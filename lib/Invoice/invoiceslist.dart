@@ -182,9 +182,16 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                   itemCount: _filteredInvoices.length,
                   itemBuilder: (context, index) {
                     final invoice = Map<String, dynamic>.from(_filteredInvoices[index]);
-                    final grandTotal = invoice['grandTotal'] ?? 0.0;
-                    final debitAmount = invoice['debitAmount'] ?? 0.0;
-                    final remainingAmount = grandTotal - debitAmount;
+
+                    // final grandTotal = invoice['grandTotal'] ?? 0.0;
+                    final grandTotal = (invoice['grandTotal'] ?? 0.0).toDouble();
+
+                    // final debitAmount = invoice['debitAmount'] ?? 0.0;
+                    final debitAmount = (invoice['debitAmount'] ?? 0.0).toDouble();
+
+                    // final remainingAmount = grandTotal - debitAmount;
+                    final remainingAmount = (grandTotal - debitAmount).toDouble();
+
                     return ListTile(
                       // title: Text('Invoice #${invoice['invoiceNumber']}'),
                       title: Text(
@@ -285,59 +292,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
     );
   }
 
-  // Future<void> _showInvoicePaymentDialog(
-  //
-  //     Map<String, dynamic> invoice, InvoiceProvider invoiceProvider, LanguageProvider languageprovider) async {
-  //   // final languageProvider = Provider.of<LanguageProvider>(context);
-  //   // final languageProvider = Provider.of<LanguageProvider>(context);
-  //   final languageProvider = context.read<LanguageProvider>();
-  //
-  //
-  //   _paymentController.clear();
-  //   await showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return AlertDialog(
-  //         // title: const Text('Pay Invoice'),
-  //         title: Text(languageProvider.isEnglish ? 'Pay Invoice' : 'انوائس کی رقم ادا کریں'),
-  //         content: TextField(
-  //           controller: _paymentController,
-  //           keyboardType: TextInputType.number,
-  //           decoration: InputDecoration(
-  //             // labelText: 'Enter Payment Amount',
-  //             labelText: languageProvider.isEnglish ? 'Enter Payment Amount' : 'رقم لکھیں'
-  //           ),
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //             // child: const Text('Cancel'),
-  //             child: Text(languageProvider.isEnglish ? 'Cancel' : 'انکار'),
-  //           ),
-  //           TextButton(
-  //             onPressed: () async {
-  //               final amount = double.tryParse(_paymentController.text);
-  //               if (amount != null && amount > 0) {
-  //                 // await invoiceProvider.addDebit(invoice['id'], amount);
-  //                 await invoiceProvider.payInvoice(context, invoice['id'], amount);
-  //                 Navigator.of(context).pop();
-  //               } else {
-  //                 // Handle invalid input
-  //               }
-  //             },
-  //             // child: const Text('Pay'),
-  //             child: Text(languageProvider.isEnglish ? 'Pay' : 'رقم ادا کریں'),
-  //
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
-  //
-  //
+
 
   Future<void> _printInvoices() async {
     final pdf = pw.Document();

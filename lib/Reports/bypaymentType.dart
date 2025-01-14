@@ -51,7 +51,6 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
     _fetchReportData();
   }
 
-// Fetch report data based on filters
   // Fetch report data based on filters
   Future<void> _fetchReportData() async {
     try {
@@ -298,147 +297,340 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Filter Row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Payment type dropdown
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.teal.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.teal.withOpacity(0.3),
-                        spreadRadius: 2,
-                        blurRadius: 5,
+            // Row(
+            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //   children: [
+            //     // Payment type dropdown
+            //     Container(
+            //       decoration: BoxDecoration(
+            //         color: Colors.teal.shade50,
+            //         borderRadius: BorderRadius.circular(12),
+            //         boxShadow: [
+            //           BoxShadow(
+            //             color: Colors.teal.withOpacity(0.3),
+            //             spreadRadius: 2,
+            //             blurRadius: 5,
+            //           ),
+            //         ],
+            //       ),
+            //       child: DropdownButton<String>(
+            //         value: _selectedPaymentType,
+            //         onChanged: (value) {
+            //           setState(() {
+            //             _selectedPaymentType = value;
+            //             // Reset payment method when payment type changes
+            //             if (value != 'instant') {
+            //               _selectedPaymentMethod = 'all';
+            //             }
+            //           });
+            //           _fetchReportData(); // Refetch data based on payment type
+            //         },
+            //         items: <String>['all', 'udhaar', 'instant']
+            //             .map<DropdownMenuItem<String>>((String value) {
+            //           return DropdownMenuItem<String>(
+            //             value: value,
+            //             child: Text(value == 'all'
+            //                 ? 'All Payments'
+            //                 : value == 'udhaar'
+            //                 ? 'Udhaar'
+            //                 : 'Instant'),
+            //           );
+            //         }).toList(),
+            //       ),
+            //     ),
+            //     const SizedBox(width: 15),
+            //     // Customer dropdown or filter
+            //     ElevatedButton(
+            //       onPressed: () => _selectCustomer(context),
+            //       style: ElevatedButton.styleFrom(
+            //         backgroundColor: Colors.teal.shade400,
+            //         shape: RoundedRectangleBorder(
+            //           borderRadius: BorderRadius.circular(12),
+            //         ),
+            //       ),
+            //       child: Text(
+            //         _selectedCustomerName == null
+            //             ? 'Select Customer'
+            //             : 'Selected: $_selectedCustomerName', // Display selected customer name
+            //         style: const TextStyle(
+            //           color: Colors.white
+            //         ),
+            //       ),
+            //     ),
+            //     const SizedBox(width: 15),
+            //     // Date range picker
+            //     ElevatedButton(
+            //       onPressed: () => _selectDateRange(context),
+            //       style: ElevatedButton.styleFrom(
+            //         backgroundColor: Colors.teal.shade400,
+            //         shape: RoundedRectangleBorder(
+            //           borderRadius: BorderRadius.circular(12),
+            //         ),
+            //       ),
+            //       child: Text(
+            //           _selectedDateRange == null ? 'Select Date Range' : 'Date Range Selected',
+            //         style: const TextStyle(
+            //           color: Colors.white
+            //         ),
+            //       ),
+            //     ),
+            //     const SizedBox(width: 15),
+            //     // Clear filter button
+            //     ElevatedButton(
+            //       onPressed: _clearFilters,
+            //       style: ElevatedButton.styleFrom(
+            //         backgroundColor: Colors.red.shade400,
+            //         shape: RoundedRectangleBorder(
+            //           borderRadius: BorderRadius.circular(12),
+            //         ),
+            //       ),
+            //       child: Text(
+            //           // 'Clear Filters'
+            //         languageProvider.isEnglish ? 'Clear Filters' : 'فلٹرز صاف کریں۔', // Dynamic text based on language
+            //         style: const TextStyle(color: Colors.white),
+            //       ),
+            //     ),
+            //   ],
+            // ),
+            // const SizedBox(height: 20),
+            // // Payment method dropdown (only for instant payments)
+            // if (_selectedPaymentType == 'instant')
+            //   Row(
+            //     children: [
+            //       Container(
+            //         decoration: BoxDecoration(
+            //           color: Colors.teal.shade50,
+            //           borderRadius: BorderRadius.circular(12),
+            //           boxShadow: [
+            //             BoxShadow(
+            //               color: Colors.teal.withOpacity(0.3),
+            //               spreadRadius: 2,
+            //               blurRadius: 5,
+            //             ),
+            //           ],
+            //         ),
+            //         child: DropdownButton<String>(
+            //           value: _selectedPaymentMethod,
+            //           onChanged: (value) {
+            //             setState(() {
+            //               _selectedPaymentMethod = value;
+            //             });
+            //             _fetchReportData(); // Refetch data based on payment method
+            //           },
+            //           items: <String>['all', 'online', 'cash']
+            //               .map<DropdownMenuItem<String>>((String value) {
+            //             return DropdownMenuItem<String>(
+            //               value: value,
+            //               child: Text(value == 'all'
+            //                   ? 'All Methods'
+            //                   : value == 'online'
+            //                   ? 'Online'
+            //                   : 'Cash'),
+            //             );
+            //           }).toList(),
+            //         ),
+            //       ),
+            //       const SizedBox(width: 15),
+            //     ],
+            //   ),
+            // const SizedBox(height: 20),
+            SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      // Payment type dropdown
+                      Container(
+                        width: MediaQuery.of(context).size.width * 0.45, // Adjust width
+                        decoration: BoxDecoration(
+                          color: Colors.teal.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.teal.withOpacity(0.3),
+                              spreadRadius: 2,
+                              blurRadius: 5,
+                            ),
+                          ],
+                        ),
+                        child: DropdownButton<String>(
+                          isExpanded: true, // Ensure dropdown adapts to the container width
+                          value: _selectedPaymentType,
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedPaymentType = value;
+                              if (value != 'instant') {
+                                _selectedPaymentMethod = 'all';
+                              }
+                            });
+                            _fetchReportData();
+                          },
+                          items: <String>['all', 'udhaar', 'instant']
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value == 'all'
+                                  ? 'All Payments'
+                                  : value == 'udhaar'
+                                  ? 'Udhaar'
+                                  : 'Instant'),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      // Customer dropdown or filter
+                      ElevatedButton(
+                        onPressed: () => _selectCustomer(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal.shade400,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          _selectedCustomerName == null
+                              ? 'Select Customer'
+                              : 'Selected: $_selectedCustomerName',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      // Date range picker
+                      ElevatedButton(
+                        onPressed: () => _selectDateRange(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal.shade400,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          _selectedDateRange == null
+                              ? 'Select Date Range'
+                              : 'Date Range Selected',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      // Clear filter button
+                      ElevatedButton(
+                        onPressed: _clearFilters,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade400,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          languageProvider.isEnglish ? 'Clear Filters' : 'فلٹرز صاف کریں۔',
+                          style: const TextStyle(color: Colors.white),
+                        ),
                       ),
                     ],
                   ),
-                  child: DropdownButton<String>(
-                    value: _selectedPaymentType,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedPaymentType = value;
-                        // Reset payment method when payment type changes
-                        if (value != 'instant') {
-                          _selectedPaymentMethod = 'all';
-                        }
-                      });
-                      _fetchReportData(); // Refetch data based on payment type
-                    },
-                    items: <String>['all', 'udhaar', 'instant']
-                        .map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value == 'all'
-                            ? 'All Payments'
-                            : value == 'udhaar'
-                            ? 'Udhaar'
-                            : 'Instant'),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                const SizedBox(width: 15),
-                // Customer dropdown or filter
-                ElevatedButton(
-                  onPressed: () => _selectCustomer(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal.shade400,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    _selectedCustomerName == null
-                        ? 'Select Customer'
-                        : 'Selected: $_selectedCustomerName', // Display selected customer name
-                    style: const TextStyle(
-                      color: Colors.white
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 15),
-                // Date range picker
-                ElevatedButton(
-                  onPressed: () => _selectDateRange(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal.shade400,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                      _selectedDateRange == null ? 'Select Date Range' : 'Date Range Selected',
-                    style: const TextStyle(
-                      color: Colors.white
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 15),
-                // Clear filter button
-                ElevatedButton(
-                  onPressed: _clearFilters,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade400,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                      // 'Clear Filters'
-                    languageProvider.isEnglish ? 'Clear Filters' : 'فلٹرز صاف کریں۔', // Dynamic text based on language
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // Payment method dropdown (only for instant payments)
-            if (_selectedPaymentType == 'instant')
-              Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.teal.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.teal.withOpacity(0.3),
-                          spreadRadius: 2,
-                          blurRadius: 5,
+                  const SizedBox(height: 20),
+                  // Payment method dropdown (only for instant payments)
+                  if (_selectedPaymentType == 'instant')
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        Container(
+                          width: MediaQuery.of(context).size.width * 0.45,
+                          decoration: BoxDecoration(
+                            color: Colors.teal.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.teal.withOpacity(0.3),
+                                spreadRadius: 2,
+                                blurRadius: 5,
+                              ),
+                            ],
+                          ),
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: _selectedPaymentMethod,
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedPaymentMethod = value;
+                              });
+                              _fetchReportData();
+                            },
+                            items: <String>['all', 'online', 'cash']
+                                .map<DropdownMenuItem<String>>((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value == 'all'
+                                    ? 'All Methods'
+                                    : value == 'online'
+                                    ? 'Online'
+                                    : 'Cash'),
+                              );
+                            }).toList(),
+                          ),
                         ),
                       ],
                     ),
-                    child: DropdownButton<String>(
-                      value: _selectedPaymentMethod,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedPaymentMethod = value;
-                        });
-                        _fetchReportData(); // Refetch data based on payment method
-                      },
-                      items: <String>['all', 'online', 'cash']
-                          .map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value == 'all'
-                              ? 'All Methods'
-                              : value == 'online'
-                              ? 'Online'
-                              : 'Cash'),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(width: 15),
+                  const SizedBox(height: 20),
                 ],
               ),
-            const SizedBox(height: 20),
+            ),
+
+            // Expanded(
+            //   child: SingleChildScrollView(
+            //     child: Container(
+            //       width: double.infinity,  // Make the table take full width
+            //       decoration: BoxDecoration(
+            //         borderRadius: BorderRadius.circular(12),
+            //         boxShadow: [
+            //           BoxShadow(
+            //             color: Colors.teal.withOpacity(0.3),
+            //             spreadRadius: 2,
+            //             blurRadius: 5,
+            //           ),
+            //         ],
+            //       ),
+            //       child: Card(
+            //         color: Colors.teal.shade50,
+            //         elevation: 8,
+            //         shape: RoundedRectangleBorder(
+            //           borderRadius: BorderRadius.circular(12),
+            //         ),
+            //         child: DataTable(
+            //           columnSpacing: 25.0,  // Increase spacing between columns
+            //           dataRowHeight: 60,   // Increase row height
+            //           columns: [
+            //             DataColumn(label: Text('Customer', style: TextStyle(color: Colors.teal.shade800))),
+            //             DataColumn(label: Text('Payment Type', style: TextStyle(color: Colors.teal.shade800))),
+            //             DataColumn(label: Text('Invoice ID', style: TextStyle(color: Colors.teal.shade800))),
+            //             DataColumn(label: Text('Payment Method', style: TextStyle(color: Colors.teal.shade800))),
+            //             DataColumn(label: Text('Amount', style: TextStyle(color: Colors.teal.shade800))),
+            //             DataColumn(label: Text('Date', style: TextStyle(color: Colors.teal.shade800))),
+            //           ],
+            //           rows: _reportData.map((invoice) {
+            //             print(invoice);
+            //             return DataRow(cells: [
+            //               DataCell(Text(invoice['customerName'] ?? 'N/A')),
+            //               DataCell(Text(invoice['paymentType'] ?? 'N/A')),
+            //               DataCell(Text(invoice['invoiceId'] ?? 'N/A')),
+            //               DataCell(Text(invoice['paymentMethod'] ?? 'N/A')),
+            //               DataCell(Text(invoice['amount'].toString())),
+            //               DataCell(Text(DateFormat.yMMMd().format(DateTime.parse(invoice['date'])))),
+            //             ]);
+            //           }).toList(),
+            //         ),
+            //       ),
+            //     ),
+            //   ),
+            // ),
+
             Expanded(
               child: SingleChildScrollView(
                 child: Container(
-                  width: double.infinity,  // Make the table take full width
+                  width: double.infinity, // Ensure the table takes full width
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
@@ -455,28 +647,30 @@ class _PaymentTypeReportPageState extends State<PaymentTypeReportPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: DataTable(
-                      columnSpacing: 25.0,  // Increase spacing between columns
-                      dataRowHeight: 60,   // Increase row height
-                      columns: [
-                        DataColumn(label: Text('Customer', style: TextStyle(color: Colors.teal.shade800))),
-                        DataColumn(label: Text('Payment Type', style: TextStyle(color: Colors.teal.shade800))),
-                        DataColumn(label: Text('Invoice ID', style: TextStyle(color: Colors.teal.shade800))),
-                        DataColumn(label: Text('Payment Method', style: TextStyle(color: Colors.teal.shade800))),
-                        DataColumn(label: Text('Amount', style: TextStyle(color: Colors.teal.shade800))),
-                        DataColumn(label: Text('Date', style: TextStyle(color: Colors.teal.shade800))),
-                      ],
-                      rows: _reportData.map((invoice) {
-                        print(invoice);
-                        return DataRow(cells: [
-                          DataCell(Text(invoice['customerName'] ?? 'N/A')),
-                          DataCell(Text(invoice['paymentType'] ?? 'N/A')),
-                          DataCell(Text(invoice['invoiceId'] ?? 'N/A')),
-                          DataCell(Text(invoice['paymentMethod'] ?? 'N/A')),
-                          DataCell(Text(invoice['amount'].toString())),
-                          DataCell(Text(DateFormat.yMMMd().format(DateTime.parse(invoice['date'])))),
-                        ]);
-                      }).toList(),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal, // Enable horizontal scrolling
+                      child: DataTable(
+                        columnSpacing: 25.0, // Increase spacing between columns
+                        dataRowHeight: 60, // Increase row height
+                        columns: [
+                          DataColumn(label: Text('Customer', style: TextStyle(color: Colors.teal.shade800))),
+                          DataColumn(label: Text('Payment Type', style: TextStyle(color: Colors.teal.shade800))),
+                          DataColumn(label: Text('Invoice ID', style: TextStyle(color: Colors.teal.shade800))),
+                          DataColumn(label: Text('Payment Method', style: TextStyle(color: Colors.teal.shade800))),
+                          DataColumn(label: Text('Amount', style: TextStyle(color: Colors.teal.shade800))),
+                          DataColumn(label: Text('Date', style: TextStyle(color: Colors.teal.shade800))),
+                        ],
+                        rows: _reportData.map((invoice) {
+                          return DataRow(cells: [
+                            DataCell(Text(invoice['customerName'] ?? 'N/A')),
+                            DataCell(Text(invoice['paymentType'] ?? 'N/A')),
+                            DataCell(Text(invoice['invoiceId'] ?? 'N/A')),
+                            DataCell(Text(invoice['paymentMethod'] ?? 'N/A')),
+                            DataCell(Text(invoice['amount'].toString())),
+                            DataCell(Text(DateFormat.yMMMd().format(DateTime.parse(invoice['date'])))),
+                          ]);
+                        }).toList(),
+                      ),
                     ),
                   ),
                 ),

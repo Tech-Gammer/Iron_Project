@@ -39,11 +39,21 @@ class _byCustomerReportState extends State<byCustomerReport> {
 
       if (snapshot.exists) {
         final data = snapshot.value as Map<dynamic, dynamic>;
+        // Since data is a map, we need to access the correct values.
         final lastTransaction = data.values.first;
-        setState(() {
-          // Extract the remainingBalance from the latest transaction
-          remainingBalance = lastTransaction['remainingBalance'] ?? 0.0;
-        });
+        if (lastTransaction is Map) {
+          setState(() {
+            // Extract and safely convert the remainingBalance
+            var balance = lastTransaction['remainingBalance'];
+            if (balance is int) {
+              remainingBalance = balance.toDouble();  // Convert int to double
+            } else if (balance is double) {
+              remainingBalance = balance;  // If already a double, use it as is
+            } else {
+              remainingBalance = 0.0;  // Default to 0.0 if it's neither int nor double
+            }
+          });
+        }
       } else {
         setState(() {
           remainingBalance = 0.0; // If no ledger entries exist, set balance to 0
@@ -56,6 +66,8 @@ class _byCustomerReportState extends State<byCustomerReport> {
       });
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {

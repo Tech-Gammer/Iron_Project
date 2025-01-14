@@ -114,19 +114,20 @@ class InvoiceProvider with ChangeNotifier {
             'invoiceNumber': value['invoiceNumber'],
             'customerId': value['customerId'],
             'customerName': value['customerName'],
-            'subtotal': value['subtotal'],
-            'discount': value['discount'],
-            'grandTotal': value['grandTotal'],
+            'subtotal': (value['subtotal'] as num?)?.toDouble() ?? 0.0, // Ensuring 'subtotal' is a double
+            'discount': (value['discount'] as num?)?.toDouble() ?? 0.0,   // Ensuring 'discount' is a double
+            'grandTotal': (value['grandTotal'] as num?)?.toDouble() ?? 0.0, // Ensuring 'grandTotal' is a double
             'paymentType': value['paymentType'],
             'paymentMethod': value['paymentMethod'],
-            'debitAmount': value['debitAmount'] ?? 0.0, // **Added field for paid amount**
-            'debitAt': value['debitAt'], // **Added field for last payment date**
+            'debitAmount': (value['debitAmount'] as num?)?.toDouble() ?? 0.0, // Ensuring 'debitAmount' is a double
+            'debitAt': value['debitAt'],
             'items': List<Map<String, dynamic>>.from(
               (value['items'] as List).map((item) => Map<String, dynamic>.from(item)),
             ),
             'createdAt': value['createdAt'] is int
                 ? DateTime.fromMillisecondsSinceEpoch(value['createdAt']).toIso8601String()
                 : value['createdAt'],
+            'remainingBalance': (value['remainingBalance'] as num?)?.toDouble() ?? 0.0, // Ensuring 'remainingBalance' is a double
           });
         });
         notifyListeners();
@@ -135,6 +136,7 @@ class InvoiceProvider with ChangeNotifier {
       throw Exception('Failed to fetch invoices: $e');
     }
   }
+
 
 
   Future<void> deleteInvoice(String invoiceId) async {
@@ -192,7 +194,9 @@ class InvoiceProvider with ChangeNotifier {
       if (snapshot.exists) {
         final data = snapshot.value as Map<dynamic, dynamic>;
         final lastTransaction = data.values.first;
-        lastRemainingBalance = lastTransaction['remainingBalance'] as double;
+
+        // Ensure lastRemainingBalance is safely converted to double
+        lastRemainingBalance = (lastTransaction['remainingBalance'] as num?)?.toDouble() ?? 0.0;
       }
 
       // Calculate the new remaining balance
@@ -213,12 +217,27 @@ class InvoiceProvider with ChangeNotifier {
     }
   }
 
+
   List<Map<String, dynamic>> getInvoicesByPaymentMethod(String paymentMethod) {
     return _invoices.where((invoice) {
       final method = invoice['paymentMethod'] ?? '';
       return method.toLowerCase() == paymentMethod.toLowerCase();
     }).toList();
   }
+
+  // Helper function declared at the top
+  double _parseToDouble(dynamic value) {
+    if (value == null) {
+      return 0.0; // Default to 0.0 if null
+    }
+
+    // Attempt to parse the value as a double
+    final parsedValue = (value is num) ? value.toDouble() : double.tryParse(value.toString()) ?? 0.0;
+    return parsedValue;
+  }
+
+
+
 
 
   Future<void> payInvoiceWithSeparateMethod(
@@ -233,10 +252,29 @@ class InvoiceProvider with ChangeNotifier {
       // Convert the retrieved data to Map<String, dynamic>
       final invoice = Map<String, dynamic>.from(invoiceSnapshot.value as Map);
 
-      // Get the current payment amounts (default to 0.0 if not set)
-      final currentCashPaid = (invoice['cashPaidAmount'] ?? 0.0) as double;
-      final currentOnlinePaid = (invoice['onlinePaidAmount'] ?? 0.0) as double;
-      final grandTotal = (invoice['grandTotal'] ?? 0.0) as double;
+      // Helper function to parse values safely
+      double _parseToDouble(dynamic value) {
+        if (value == null) {
+          return 0.0; // Default to 0.0 if null
+        }
+        if (value is int) {
+          return value.toDouble(); // Convert int to double
+        } else if (value is double) {
+          return value;
+        } else {
+          try {
+            return double.parse(value.toString()); // Try parsing as double
+          } catch (e) {
+            return 0.0; // Return 0.0 in case of a parsing failure
+          }
+        }
+      }
+
+      // Retrieve and parse all necessary values
+      final remainingBalance = _parseToDouble(invoice['remainingBalance']);
+      final currentCashPaid = _parseToDouble(invoice['cashPaidAmount']);
+      final currentOnlinePaid = _parseToDouble(invoice['onlinePaidAmount']);
+      final grandTotal = _parseToDouble(invoice['grandTotal']);
 
       // Calculate the total paid so far
       final totalPaid = currentCashPaid + currentOnlinePaid;
@@ -269,8 +307,8 @@ class InvoiceProvider with ChangeNotifier {
         });
       }
 
-      // Get the current debit amount (default to 0.0 if not set)
-      final currentDebit = (invoice['debitAmount'] ?? 0.0) as double;
+      // Retrieve and parse the current debit amount
+      final currentDebit = _parseToDouble(invoice['debitAmount']);
 
       // Check if the payment amount exceeds the remaining balance
       if (paymentAmount > (grandTotal - currentDebit)) {
@@ -287,7 +325,7 @@ class InvoiceProvider with ChangeNotifier {
       await _db.child('invoices').child(invoiceId).update({
         'cashPaidAmount': updatedCashPaid,
         'onlinePaidAmount': updatedOnlinePaid,
-        'debitAmount': updatedDebit, // Make sure this is updated
+        'debitAmount': updatedDebit, // Make sure this is updated correctly
         'debitAt': debitAt,
       });
 
@@ -313,5 +351,4 @@ class InvoiceProvider with ChangeNotifier {
       throw Exception('Failed to save payment: $e');
     }
   }
-
 }

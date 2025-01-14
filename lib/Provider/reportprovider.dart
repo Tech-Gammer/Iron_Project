@@ -114,8 +114,10 @@ class CustomerReportProvider with ChangeNotifier {
         double currentBalance = 0.0;
 
         ledgerData.forEach((key, value) {
-          final debit = (value['debitAmount'] ?? 0.0) as double;
-          final credit = (value['creditAmount'] ?? 0.0) as double;
+          // final debit = (value['debitAmount'] ?? 0.0) as double;
+          // final credit = (value['creditAmount'] ?? 0.0) as double;
+          final debit = (value['debitAmount'] ?? 0.0).toDouble();
+          final credit = (value['creditAmount'] ?? 0.0).toDouble();
 
           // Accumulate debits and credits
           totalDebit += debit;

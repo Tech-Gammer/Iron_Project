@@ -80,7 +80,26 @@ class Dashboard extends StatelessWidget {
           ),
         ],
         onTap: (index) {
-          // Handle navigation
+          switch (index) {
+            case 0:
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => Dashboard()),
+              );
+              break;
+            case 1:
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ledgerselection()),
+              );
+              break;
+            case 2:
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UsersPage()),
+              );
+              break;
+          }
         },
       )
           : null,
@@ -102,7 +121,7 @@ class Dashboard extends StatelessWidget {
             leading: const Icon(Icons.home),
             title: Text(languageProvider.isEnglish ? 'Home' : 'ہوم'),
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context)=>Dashboard()));
+              Navigator.push(context, MaterialPageRoute(builder: (context)=>const Dashboard()));
             },
           ),
           ListTile(
@@ -112,7 +131,7 @@ class Dashboard extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ledgerselection(),
+                  builder: (context) => const ledgerselection(),
                 ),
               );              },
           ),
@@ -145,7 +164,7 @@ class Dashboard extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Dashboard()),
+                MaterialPageRoute(builder: (context) => const Dashboard()),
               );
               },
           ),
@@ -156,7 +175,7 @@ class Dashboard extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ledgerselection(),
+                  builder: (context) => const ledgerselection(),
                 ),
               );            },
           ),
@@ -219,7 +238,7 @@ class Dashboard extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ledgerselection(),
+                builder: (context) => const ledgerselection(),
               ),
             );
           }),
@@ -228,7 +247,7 @@ class Dashboard extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ReportsPage(),
+                builder: (context) => const ReportsPage(),
               ),
             );
           }),

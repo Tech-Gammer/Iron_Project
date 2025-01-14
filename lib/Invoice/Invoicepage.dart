@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:iron_project_new/Invoice/invoiceslist.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -96,11 +100,10 @@ class _InvoicePageState extends State<InvoicePage> {
     // Get the remaining balance from the ledger
     double remainingBalance = await _getRemainingBalance(_selectedCustomerId!);
 
-
-    // Load the image from assets
-    final ByteData bytes = await rootBundle.load('images/logo.png');
-    final Uint8List imageBytes = bytes.buffer.asUint8List();
-    final pw.MemoryImage logoImage = pw.MemoryImage(imageBytes);
+    // Load the image asset
+    final ByteData bytes = await rootBundle.load('assets/images/logo.png');
+    final buffer = bytes.buffer.asUint8List();
+    final image = pw.MemoryImage(buffer);
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a5,
@@ -114,7 +117,7 @@ class _InvoicePageState extends State<InvoicePage> {
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Image(logoImage, width: 70, height: 70), // Adjust width and height as needed
+                    pw.Image(image, width: 70, height: 70), // Adjust width and height as needed
                     pw.Text(
                       // languageProvider.isEnglish ? 'Invoice' : 'انوائس',
                       'Invoice',
@@ -255,43 +258,52 @@ class _InvoicePageState extends State<InvoicePage> {
         },
       ),
     );
-    // Print or preview the PDF
-    await Printing.layoutPdf(
-      onLayout: (format) async => pdf.save(),
-    );
+    try {
+      await Printing.layoutPdf(
+        onLayout: (format) async {
+          return pdf.save();
+        },
+      );
+    } catch (e) {
+      print("Error printsings: $e");
+    }
   }
 
   Future<double> _getRemainingBalance(String customerId) async {
     try {
-      // Reference to the customer's ledger in Firebase
       final customerLedgerRef = _db.child('ledger').child(customerId);
 
-      // Get the most recent entry based on the 'createdAt' field
       final DatabaseEvent snapshot = await customerLedgerRef.orderByChild('createdAt').limitToLast(1).once();
 
       if (snapshot.snapshot.exists) {
-        // The snapshot will contain the data in a Map form
         final Map<dynamic, dynamic> ledgerEntries = snapshot.snapshot.value as Map<dynamic, dynamic>;
 
-        // Get the last entry (since we ordered by 'createdAt' and limited to last 1)
-        final lastEntryKey = ledgerEntries.keys.first; // Get the key of the first (and only) entry
+        final lastEntryKey = ledgerEntries.keys.first;
         final lastEntry = ledgerEntries[lastEntryKey];
 
         if (lastEntry != null && lastEntry is Map) {
-          // Get the remaining balance from the last entry
-          final double remainingBalance = lastEntry['remainingBalance'] ?? 0.0;
+          // Safely handle the conversion to double
+          final remainingBalanceValue = lastEntry['remainingBalance'];
+
+          // Check if the value is an int or a double and convert accordingly
+          double remainingBalance = 0.0;
+          if (remainingBalanceValue is int) {
+            remainingBalance = remainingBalanceValue.toDouble();
+          } else if (remainingBalanceValue is double) {
+            remainingBalance = remainingBalanceValue;
+          }
+
+          print("Remaining Balance: $remainingBalance"); // Debug print
           return remainingBalance;
         }
       }
 
-      // If no ledger entry exists, return 0 as defaults
-      return 0.0;
+      return 0.0; // If no data is found, return 0.0
     } catch (e) {
-      print("Error fetching remaining balance: $e");
+      print("Error fetching remaining balance: $e"); // Debug error message
       return 0.0; // Return 0 if there's an error
     }
   }
-
 
 
   @override
@@ -450,135 +462,6 @@ class _InvoicePageState extends State<InvoicePage> {
                   // Display columns for the invoice details
                   Text(languageProvider.isEnglish ? 'Invoice Details:' : 'انوائس کی تفصیلات:',
                     style: TextStyle(color: Colors.teal.shade800, fontSize: 18),                  ),
-                  // Table(
-                  //   border: TableBorder.all(),
-                  //   columnWidths: const {
-                  //     0: FlexColumnWidth(2),
-                  //     1: FlexColumnWidth(2),
-                  //     2: FlexColumnWidth(2),
-                  //     3: FlexColumnWidth(2),
-                  //     4: FlexColumnWidth(3),
-                  //     5: FlexColumnWidth(1), // For Delete button column
-                  //   },
-                  //   children: [
-                  //     TableRow(
-                  //       children: [
-                  //          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Total' : 'کل', textAlign: TextAlign.center))),
-                  //          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Sarya Rate' : 'سرئے کی قیمت', textAlign: TextAlign.center))),
-                  //          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Sarya Qty' : 'سرئے کی مقدار', textAlign: TextAlign.center))),
-                  //          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Sarya Weight(Kg)' : 'سرئے کا وزن(کلوگرام)', textAlign: TextAlign.center))),
-                  //          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Description' : 'تفصیل', textAlign: TextAlign.center))),
-                  //          TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Delete' : 'حذف کریں', textAlign: TextAlign.center))),
-                  //       ],
-                  //     ),
-                  //     // Generate a row for each item in _invoiceRows
-                  //     for (int i = 0; i < _invoiceRows.length; i++)
-                  //       TableRow(
-                  //         children: [
-                  //           // Total
-                  //           TableCell(
-                  //             child: Padding(
-                  //               padding: const EdgeInsets.all(8.0),
-                  //               child: Text(_invoiceRows[i]['total']?.toStringAsFixed(2) ?? '0.00', textAlign: TextAlign.center),
-                  //             ),
-                  //           ),
-                  //           // Sarya Rate
-                  //           TableCell(
-                  //             child: Padding(
-                  //               padding: const EdgeInsets.all(8.0),
-                  //               child: TextField(
-                  //                 // controller: TextEditingController(text: _invoiceRows[i]['rate'].toString()),
-                  //                 controller: _invoiceRows[i]['rateController'],
-                  //                 enabled: !_isReadOnly, // Disable in read-only mode
-                  //                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  //                 inputFormatters: [
-                  //                   FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),  // This allows only numeric input
-                  //                 ],
-                  //                 onChanged: (value) {
-                  //                   _updateRow(i, 'rate', double.tryParse(value) ?? 0.0);
-                  //                 },
-                  //                 decoration: InputDecoration(hintText: languageProvider.isEnglish ? 'Rate' : 'قیمت',
-                  //                   hintStyle: TextStyle(color: Colors.teal.shade600),
-                  //                 ),
-                  //               ),
-                  //             ),
-                  //           ),
-                  //           // Sarya Qty
-                  //           TableCell(
-                  //             child: Padding(
-                  //               padding: const EdgeInsets.all(8.0),
-                  //               child: TextField(
-                  //                 // controller: TextEditingController(text: _invoiceRows[i]['qty'].toString()),
-                  //                 controller: _invoiceRows[i]['qtyController'],
-                  //                 enabled: !_isReadOnly, // Disable in read-only mode
-                  //
-                  //                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  //                 inputFormatters: [
-                  //                   FilteringTextInputFormatter.digitsOnly,  // This allows only numeric input
-                  //                 ],
-                  //                 onChanged: (value) {
-                  //                   _updateRow(i, 'qty', double.tryParse(value) ?? 0.0);
-                  //                 },
-                  //                 decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Qty' : 'مقدار',
-                  //                   hintStyle: TextStyle(color: Colors.teal.shade600),),
-                  //               ),
-                  //             ),
-                  //           ),
-                  //           // Sarya Weight
-                  //           TableCell(
-                  //             child: Padding(
-                  //               padding: const EdgeInsets.all(8.0),
-                  //               child: TextField(
-                  //                 // controller: TextEditingController(text: _invoiceRows[i]['weight'].toString()),
-                  //                 controller: _invoiceRows[i]['weightController'],
-                  //                 enabled: !_isReadOnly, // Disable in read-only mode
-                  //
-                  //                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  //                 inputFormatters: [
-                  //                   FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,4}')),  // This allows only numeric input
-                  //                 ],
-                  //                 onChanged: (value) {
-                  //                   _updateRow(i, 'weight', double.tryParse(value) ?? 0.0);
-                  //                 },
-                  //                 decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Weight' : 'وزن',
-                  //                   hintStyle: TextStyle(color: Colors.teal.shade600),),
-                  //               ),
-                  //             ),
-                  //           ),
-                  //           // Description
-                  //           TableCell(
-                  //             child: Padding(
-                  //               padding: const EdgeInsets.all(8.0),
-                  //               child: TextField(
-                  //                 // controller: TextEditingController(text: _invoiceRows[i]['description']),
-                  //                 controller: _invoiceRows[i]['descriptionController'],
-                  //                 enabled: !_isReadOnly, // Disable in read-only mode
-                  //
-                  //                 onChanged: (value) {
-                  //                   _updateRow(i, 'description', value);
-                  //                 },
-                  //                 decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Description' : 'تفصیل',
-                  //                   hintStyle: TextStyle(color: Colors.teal.shade600),),
-                  //               ),
-                  //             ),
-                  //           ),
-                  //           // Delete Button
-                  //           TableCell(
-                  //             child: Padding(
-                  //               padding: const EdgeInsets.all(8.0),
-                  //               child: IconButton(
-                  //                 icon: const Icon(Icons.delete,color: Colors.red,),
-                  //                 onPressed: () {
-                  //                   _deleteRow(i); // Delete the current row
-                  //                 },
-                  //               ),
-                  //             ),
-                  //           ),
-                  //         ],
-                  //       ),
-                  //   ],
-                  // ),
-                  // add row button
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal, // Enable horizontal scrolling
                     child: ConstrainedBox(
@@ -1055,7 +938,22 @@ class _InvoicePageState extends State<InvoicePage> {
 
                         }
                         // Generate and print the PDF
-                        await _generateAndPrintPDF(invoiceNumber);
+                        // try {
+                        //   // Generate and print the PDF
+                        //   await _generateAndPrintPDF(invoiceNumber);
+                        // } catch (e) {
+                        //   print('Error during PDF generation: $e'); // Log the error for debugging
+                        //   ScaffoldMessenger.of(context).showSnackBar(
+                        //     SnackBar(
+                        //       content: Text(
+                        //         languageProvider.isEnglish
+                        //             ? 'Failed to generate PDF'
+                        //             : 'پی ڈی ایف بنانے میں ناکام',
+                        //       ),
+                        //     ),
+                        //   );
+                        //   return; // Exit early if PDF generation fails
+                        // }
 
                         // Navigate back
                         // Navigator.pop(context);

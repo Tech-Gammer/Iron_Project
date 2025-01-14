@@ -7,7 +7,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../Provider/customerprovider.dart';
-import '../Provider/lanprovider.dart'; // Import your customer provider
+import '../Provider/lanprovider.dart';
+import 'filledlist.dart'; // Import your customer provider
 
 class filledpage extends StatefulWidget {
   final Map<String, dynamic>? filled; // Optional filled data for editing
@@ -95,10 +96,10 @@ class _filledpageState extends State<filledpage> {
     double remainingBalance = await _getRemainingBalance(_selectedCustomerId!);
 
 
-    // Load the image from assets
-    final ByteData bytes = await rootBundle.load('images/logo.png');
-    final Uint8List imageBytes = bytes.buffer.asUint8List();
-    final pw.MemoryImage logoImage = pw.MemoryImage(imageBytes);
+    // Load the image asset
+    final ByteData bytes = await rootBundle.load('assets/images/logo.png');
+    final buffer = bytes.buffer.asUint8List();
+    final image = pw.MemoryImage(buffer);
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a5,
@@ -112,7 +113,7 @@ class _filledpageState extends State<filledpage> {
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Image(logoImage, width: 70, height: 70), // Adjust width and height as needed
+                    pw.Image(image, width: 70, height: 70), // Adjust width and height as needed
                     pw.Text(
                       'Filled',
                       style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
@@ -233,38 +234,49 @@ class _filledpageState extends State<filledpage> {
       ),
     );
     // Print or preview the PDF
-    await Printing.layoutPdf(
-      onLayout: (format) async => pdf.save(),
-    );
+    try {
+      await Printing.layoutPdf(
+        onLayout: (format) async {
+          return pdf.save();
+        },
+      );
+    } catch (e) {
+      print("Error printsings: $e");
+    }
   }
 
   Future<double> _getRemainingBalance(String customerId) async {
     try {
-      // Reference to the customer's ledger in Firebase
       final customerLedgerRef = _db.child('filledledger').child(customerId);
 
-      // Get the most recent entry based on the 'createdAt' field
       final DatabaseEvent snapshot = await customerLedgerRef.orderByChild('createdAt').limitToLast(1).once();
 
       if (snapshot.snapshot.exists) {
-        // The snapshot will contain the data in a Map form
         final Map<dynamic, dynamic> ledgerEntries = snapshot.snapshot.value as Map<dynamic, dynamic>;
 
-        // Get the last entry (since we ordered by 'createdAt' and limited to last 1)
-        final lastEntryKey = ledgerEntries.keys.first; // Get the key of the first (and only) entry
+        final lastEntryKey = ledgerEntries.keys.first;
         final lastEntry = ledgerEntries[lastEntryKey];
 
         if (lastEntry != null && lastEntry is Map) {
-          // Get the remaining balance from the last entry
-          final double remainingBalance = lastEntry['remainingBalance'] ?? 0.0;
+          // Safely handle the conversion to double
+          final remainingBalanceValue = lastEntry['remainingBalance'];
+
+          // Check if the value is an int or a double and convert accordingly
+          double remainingBalance = 0.0;
+          if (remainingBalanceValue is int) {
+            remainingBalance = remainingBalanceValue.toDouble();
+          } else if (remainingBalanceValue is double) {
+            remainingBalance = remainingBalanceValue;
+          }
+
+          print("Remaining Balance: $remainingBalance"); // Debug print
           return remainingBalance;
         }
       }
 
-      // If no ledger entry exists, return 0 as default
-      return 0.0;
+      return 0.0; // If no data is found, return 0.0
     } catch (e) {
-      print("Error fetching remaining balance: $e");
+      print("Error fetching remaining balance: $e"); // Debug error message
       return 0.0; // Return 0 if there's an error
     }
   }
@@ -287,7 +299,7 @@ class _filledpageState extends State<filledpage> {
     super.initState();
     // Fetch the customers when the page is initialized
     Provider.of<CustomerProvider>(context, listen: false).fetchCustomers();
-    _isReadOnly = widget.filled != null; // Set read-only if invoice is passed
+    _isReadOnly = widget.filled != null; // Set read-only if filled is passed
 
     if (widget.filled != null) {
       // Populate fields for editing
@@ -826,10 +838,14 @@ class _filledpageState extends State<filledpage> {
 
                         }
                         // Generate and print the PDF
-                        await _generateAndPrintPDF(filledNumber);
+                        // await _generateAndPrintPDF(filledNumber);
 
                         // Navigate back
-                        Navigator.pop(context);
+                        // Navigator.pop(context);
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => filledListpage()),
+                        );
                       } catch (e) {
                         // Show error message
                         print(e);

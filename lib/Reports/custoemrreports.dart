@@ -182,7 +182,7 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                           scrollDirection: Axis.horizontal,
                           child: DataTable(
                             headingRowHeight: 60,  // Increase heading row height
-                            dataRowHeight: 60,  // Increase data row height
+                            dataRowHeight: 60,  // Increase data row heights
                             columnSpacing: 20,  // Increase column spacing
                             columns: [
                               DataColumn(label: Text(
