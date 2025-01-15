@@ -396,7 +396,7 @@ class _FilledPaymentTypeReportPageState extends State<FilledPaymentTypeReportPag
                   ),
                   const SizedBox(height: 20),
                   // Payment method dropdown (only for instant payments)
-                  if (_selectedPaymentType == 'instant')
+                  // if (_selectedPaymentType == 'instant')
                     Wrap(
                       spacing: 10,
                       runSpacing: 10,

@@ -104,46 +104,50 @@ class FilledCustomerReportProvider with ChangeNotifier {
       report = {};
       transactions = [];
 
-      // Fetch ledger entries for the customer
       final ledgerSnapshot = await _db.child('filledledger').child(customerId).get();
       if (ledgerSnapshot.exists) {
         final ledgerData = Map<String, dynamic>.from(ledgerSnapshot.value as Map<dynamic, dynamic>);
 
-        double totalDebit = 0.0;
-        double totalCredit = 0.0;
-        double currentBalance = 0.0;
-
         ledgerData.forEach((key, value) {
-          // final debit = (value['debitAmount'] ?? 0.0) as double;
-          // final credit = (value['creditAmount'] ?? 0.0) as double;
           final debit = (value['debitAmount'] ?? 0.0).toDouble();
           final credit = (value['creditAmount'] ?? 0.0).toDouble();
 
-          // Accumulate debits and credits
-          totalDebit += debit;
-          totalCredit += credit;
-
-          // Update current balance dynamically
-          currentBalance += credit - debit;
-
-          // Add each ledger entry to the transactions list
           transactions.add({
             'id': key,
             'date': value['createdAt'],
             'filledNumber': value['filledNumber'],
-            // 'paymentType': value['paymentType'] ?? 'N/A', // Optional field
-            // 'paymentMethod': value['paymentMethod'] ?? 'N/A', // Optional field
             'debit': debit,
             'credit': credit,
-            'balance': currentBalance,
           });
         });
 
-        // Prepare the final report
+        // Sort transactions by date
+        transactions.sort((a, b) {
+          final dateA = DateTime.parse(a['date']);
+          final dateB = DateTime.parse(b['date']);
+          return dateA.compareTo(dateB);
+        });
+
+        // Calculate totals and running balances
+        double totalDebit = 0.0;
+        double totalCredit = 0.0;
+        double runningBalance = 0.0;
+
+        transactions.forEach((transaction) {
+          final debit = transaction['debit'] ?? 0.0;
+          final credit = transaction['credit'] ?? 0.0;
+
+          totalDebit += debit;
+          totalCredit += credit;
+          runningBalance += credit - debit;
+
+          transaction['balance'] = runningBalance;
+        });
+
         report = {
           'debit': totalDebit,
           'credit': totalCredit,
-          'balance': currentBalance,
+          'balance': runningBalance,
         };
       }
 

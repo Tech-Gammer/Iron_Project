@@ -54,6 +54,14 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
       return matchesSearch;
     }).toList();
 
+// Sort invoices by createdAt in descending order
+    _filteredInvoices.sort((a, b) {
+      final dateA = DateTime.tryParse(a['createdAt']) ?? DateTime.fromMillisecondsSinceEpoch(int.parse(a['createdAt']));
+      final dateB = DateTime.tryParse(b['createdAt']) ?? DateTime.fromMillisecondsSinceEpoch(int.parse(b['createdAt']));
+      return dateB.compareTo(dateA); // Newest first
+    });
+
+
     return Scaffold(
       appBar: AppBar(
         title: Text(languageProvider.isEnglish ? 'Invoice List' : 'انوائس لسٹ',style: TextStyle(color: Colors.white),),
@@ -72,7 +80,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
           IconButton(
             icon: const Icon(Icons.print, color: Colors.white),
             onPressed: () {
-              _printInvoices(); // Trigger the print function
+              _printInvoices(); // Trigger the print functions
             },
           ),
 

@@ -217,7 +217,10 @@ class _FilledLedgerReportPageState extends State<FilledLedgerReportPage> {
                           rows: transactions.map((transaction) {
                             return DataRow(
                               cells: [
-                                DataCell(Text(transaction['date'] ?? 'N/A')),
+                                // DataCell(Text(transaction['date'] ?? 'N/A')),
+                                DataCell(Text(
+                                    DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.parse(transaction['date']))
+                                )),
                                 DataCell(Text(transaction['filledNumber'] ?? 'N/A')),
                                 DataCell(Text(transaction['credit'] != 0.0 ? 'Filled' : (transaction['debit'] != 0.0 ? 'Bill' : '-'))),
                                 DataCell(Text(transaction['debit'] != 0.0 ? 'Rs ${transaction['debit']?.toStringAsFixed(2)}' : '-')),

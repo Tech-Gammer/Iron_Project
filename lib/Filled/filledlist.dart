@@ -35,7 +35,7 @@ class _filledListpageState extends State<filledListpage> {
 
         // Parse the date, accounting for different formats
         try {
-          filledDate = DateTime.tryParse(filledDateStr) ?? DateTime.fromMillisecondsSinceEpoch(int.parse( filledDateStr));
+          filledDate = DateTime.tryParse(filledDateStr) ?? DateTime.fromMillisecondsSinceEpoch(int.parse(filledDateStr));
         } catch (e) {
           print('Error parsing date: $e');
           return false;
@@ -51,6 +51,14 @@ class _filledListpageState extends State<filledListpage> {
 
       return matchesSearch;
     }).toList();
+
+// Sort the filtered list by createdAt in descending orders
+    _filteredFilled.sort((a, b) {
+      final dateA = DateTime.tryParse(a['createdAt']) ?? DateTime.fromMillisecondsSinceEpoch(int.parse(a['createdAt']));
+      final dateB = DateTime.tryParse(b['createdAt']) ?? DateTime.fromMillisecondsSinceEpoch(int.parse(b['createdAt']));
+      return dateB.compareTo(dateA); // Newest first
+    });
+
 
     return Scaffold(
       appBar: AppBar(
@@ -230,7 +238,7 @@ class _filledListpageState extends State<filledListpage> {
                             // 'Remaining: Rs ${remainingAmount.toStringAsFixed(2)}',
                             '${languageProvider.isEnglish ? 'Remaining Amount' : 'بقایا رقم'} ${remainingAmount.toStringAsFixed(2)}',
 
-                            style: TextStyle(fontSize: 16, color: Colors.red),
+                            style: TextStyle(fontSize: 15, color: Colors.red),
                           ),
                         ],
                       ),
@@ -239,7 +247,7 @@ class _filledListpageState extends State<filledListpage> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => filledpage(
-                              filled: Map<String, dynamic>.from(_filteredFilled[index]), // Pass selected filled
+                              filled: Map<String, dynamic>.from(_filteredFilled[index]), // Passs selected filled
                             ),
                           ),
                         );

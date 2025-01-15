@@ -5,7 +5,7 @@
 
 
     <application
-        android:label="iron_project_new"
+        android:label="Zulfiqar Iron Merchant"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
