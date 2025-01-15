@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iron_project_new/Auth/login.dart';
 import 'package:iron_project_new/userspage.dart';
 import 'package:provider/provider.dart';
 import 'Customer/customerlist.dart';
@@ -17,6 +18,11 @@ import 'Reports/reportselecttionpage.dart';
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
 
+
+  void _logout(BuildContext context){
+  Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>LoginPage()  ), (Route<dynamic>route)=>false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context);
@@ -33,16 +39,10 @@ class Dashboard extends StatelessWidget {
             tooltip: languageProvider.isEnglish ? 'Switch to Urdu' : 'انگریزی میں تبدیل کریں',
           ),
           IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              // Handle notifications
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // Handle search
-            },
+            icon: const Icon(Icons.logout),
+            onPressed: () => _logout(context), // Call the logout function here
+            tooltip: languageProvider.isEnglish ? 'Logout' : 'لاگ آوٹ',
+
           ),
         ],
       ),

@@ -316,7 +316,7 @@ class _InvoicePageState extends State<InvoicePage> {
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Image(image, width: 70, height: 70), // Adjust width and height as needed
+                    pw.Image(image, width: 100, height: 100), // Adjust width and height as needed
                     pw.Text(
                       'Invoice',
                       style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
