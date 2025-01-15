@@ -41,6 +41,7 @@ class _InvoicePageState extends State<InvoicePage> {
   List<Map<String, dynamic>> _invoiceRows = [];
   String? _invoiceId; // For editing existing invoices
   late bool _isReadOnly;
+  bool _isButtonPressed = false;
 
   String generateInvoiceNumber() {
     // Generate a timestamp as invoice number (in milliseconds)
@@ -969,198 +970,381 @@ class _InvoicePageState extends State<InvoicePage> {
                     ),
                   ),
                   if (!_isReadOnly)
-                  ElevatedButton  (
-                    onPressed: () async {
-                      // Validate customer selection
-                      if (_selectedCustomerId == null || _selectedCustomerName == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              languageProvider.isEnglish
-                                  ? 'Please select a customer'
-                                  : 'براہ کرم کسٹمر منتخب کریں',
-                            ),
-                          ),
-                        );
-                        return;
-                      }
+                    ElevatedButton(
+                      onPressed: _isButtonPressed
+                          ? null
+                          : () async {
+                        setState(() {
+                          _isButtonPressed = true; // Disable the button when pressed
+                        });
 
-                      // Validate payment type
-                      if (_paymentType == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              languageProvider.isEnglish
-                                  ? 'Please select a payment type'
-                                  : 'براہ کرم ادائیگی کی قسم منتخب کریں',
-                            ),
-                          ),
-                        );
-                        return;
-                      }
+                        try {
+                          // Validate customer selection
+                          if (_selectedCustomerId == null || _selectedCustomerName == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  languageProvider.isEnglish
+                                      ? 'Please select a customer'
+                                      : 'براہ کرم کسٹمر منتخب کریں',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
 
-                      // Validate instant payment method if "Instant Payment" is selected
-                      if (_paymentType == 'instant' && _instantPaymentMethod == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              languageProvider.isEnglish
-                                  ? 'Please select an instant payment method'
-                                  : 'براہ کرم فوری ادائیگی کا طریقہ منتخب کریں',
-                            ),
-                          ),
-                        );
-                        return;
-                      }
+                          // Validate payment type
+                          if (_paymentType == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  languageProvider.isEnglish
+                                      ? 'Please select a payment type'
+                                      : 'براہ کرم ادائیگی کی قسم منتخب کریں',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
 
-                      // Validate weight and rate fields
-                      for (var row in _invoiceRows) {
-                        if (row['weight'] == null || row['weight'] <= 0) {
+                          // Validate instant payment method if "Instant Payment" is selected
+                          if (_paymentType == 'instant' && _instantPaymentMethod == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  languageProvider.isEnglish
+                                      ? 'Please select an instant payment method'
+                                      : 'براہ کرم فوری ادائیگی کا طریقہ منتخب کریں',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          // Validate weight and rate fields
+                          for (var row in _invoiceRows) {
+                            if (row['weight'] == null || row['weight'] <= 0) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    languageProvider.isEnglish
+                                        ? 'Weight cannot be zero or less'
+                                        : 'وزن صفر یا اس سے کم نہیں ہو سکتا',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+
+                            if (row['rate'] == null || row['rate'] <= 0) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    languageProvider.isEnglish
+                                        ? 'Rate cannot be zero or less'
+                                        : 'ریٹ صفر یا اس سے کم نہیں ہو سکتا',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                          }
+
+                          // Validate discount amount
+                          final subtotal = _calculateSubtotal();
+                          if (_discount >= subtotal) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  languageProvider.isEnglish
+                                      ? 'Discount amount cannot be greater than or equal to the subtotal'
+                                      : 'ڈسکاؤنٹ کی رقم سب ٹوٹل سے زیادہ یا اس کے برابر نہیں ہو سکتی',
+                                ),
+                              ),
+                            );
+                            return; // Do not save or print if discount is invalid
+                          }
+
+                          final invoiceNumber = _invoiceId ?? generateInvoiceNumber();
+                          final grandTotal = _calculateGrandTotal();
+
+                          // Try saving the invoice
+                          if (_invoiceId != null) {
+                            // Update existing invoice
+                            await Provider.of<InvoiceProvider>(context, listen: false).updateInvoice(
+                              invoiceId: _invoiceId!, // Pass the correct ID for updating
+                              invoiceNumber: invoiceNumber,
+                              customerId: _selectedCustomerId!,
+                              customerName: _selectedCustomerName!,
+                              subtotal: subtotal,
+                              discount: _discount,
+                              grandTotal: grandTotal,
+                              paymentType: _paymentType,
+                              paymentMethod: _instantPaymentMethod,
+                              items: _invoiceRows,
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  languageProvider.isEnglish
+                                      ? 'Invoice updated successfully'
+                                      : 'انوائس کامیابی سے تبدیل ہوگئی',
+                                ),
+                              ),
+                            );
+                          } else {
+                            // Save new invoice
+                            await Provider.of<InvoiceProvider>(context, listen: false).saveInvoice(
+                              invoiceId: invoiceNumber, // Pass the invoice number (or generated ID)
+                              invoiceNumber: invoiceNumber,
+                              customerId: _selectedCustomerId!,
+                              customerName: _selectedCustomerName!,
+                              subtotal: subtotal,
+                              discount: _discount,
+                              grandTotal: grandTotal,
+                              paymentType: _paymentType,
+                              paymentMethod: _instantPaymentMethod,
+                              items: _invoiceRows,
+                            );
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  languageProvider.isEnglish
+                                      ? 'Invoice saved successfully'
+                                      : 'انوائس کامیابی سے محفوظ ہوگئی',
+                                ),
+                              ),
+                            );
+                          }
+
+                          // Navigate back
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => InvoiceListPage()),
+                          );
+                        } catch (e) {
+                          // Show error message
+                          print(e);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
                                 languageProvider.isEnglish
-                                    ? 'Weight cannot be zero or less'
-                                    : 'وزن صفر یا اس سے کم نہیں ہو سکتا',
+                                    ? 'Failed to save invoice'
+                                    : 'انوائس محفوظ کرنے میں ناکام',
                               ),
                             ),
                           );
-                          return;
+                        } finally {
+                          setState(() {
+                            _isButtonPressed = false; // Re-enable button after the operation is complete
+                          });
                         }
-
-                        if (row['rate'] == null || row['rate'] <= 0) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                languageProvider.isEnglish
-                                    ? 'Rate cannot be zero or less'
-                                    : 'ریٹ صفر یا اس سے کم نہیں ہو سکتا',
-                              ),
-                            ),
-                          );
-                          return;
-                        }
-                      }
-
-                      // Validate discount amount
-                      final subtotal = _calculateSubtotal();
-                      if (_discount >= subtotal) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              languageProvider.isEnglish
-                                  ? 'Discount amount cannot be greater than or equal to the subtotal'
-                                  : 'ڈسکاؤنٹ کی رقم سب ٹوٹل سے زیادہ یا اس کے برابر نہیں ہو سکتی',
-                            ),
-                          ),
-                        );
-                        return; // Do not save or print if discount is invalid
-                      }
-                      final invoiceNumber = _invoiceId ?? generateInvoiceNumber();
-                      final grandTotal = _calculateGrandTotal();
-                      // Try saving the invoice
-                      try {
-                        if (_invoiceId != null) {
-                          // Update existing invoice
-                          await Provider.of<InvoiceProvider>(context, listen: false).updateInvoice(
-                            invoiceId: _invoiceId!, // Pass the correct ID for updating
-                            invoiceNumber: invoiceNumber,
-                            customerId: _selectedCustomerId!,
-                            customerName: _selectedCustomerName!,
-                            subtotal: subtotal,
-                            discount: _discount,
-                            grandTotal: grandTotal,
-                            paymentType: _paymentType,
-                            paymentMethod: _instantPaymentMethod,
-                            items: _invoiceRows,
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                languageProvider.isEnglish
-                                    ? 'Invoice updated successfully'
-                                    : 'انوائس کامیابی سے تبدیل ہوگئی',
-                              ),
-                            ),
-                          );
-                        }
-                        else {
-                          // Save new invoice
-                          await Provider.of<InvoiceProvider>(context, listen: false).saveInvoice(
-                            invoiceId: invoiceNumber, // Pass the invoice number (or generated ID)
-                            invoiceNumber: invoiceNumber,
-                            customerId: _selectedCustomerId!,
-                            customerName: _selectedCustomerName!,
-                            subtotal: subtotal,
-                            discount: _discount,
-                            grandTotal: grandTotal,
-                            paymentType: _paymentType,
-                            paymentMethod: _instantPaymentMethod,
-                            items: _invoiceRows,
-                          );
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                languageProvider.isEnglish
-                                    ? 'Invoice saved successfully'
-                                    : 'انوائس کامیابی سے محفوظ ہوگئی',
-                              ),
-                            ),
-                          );
-
-                        }
-                        // Generate and print the PDF
-                        // try {
-                        //   // Generate and print the PDF
-                        //   await _generateAndPrintPDF(invoiceNumber);
-                        // } catch (e) {
-                        //   print('Error during PDF generation: $e'); // Log the error for debugging
-                        //   ScaffoldMessenger.of(context).showSnackBar(
-                        //     SnackBar(
-                        //       content: Text(
-                        //         languageProvider.isEnglish
-                        //             ? 'Failed to generate PDF'
-                        //             : 'پی ڈی ایف بنانے میں ناکام',
-                        //       ),
-                        //     ),
-                        //   );
-                        //   return; // Exit early if PDF generation fails
-                        // }
-
-                        // Navigate back
-                        // Navigator.pop(context);
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => InvoiceListPage()),
-                        );
-                      } catch (e) {
-                        // Show error message
-                        print(e);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              languageProvider.isEnglish
-                                  ? 'Failed to save invoice'
-                                  : 'انوائس محفوظ کرنے میں ناکام',
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                    // child: Text(
-                    //   languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں',
-                    // ),
-                    child: Text(
-                      widget.invoice == null
-                          ? (languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں')
-                          : (languageProvider.isEnglish ? 'Update Invoice' : 'انوائس کو اپ ڈیٹ کریں'),
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal.shade400, // Button background color
-                    ),
-                  )
+                      },
+                      child: Text(
+                        widget.invoice == null
+                            ? (languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں')
+                            : (languageProvider.isEnglish ? 'Update Invoice' : 'انوائس کو اپ ڈیٹ کریں'),
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal.shade400, // Button background color
+                      ),
+                    )
+                  // ElevatedButton  (
+                  //   onPressed: () async {
+                  //
+                  //
+                  //     // Validate customer selection
+                  //     if (_selectedCustomerId == null || _selectedCustomerName == null) {
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         SnackBar(
+                  //           content: Text(
+                  //             languageProvider.isEnglish
+                  //                 ? 'Please select a customer'
+                  //                 : 'براہ کرم کسٹمر منتخب کریں',
+                  //           ),
+                  //         ),
+                  //       );
+                  //       return;
+                  //     }
+                  //
+                  //     // Validate payment type
+                  //     if (_paymentType == null) {
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         SnackBar(
+                  //           content: Text(
+                  //             languageProvider.isEnglish
+                  //                 ? 'Please select a payment type'
+                  //                 : 'براہ کرم ادائیگی کی قسم منتخب کریں',
+                  //           ),
+                  //         ),
+                  //       );
+                  //       return;
+                  //     }
+                  //
+                  //     // Validate instant payment method if "Instant Payment" is selected
+                  //     if (_paymentType == 'instant' && _instantPaymentMethod == null) {
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         SnackBar(
+                  //           content: Text(
+                  //             languageProvider.isEnglish
+                  //                 ? 'Please select an instant payment method'
+                  //                 : 'براہ کرم فوری ادائیگی کا طریقہ منتخب کریں',
+                  //           ),
+                  //         ),
+                  //       );
+                  //       return;
+                  //     }
+                  //
+                  //     // Validate weight and rate fields
+                  //     for (var row in _invoiceRows) {
+                  //       if (row['weight'] == null || row['weight'] <= 0) {
+                  //         ScaffoldMessenger.of(context).showSnackBar(
+                  //           SnackBar(
+                  //             content: Text(
+                  //               languageProvider.isEnglish
+                  //                   ? 'Weight cannot be zero or less'
+                  //                   : 'وزن صفر یا اس سے کم نہیں ہو سکتا',
+                  //             ),
+                  //           ),
+                  //         );
+                  //         return;
+                  //       }
+                  //
+                  //       if (row['rate'] == null || row['rate'] <= 0) {
+                  //         ScaffoldMessenger.of(context).showSnackBar(
+                  //           SnackBar(
+                  //             content: Text(
+                  //               languageProvider.isEnglish
+                  //                   ? 'Rate cannot be zero or less'
+                  //                   : 'ریٹ صفر یا اس سے کم نہیں ہو سکتا',
+                  //             ),
+                  //           ),
+                  //         );
+                  //         return;
+                  //       }
+                  //     }
+                  //
+                  //     // Validate discount amount
+                  //     final subtotal = _calculateSubtotal();
+                  //     if (_discount >= subtotal) {
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         SnackBar(
+                  //           content: Text(
+                  //             languageProvider.isEnglish
+                  //                 ? 'Discount amount cannot be greater than or equal to the subtotal'
+                  //                 : 'ڈسکاؤنٹ کی رقم سب ٹوٹل سے زیادہ یا اس کے برابر نہیں ہو سکتی',
+                  //           ),
+                  //         ),
+                  //       );
+                  //       return; // Do not save or print if discount is invalid
+                  //     }
+                  //     final invoiceNumber = _invoiceId ?? generateInvoiceNumber();
+                  //     final grandTotal = _calculateGrandTotal();
+                  //     // Try saving the invoice
+                  //     try {
+                  //       if (_invoiceId != null) {
+                  //         // Update existing invoice
+                  //         await Provider.of<InvoiceProvider>(context, listen: false).updateInvoice(
+                  //           invoiceId: _invoiceId!, // Pass the correct ID for updating
+                  //           invoiceNumber: invoiceNumber,
+                  //           customerId: _selectedCustomerId!,
+                  //           customerName: _selectedCustomerName!,
+                  //           subtotal: subtotal,
+                  //           discount: _discount,
+                  //           grandTotal: grandTotal,
+                  //           paymentType: _paymentType,
+                  //           paymentMethod: _instantPaymentMethod,
+                  //           items: _invoiceRows,
+                  //         );
+                  //         ScaffoldMessenger.of(context).showSnackBar(
+                  //           SnackBar(
+                  //             content: Text(
+                  //               languageProvider.isEnglish
+                  //                   ? 'Invoice updated successfully'
+                  //                   : 'انوائس کامیابی سے تبدیل ہوگئی',
+                  //             ),
+                  //           ),
+                  //         );
+                  //       }
+                  //       else {
+                  //         // Save new invoice
+                  //         await Provider.of<InvoiceProvider>(context, listen: false).saveInvoice(
+                  //           invoiceId: invoiceNumber, // Pass the invoice number (or generated ID)
+                  //           invoiceNumber: invoiceNumber,
+                  //           customerId: _selectedCustomerId!,
+                  //           customerName: _selectedCustomerName!,
+                  //           subtotal: subtotal,
+                  //           discount: _discount,
+                  //           grandTotal: grandTotal,
+                  //           paymentType: _paymentType,
+                  //           paymentMethod: _instantPaymentMethod,
+                  //           items: _invoiceRows,
+                  //         );
+                  //
+                  //         ScaffoldMessenger.of(context).showSnackBar(
+                  //           SnackBar(
+                  //             content: Text(
+                  //               languageProvider.isEnglish
+                  //                   ? 'Invoice saved successfully'
+                  //                   : 'انوائس کامیابی سے محفوظ ہوگئی',
+                  //             ),
+                  //           ),
+                  //         );
+                  //
+                  //       }
+                  //       // Generate and print the PDF
+                  //       // try {
+                  //       //   // Generate and print the PDF
+                  //       //   await _generateAndPrintPDF(invoiceNumber);
+                  //       // } catch (e) {
+                  //       //   print('Error during PDF generation: $e'); // Log the error for debugging
+                  //       //   ScaffoldMessenger.of(context).showSnackBar(
+                  //       //     SnackBar(
+                  //       //       content: Text(
+                  //       //         languageProvider.isEnglish
+                  //       //             ? 'Failed to generate PDF'
+                  //       //             : 'پی ڈی ایف بنانے میں ناکام',
+                  //       //       ),
+                  //       //     ),
+                  //       //   );
+                  //       //   return; // Exit early if PDF generation fails
+                  //       // }
+                  //
+                  //       // Navigate back
+                  //       // Navigator.pop(context);
+                  //       Navigator.pushReplacement(
+                  //         context,
+                  //         MaterialPageRoute(builder: (context) => InvoiceListPage()),
+                  //       );
+                  //     } catch (e) {
+                  //       // Show error message
+                  //       print(e);
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         SnackBar(
+                  //           content: Text(
+                  //             languageProvider.isEnglish
+                  //                 ? 'Failed to save invoice'
+                  //                 : 'انوائس محفوظ کرنے میں ناکام',
+                  //           ),
+                  //         ),
+                  //       );
+                  //     }
+                  //   },
+                  //   // child: Text(
+                  //   //   languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں',
+                  //   // ),
+                  //   child: Text(
+                  //     widget.invoice == null
+                  //         ? (languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں')
+                  //         : (languageProvider.isEnglish ? 'Update Invoice' : 'انوائس کو اپ ڈیٹ کریں'),
+                  //     style: TextStyle(color: Colors.white),
+                  //   ),
+                  //   style: ElevatedButton.styleFrom(
+                  //     backgroundColor: Colors.teal.shade400, // Button background color
+                  //   ),
+                  // )
                 ],
               ),
             );

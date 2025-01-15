@@ -89,70 +89,118 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
     }
   }
 
-  // Generate PDF for the expenses
-  Future<void> _generatePdf() async {
-    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
-
+  void _generatePdf() async {
     final pdf = pw.Document();
 
-    // Add the opening balance, expenses, and total
-    pdf.addPage(pw.Page(
-      pageFormat: PdfPageFormat.a5,
-      build: (pw.Context context) {
-        return pw.Column(
-          children: [
-            pw.Text(
-                "Daily Expenses Report",
-            // languageProvider.isEnglish ? 'Daily Expenses Report:' : 'روزانہ اخراجات کی رپورٹ',
-                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-            pw.Text(
-                "Opening Balance: ${_originalOpeningBalance.toStringAsFixed(2)} rs",
-                // languageProvider.isEnglish ? 'Opening Balance:' : 'اوپننگ بیلنس:',
+    // Split expenses into chunks of 20 items per page
+    const int itemsPerPage = 20;
+    int pageCount = (expenses.length / itemsPerPage).ceil();
 
-                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-            pw.Text(
-                "Selected Date: ${DateFormat('dd:MM:yyyy').format(_selectedDate)}",
-                // "${languageProvider.isEnglish ? 'Selected Date:' : 'تاریخ منتخب کریں:'} ${DateFormat('dd:MM:yyyy').format(_selectedDate)}",
-                style: pw.TextStyle(fontSize: 16)),
-            pw.SizedBox(height: 20),
-            pw.Text(
-                "Expenses",
-                // languageProvider.isEnglish ? "Expenses" : "اخراجات",
-                style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-            pw.ListView.builder(
-              itemCount: expenses.length,
-              itemBuilder: (context, index) {
-                final expense = expenses[index];
-                return pw.Padding(
-                  padding: pw.EdgeInsets.symmetric(vertical: 5),
-                  child: pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      pw.Text(
-                          expense["description"],
-                          style: pw.TextStyle(fontSize: 14)),
-                      pw.Text("${expense["amount"].toStringAsFixed(2)} rs", style: pw.TextStyle(fontSize: 14)),
-                    ],
+    for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+      // Create the PDF layout for each page
+      pdf.addPage(pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          final start = pageIndex * itemsPerPage;
+          final end = (start + itemsPerPage > expenses.length)
+              ? expenses.length
+              : start + itemsPerPage;
+          final pageExpenses = expenses.sublist(start, end);
+
+          return pw.Padding(
+            padding: const pw.EdgeInsets.all(20),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'Daily Expense Report',
+                  style: pw.TextStyle(
+                    fontSize: 28,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColor.fromInt(0xFF00695C),
                   ),
-                );
-              },
+                ),
+                pw.SizedBox(height: 15),
+                pw.Text(
+                  'Opening Balance: ${_originalOpeningBalance.toStringAsFixed(2)} rs',
+                  style: pw.TextStyle(
+                    fontSize: 22,
+                    fontWeight: pw.FontWeight.normal,
+                  ),
+                ),
+                pw.Text(
+                  'Selected Date: ${DateFormat('dd:MM:yyyy').format(_selectedDate)}',
+                  style: pw.TextStyle(
+                    fontSize: 22,
+                    fontWeight: pw.FontWeight.normal,
+                  ),
+                ),
+                pw.SizedBox(height: 25),
+                pw.Text(
+                  'Expenses',
+                  style: pw.TextStyle(
+                    fontSize: 24,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.ListView.builder(
+                  itemCount: pageExpenses.length,
+                  itemBuilder: (context, index) {
+                    final expense = pageExpenses[index];
+                    return pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text(
+                          expense["description"],
+                          style: pw.TextStyle(
+                            fontSize: 20,
+                          ),
+                        ),
+                        pw.Text(
+                          "${expense["amount"].toStringAsFixed(2)} rs",
+                          style: pw.TextStyle(
+                            fontSize: 20,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.Text(
+                          expense["date"],
+                          style: pw.TextStyle(
+                            fontSize: 20,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                pw.SizedBox(height: 25),
+                pw.Divider(),
+                pw.SizedBox(height: 10),
+                pw.Text(
+                  'Total Expenses: ${_totalExpense.toStringAsFixed(2)} rs',
+                  style: pw.TextStyle(
+                    fontSize: 22,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.Text(
+                  'Remaining Balance: ${_remainingBalance.toStringAsFixed(2)} rs',
+                  style: pw.TextStyle(
+                    fontSize: 22,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-            pw.SizedBox(height: 20),
-            pw.Text(
-                "Total Expenses: ${_totalExpense.toStringAsFixed(2)} rs",
-                // "${languageProvider.isEnglish ? 'Total Expenses:' : 'کل اخراجات:'} ${_totalExpense.toStringAsFixed(2)} rs",
-                style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-            pw.Text(
-                "Remaining Balance: ${_remainingBalance.toStringAsFixed(2)} rs",
-                // "${languageProvider.isEnglish ? 'Remaining Balance:' : 'بقایا رقم:'} ${_remainingBalance.toStringAsFixed(2)} rs",
-                style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-          ],
-        );
-      },
-    ));
+          );
+        },
+      ));
+    }
 
-    // Save PDF to file or print
-    await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
+    // Save the PDF to a file or print it
+    final output = await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+    );
   }
 
 
@@ -162,7 +210,7 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(languageProvider.isEnglish ? 'View Daily Expense:' : 'روزانہ کے اخراجات',style: TextStyle(color: Colors.white),),
+        title: Text(languageProvider.isEnglish ? 'View Daily Expense' : 'روزانہ کے اخراجات',style: TextStyle(color: Colors.white),),
         backgroundColor: Colors.teal,
         centerTitle: true,
 

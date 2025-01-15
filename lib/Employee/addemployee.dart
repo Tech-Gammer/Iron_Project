@@ -18,7 +18,7 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
-
+  bool _isSaving = false; // Track if the save operation is in progress
   @override
   void initState() {
     super.initState();
@@ -37,8 +37,11 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
     }
   }
 
-  void _saveEmployee() {
+  Future<void> _saveEmployee() async {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isSaving = true; // Disable the button
+      });
       final employeeData = {
         'name': _nameController.text,
         'address': _addressController.text,
@@ -58,7 +61,11 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Employee saved successfully!')),
       );
-
+      // Delay to simulate saving operation, then re-enable the button
+      await Future.delayed(Duration(seconds: 1));
+      setState(() {
+        _isSaving = false; // Re-enable the button
+      });
       Navigator.pop(context);
     }
   }
@@ -164,7 +171,9 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: _saveEmployee,
+                // onPressed: _saveEmployee,
+                onPressed: _isSaving ? null : _saveEmployee, // Disable button when saving
+
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
                   padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 40),

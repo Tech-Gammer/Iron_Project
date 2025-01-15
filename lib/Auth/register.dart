@@ -71,7 +71,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     SizedBox(height: 20,),
                     CircleAvatar(
                       radius: 70,
-                      backgroundImage: AssetImage('images/logo.png'), // Correct usage
+                      backgroundImage: AssetImage('assets/images/logo.png'), // Correct usage
                     ),
                     SizedBox(height: 15,),
                     TextFormField(

@@ -15,16 +15,20 @@ class _LoginPageState extends State<LoginPage> {
 
   String _email = '';
   String _password = '';
+  bool _isProcessing = false; // Flag to track if login is in progress
 
   void _login() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+      setState(() {
+        _isProcessing = true; // Set flag to true when login starts
+      });
       try {
         await _auth.signInWithEmailAndPassword(
           email: _email,
           password: _password,
         );
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Login successful!'),
         ));
         Navigator.pushReplacement(
@@ -35,6 +39,10 @@ class _LoginPageState extends State<LoginPage> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Login failed: $e'),
         ));
+      } finally {
+        setState(() {
+          _isProcessing = false; // Reset flag when login is complete
+        });
       }
     }
   }
@@ -42,77 +50,79 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Login'),
-      automaticallyImplyLeading: false,
+      appBar: AppBar(
+        title: const Text('Login'),
+        automaticallyImplyLeading: false,
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return Center(
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.all(Radius.circular(20)),
+                borderRadius: const BorderRadius.all(Radius.circular(20)),
                 border: Border.all(
                   color: Colors.blue, // Set the color of the border
                   width: 2.0,        // Set the width of the border
                 ),
               ),
               width: constraints.maxWidth > 600 ? 400 : double.infinity,
-              padding: EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16.0),
               child: Form(
                 key: _formKey,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(height: 20,),
-                    CircleAvatar(
+                    const SizedBox(height: 20),
+                    const CircleAvatar(
                       radius: 70,
-                      backgroundImage: AssetImage('images/logo.png'), // Correct usage
+                      backgroundImage: AssetImage('assets/images/logo.png'), // Correct usage
                     ),
-                    SizedBox(height: 15,),
+                    const SizedBox(height: 15),
                     TextFormField(
-                      decoration: InputDecoration(labelText: 'Email',
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(10)),
-                              borderSide: BorderSide(color: Colors.grey)
-                          )
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
                       ),
                       onSaved: (value) => _email = value!,
                       validator: (value) => value!.isEmpty || !value.contains('@') ? 'Enter a valid email' : null,
-                    ),SizedBox(height: 8,),
+                    ),
+                    const SizedBox(height: 8),
                     TextFormField(
-                      decoration: InputDecoration(labelText: 'Password',
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(10)),
-                              borderSide: BorderSide(color: Colors.grey)
-                          )
+                      decoration: const InputDecoration(
+                        labelText: 'Password',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
                       ),
                       obscureText: true,
                       onSaved: (value) => _password = value!,
                       validator: (value) => value!.length < 6 ? 'Password must be at least 6 characters' : null,
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     Container(
-                        width: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.lightBlueAccent,
-                          borderRadius: BorderRadius.circular(10),
+                      width: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.lightBlueAccent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: TextButton(
+                        onPressed: _isProcessing ? null : _login, // Disable button if processing
+                        child: _isProcessing
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text(
+                          "Login",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        child: TextButton(
-                            onPressed: (){
-                              _login();
-                            },
-                            child: Text("Login",style: TextStyle(color: Colors.black,fontSize: 20,fontWeight: FontWeight.bold),)
-                        )
+                      ),
                     ),
-                    // Row(
-                    //   mainAxisAlignment: MainAxisAlignment.center,
-                    //   children: [
-                    //     Text("If you are new click on"),
-                    //     TextButton(onPressed: (){
-                    //       Navigator.push(context, MaterialPageRoute(builder: (context)=>RegisterPage()));
-                    //     }, child: Text('Register'))
-                    //   ],
-                    // )
                   ],
                 ),
               ),
@@ -123,4 +133,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-

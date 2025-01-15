@@ -33,6 +33,7 @@ class _filledpageState extends State<filledpage> {
   List<Map<String, dynamic>> _filledRows = [];
   String? _filledId; // For editing existing filled
   late bool _isReadOnly;
+  bool _isButtonPressed = false;
 
   String generateFilledNumber() {
     // Generate a timestamp as filled number (in millsiseconds)
@@ -267,7 +268,7 @@ class _filledpageState extends State<filledpage> {
     final buffer = bytes.buffer.asUint8List();
     final image = pw.MemoryImage(buffer);
 
-    // Pre-generate images for all descriptions
+    // Pre-generate images for all descriptionss
     List<pw.MemoryImage> descriptionImages = [];
     for (var row in _filledRows) {
       final image = await _createTextImage(row['description']);
@@ -867,180 +868,348 @@ class _filledpageState extends State<filledpage> {
                     ),
                   ),
                   if (!_isReadOnly)
-                    ElevatedButton  (
-                    onPressed: () async {
-                      // Validate customer selection
-                      if (_selectedCustomerId == null || _selectedCustomerName == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              languageProvider.isEnglish
-                                  ? 'Please select a customer'
-                                  : 'براہ کرم کسٹمر منتخب کریں',
-                            ),
-                          ),
-                        );
-                        return;
-                      }
+                    ElevatedButton(
+                      onPressed: _isButtonPressed
+                          ? null
+                          : () async {
+                        setState(() {
+                          _isButtonPressed = true; // Disable the button when pressed
+                        });
 
-                      // Validate payment type
-                      if (_paymentType == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              languageProvider.isEnglish
-                                  ? 'Please select a payment type'
-                                  : 'براہ کرم ادائیگی کی قسم منتخب کریں',
-                            ),
-                          ),
-                        );
-                        return;
-                      }
+                        try {
+                          // Validate customer selection
+                          if (_selectedCustomerId == null || _selectedCustomerName == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  languageProvider.isEnglish
+                                      ? 'Please select a customer'
+                                      : 'براہ کرم کسٹمر منتخب کریں',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
 
-                      // Validate instant payment method if "Instant Payment" is selected
-                      if (_paymentType == 'instant' && _instantPaymentMethod == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              languageProvider.isEnglish
-                                  ? 'Please select an instant payment method'
-                                  : 'براہ کرم فوری ادائیگی کا طریقہ منتخب کریں',
-                            ),
-                          ),
-                        );
-                        return;
-                      }
+                          // Validate payment type
+                          if (_paymentType == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  languageProvider.isEnglish
+                                      ? 'Please select a payment type'
+                                      : 'براہ کرم ادائیگی کی قسم منتخب کریں',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
 
-                      // Validate weight and rate fields
-                      for (var row in _filledRows) {
-                        // if (row['weight'] == null || row['weight'] <= 0) {
-                        //   ScaffoldMessenger.of(context).showSnackBar(
-                        //     SnackBar(
-                        //       content: Text(
-                        //         languageProvider.isEnglish
-                        //             ? 'Weight cannot be zero or less'
-                        //             : 'وزن صفر یا اس سے کم نہیں ہو سکتا',
-                        //       ),
-                        //     ),
-                        //   );
-                        //   return;
-                        // }
+                          // Validate instant payment method if "Instant Payment" is selected
+                          if (_paymentType == 'instant' && _instantPaymentMethod == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  languageProvider.isEnglish
+                                      ? 'Please select an instant payment method'
+                                      : 'براہ کرم فوری ادائیگی کا طریقہ منتخب کریں',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
 
-                        if (row['rate'] == null || row['rate'] <= 0) {
+                          // Validate rate fields
+                          for (var row in _filledRows) {
+                            if (row['rate'] == null || row['rate'] <= 0) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    languageProvider.isEnglish
+                                        ? 'Rate cannot be zero or less'
+                                        : 'ریٹ صفر یا اس سے کم نہیں ہو سکتا',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                          }
+
+                          // Validate discount amount
+                          final subtotal = _calculateSubtotal();
+                          if (_discount >= subtotal) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  languageProvider.isEnglish
+                                      ? 'Discount amount cannot be greater than or equal to the subtotal'
+                                      : 'ڈسکاؤنٹ کی رقم سب ٹوٹل سے زیادہ یا اس کے برابر نہیں ہو سکتی',
+                                ),
+                              ),
+                            );
+                            return; // Do not save or print if discount is invalid
+                          }
+
+                          final filledNumber = _filledId ?? generateFilledNumber();
+                          final grandTotal = _calculateGrandTotal();
+
+                          // Try saving the filled
+                          if (_filledId != null) {
+                            // Update existing filled
+                            await Provider.of<FilledProvider>(context, listen: false).updateFilled(
+                              filledId: _filledId!, // Pass the correct ID for updating
+                              filledNumber: filledNumber,
+                              customerId: _selectedCustomerId!,
+                              customerName: _selectedCustomerName!,
+                              subtotal: subtotal,
+                              discount: _discount,
+                              grandTotal: grandTotal,
+                              paymentType: _paymentType,
+                              paymentMethod: _instantPaymentMethod,
+                              items: _filledRows,
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  languageProvider.isEnglish
+                                      ? 'Filled updated successfully'
+                                      : 'فلڈ کامیابی سے تبدیل ہوگئی',
+                                ),
+                              ),
+                            );
+                          } else {
+                            // Save new filled
+                            await Provider.of<FilledProvider>(context, listen: false).saveFilled(
+                              filledId: filledNumber, // Pass the filled number (or generated ID)
+                              filledNumber: filledNumber,
+                              customerId: _selectedCustomerId!,
+                              customerName: _selectedCustomerName!,
+                              subtotal: subtotal,
+                              discount: _discount,
+                              grandTotal: grandTotal,
+                              paymentType: _paymentType,
+                              paymentMethod: _instantPaymentMethod,
+                              items: _filledRows,
+                            );
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  languageProvider.isEnglish
+                                      ? 'Filled saved successfully'
+                                      : 'فلڈ کامیابی سے محفوظ ہوگئی',
+                                ),
+                              ),
+                            );
+                          }
+
+                          // Navigate to the filled list page
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => filledListpage()),
+                          );
+                        } catch (e) {
+                          // Show error message
+                          print(e);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
                                 languageProvider.isEnglish
-                                    ? 'Rate cannot be zero or less'
-                                    : 'ریٹ صفر یا اس سے کم نہیں ہو سکتا',
+                                    ? 'Failed to save filled'
+                                    : 'فلڈ محفوظ کرنے میں ناکام',
                               ),
                             ),
                           );
-                          return;
+                        } finally {
+                          setState(() {
+                            _isButtonPressed = false; // Re-enable button after the operation is complete
+                          });
                         }
-                      }
-
-                      // Validate discount amount
-                      final subtotal = _calculateSubtotal();
-                      if (_discount >= subtotal) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              languageProvider.isEnglish
-                                  ? 'Discount amount cannot be greater than or equal to the subtotal'
-                                  : 'ڈسکاؤنٹ کی رقم سب ٹوٹل سے زیادہ یا اس کے برابر نہیں ہو سکتی',
-                            ),
-                          ),
-                        );
-                        return; // Do not save or print if discount is invalid
-                      }
-                      final filledNumber = _filledId ?? generateFilledNumber();
-                      final grandTotal = _calculateGrandTotal();
-                      // Try saving the filled
-                      try {
-                        if (_filledId != null) {
-                          // Update existing filled
-                          await Provider.of<FilledProvider>(context, listen: false).updateFilled(
-                            filledId: _filledId!, // Pass the correct ID for updating
-                            filledNumber: filledNumber,
-                            customerId: _selectedCustomerId!,
-                            customerName: _selectedCustomerName!,
-                            subtotal: subtotal,
-                            discount: _discount,
-                            grandTotal: grandTotal,
-                            paymentType: _paymentType,
-                            paymentMethod: _instantPaymentMethod,
-                            items: _filledRows,
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                languageProvider.isEnglish
-                                    ? 'Filled updated successfully'
-                                    : 'فلڈ کامیابی سے تبدیل ہوگئی',
-                              ),
-                            ),
-                          );
-                        }
-                        else {
-                          // Save new filled
-                          await Provider.of<FilledProvider>(context, listen: false).saveFilled(
-                            filledId: filledNumber, // Pass the filled number (or generated ID)
-                            filledNumber: filledNumber,
-                            customerId: _selectedCustomerId!,
-                            customerName: _selectedCustomerName!,
-                            subtotal: subtotal,
-                            discount: _discount,
-                            grandTotal: grandTotal,
-                            paymentType: _paymentType,
-                            paymentMethod: _instantPaymentMethod,
-                            items: _filledRows,
-                          );
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                languageProvider.isEnglish
-                                    ? 'Filled saved successfully'
-                                    : 'فلڈ کامیابی سے محفوظ ہوگئی',
-                              ),
-                            ),
-                          );
-
-                        }
-                        // Generate and print the PDF
-                        // await _generateAndPrintPDF(filledNumber);
-
-                        // Navigate back
-                        // Navigator.pop(context);
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => filledListpage()),
-                        );
-                      } catch (e) {
-                        // Show error message
-                        print(e);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              languageProvider.isEnglish
-                                  ? 'Failed to save filled'
-                                  : 'انوائس محفوظ کرنے میں ناکام',
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                    child: Text(
-                      widget.filled == null
-                          ? (languageProvider.isEnglish ? 'Save Filled' : 'فلڈ محفوظ کریں')
-                          : (languageProvider.isEnglish ? 'Update Filled' : 'فلڈ کو اپ ڈیٹ کریں'),
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal.shade400, // Button background color
-                    ),
-                  )
+                      },
+                      child: Text(
+                        widget.filled == null
+                            ? (languageProvider.isEnglish ? 'Save Filled' : 'فلڈ محفوظ کریں')
+                            : (languageProvider.isEnglish ? 'Update Filled' : 'فلڈ کو اپ ڈیٹ کریں'),
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal.shade400, // Button background color
+                      ),
+                    )
+                  //   ElevatedButton  (
+                  //   onPressed: () async {
+                  //     // Validate customer selection
+                  //     if (_selectedCustomerId == null || _selectedCustomerName == null) {
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         SnackBar(
+                  //           content: Text(
+                  //             languageProvider.isEnglish
+                  //                 ? 'Please select a customer'
+                  //                 : 'براہ کرم کسٹمر منتخب کریں',
+                  //           ),
+                  //         ),
+                  //       );
+                  //       return;
+                  //     }
+                  //
+                  //     // Validate payment type
+                  //     if (_paymentType == null) {
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         SnackBar(
+                  //           content: Text(
+                  //             languageProvider.isEnglish
+                  //                 ? 'Please select a payment type'
+                  //                 : 'براہ کرم ادائیگی کی قسم منتخب کریں',
+                  //           ),
+                  //         ),
+                  //       );
+                  //       return;
+                  //     }
+                  //
+                  //     // Validate instant payment method if "Instant Payment" is selected
+                  //     if (_paymentType == 'instant' && _instantPaymentMethod == null) {
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         SnackBar(
+                  //           content: Text(
+                  //             languageProvider.isEnglish
+                  //                 ? 'Please select an instant payment method'
+                  //                 : 'براہ کرم فوری ادائیگی کا طریقہ منتخب کریں',
+                  //           ),
+                  //         ),
+                  //       );
+                  //       return;
+                  //     }
+                  //
+                  //     // Validate weight and rate fields
+                  //     for (var row in _filledRows) {
+                  //       // if (row['weight'] == null || row['weight'] <= 0) {
+                  //       //   ScaffoldMessenger.of(context).showSnackBar(
+                  //       //     SnackBar(
+                  //       //       content: Text(
+                  //       //         languageProvider.isEnglish
+                  //       //             ? 'Weight cannot be zero or less'
+                  //       //             : 'وزن صفر یا اس سے کم نہیں ہو سکتا',
+                  //       //       ),
+                  //       //     ),
+                  //       //   );
+                  //       //   return;
+                  //       // }
+                  //
+                  //       if (row['rate'] == null || row['rate'] <= 0) {
+                  //         ScaffoldMessenger.of(context).showSnackBar(
+                  //           SnackBar(
+                  //             content: Text(
+                  //               languageProvider.isEnglish
+                  //                   ? 'Rate cannot be zero or less'
+                  //                   : 'ریٹ صفر یا اس سے کم نہیں ہو سکتا',
+                  //             ),
+                  //           ),
+                  //         );
+                  //         return;
+                  //       }
+                  //     }
+                  //
+                  //     // Validate discount amount
+                  //     final subtotal = _calculateSubtotal();
+                  //     if (_discount >= subtotal) {
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         SnackBar(
+                  //           content: Text(
+                  //             languageProvider.isEnglish
+                  //                 ? 'Discount amount cannot be greater than or equal to the subtotal'
+                  //                 : 'ڈسکاؤنٹ کی رقم سب ٹوٹل سے زیادہ یا اس کے برابر نہیں ہو سکتی',
+                  //           ),
+                  //         ),
+                  //       );
+                  //       return; // Do not save or print if discount is invalid
+                  //     }
+                  //     final filledNumber = _filledId ?? generateFilledNumber();
+                  //     final grandTotal = _calculateGrandTotal();
+                  //     // Try saving the filled
+                  //     try {
+                  //       if (_filledId != null) {
+                  //         // Update existing filled
+                  //         await Provider.of<FilledProvider>(context, listen: false).updateFilled(
+                  //           filledId: _filledId!, // Pass the correct ID for updating
+                  //           filledNumber: filledNumber,
+                  //           customerId: _selectedCustomerId!,
+                  //           customerName: _selectedCustomerName!,
+                  //           subtotal: subtotal,
+                  //           discount: _discount,
+                  //           grandTotal: grandTotal,
+                  //           paymentType: _paymentType,
+                  //           paymentMethod: _instantPaymentMethod,
+                  //           items: _filledRows,
+                  //         );
+                  //         ScaffoldMessenger.of(context).showSnackBar(
+                  //           SnackBar(
+                  //             content: Text(
+                  //               languageProvider.isEnglish
+                  //                   ? 'Filled updated successfully'
+                  //                   : 'فلڈ کامیابی سے تبدیل ہوگئی',
+                  //             ),
+                  //           ),
+                  //         );
+                  //       }
+                  //       else {
+                  //         // Save new filled
+                  //         await Provider.of<FilledProvider>(context, listen: false).saveFilled(
+                  //           filledId: filledNumber, // Pass the filled number (or generated ID)
+                  //           filledNumber: filledNumber,
+                  //           customerId: _selectedCustomerId!,
+                  //           customerName: _selectedCustomerName!,
+                  //           subtotal: subtotal,
+                  //           discount: _discount,
+                  //           grandTotal: grandTotal,
+                  //           paymentType: _paymentType,
+                  //           paymentMethod: _instantPaymentMethod,
+                  //           items: _filledRows,
+                  //         );
+                  //
+                  //         ScaffoldMessenger.of(context).showSnackBar(
+                  //           SnackBar(
+                  //             content: Text(
+                  //               languageProvider.isEnglish
+                  //                   ? 'Filled saved successfully'
+                  //                   : 'فلڈ کامیابی سے محفوظ ہوگئی',
+                  //             ),
+                  //           ),
+                  //         );
+                  //
+                  //       }
+                  //       // Generate and print the PDF
+                  //       // await _generateAndPrintPDF(filledNumber);
+                  //
+                  //       // Navigate back
+                  //       // Navigator.pop(context);
+                  //       Navigator.pushReplacement(
+                  //         context,
+                  //         MaterialPageRoute(builder: (context) => filledListpage()),
+                  //       );
+                  //     } catch (e) {
+                  //       // Show error message
+                  //       print(e);
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         SnackBar(
+                  //           content: Text(
+                  //             languageProvider.isEnglish
+                  //                 ? 'Failed to save filled'
+                  //                 : 'انوائس محفوظ کرنے میں ناکام',
+                  //           ),
+                  //         ),
+                  //       );
+                  //     }
+                  //   },
+                  //   child: Text(
+                  //     widget.filled == null
+                  //         ? (languageProvider.isEnglish ? 'Save Filled' : 'فلڈ محفوظ کریں')
+                  //         : (languageProvider.isEnglish ? 'Update Filled' : 'فلڈ کو اپ ڈیٹ کریں'),
+                  //     style: TextStyle(color: Colors.white),
+                  //   ),
+                  //   style: ElevatedButton.styleFrom(
+                  //     backgroundColor: Colors.teal.shade400, // Button background color
+                  //   ),
+                  // )
                 ],
               ),
             );

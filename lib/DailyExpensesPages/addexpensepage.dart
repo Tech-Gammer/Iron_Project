@@ -16,6 +16,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
   final TextEditingController _amountController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   double _openingBalance = 0.0; // Variable to store the opening balance
+  bool _isSaveButtonPressed = false; // Flag to track button press status
 
   @override
   void initState() {
@@ -136,17 +137,81 @@ class _AddExpensePageState extends State<AddExpensePage> {
   }
 
   // Save the daily expense
-  void _saveExpense() {
+  // void _saveExpense() {
+  //   final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+  //
+  //   if (_descriptionController.text.isEmpty || _amountController.text.isEmpty) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //        SnackBar(content: Text(
+  //           // 'Please fill in all fields'
+  //         languageProvider.isEnglish ? 'Please fill in all fields' : 'براہ کرم تمام فیلڈز کو پُر کریں۔',
+  //
+  //       )),
+  //     );
+  //     return;
+  //   }
+  //
+  //   double expenseAmount = double.parse(_amountController.text);
+  //
+  //   // Check if opening balance is sufficient for the expense
+  //   if (_openingBalance < expenseAmount) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //        SnackBar(content: Text(
+  //           // 'Insufficient funds!'
+  //         languageProvider.isEnglish ? 'Insufficient funds!' : 'ناکافی فنڈز!',
+  //
+  //       )),
+  //     );
+  //     return;
+  //   }
+  //
+  //   // Deduct the expense from the opening balance
+  //   _openingBalance -= expenseAmount;
+  //
+  //   // Format the date to dd:mm:yyyy
+  //   String formattedDate = DateFormat('dd:MM:yyyy').format(_selectedDate);
+  //
+  //   final data = {
+  //     "description": _descriptionController.text,
+  //     "amount": expenseAmount,
+  //     "date": formattedDate, // Save formatted date without time
+  //   };
+  //
+  //   dbRef.child(formattedDate).child("expenses").push().set(data).then((_) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //        SnackBar(content: Text(
+  //           // 'Expense added successfully'
+  //         languageProvider.isEnglish ? 'Expense added successfully' : 'اخراجات کامیابی کے ساتھ شامل ہو گئے۔',
+  //
+  //       )),
+  //     );
+  //     _descriptionController.clear();
+  //     _amountController.clear();
+  //     setState(() {
+  //       _selectedDate = DateTime.now();
+  //     });
+  //
+  //     // Save updated opening balance to Firebase after adding expense
+  //     _saveUpdatedOpeningBalance();
+  //   }).catchError((error) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text(
+  //           // 'Error adding expense: $error'
+  //         languageProvider.isEnglish ? 'Error adding expense: $error' : 'اخراجات شامل کرنے میں خرابی:$error',
+  //
+  //       )),
+  //     );
+  //   });
+  // }
+
+  void _saveExpense() async {
     final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
 
     if (_descriptionController.text.isEmpty || _amountController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(content: Text(
-            // 'Please fill in all fields'
-          languageProvider.isEnglish ? 'Please fill in all fields' : 'براہ کرم تمام فیلڈز کو پُر کریں۔',
-
-        )),
-      );
+          SnackBar(content: Text(
+            languageProvider.isEnglish ? 'Please fill in all fields' : 'براہ کرم تمام فیلڈز کو پُر کریں۔',
+          )));
       return;
     }
 
@@ -155,14 +220,16 @@ class _AddExpensePageState extends State<AddExpensePage> {
     // Check if opening balance is sufficient for the expense
     if (_openingBalance < expenseAmount) {
       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(content: Text(
-            // 'Insufficient funds!'
-          languageProvider.isEnglish ? 'Insufficient funds!' : 'ناکافی فنڈز!',
-
-        )),
-      );
+          SnackBar(content: Text(
+            languageProvider.isEnglish ? 'Insufficient funds!' : 'ناکافی فنڈز!',
+          )));
       return;
     }
+
+    // Disable the button to prevent multiple submissions
+    setState(() {
+      _isSaveButtonPressed = true;
+    });
 
     // Deduct the expense from the opening balance
     _openingBalance -= expenseAmount;
@@ -173,17 +240,15 @@ class _AddExpensePageState extends State<AddExpensePage> {
     final data = {
       "description": _descriptionController.text,
       "amount": expenseAmount,
-      "date": formattedDate, // Save formatted date without time
+      "date": formattedDate,
     };
 
-    dbRef.child(formattedDate).child("expenses").push().set(data).then((_) {
+    try {
+      await dbRef.child(formattedDate).child("expenses").push().set(data);
       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(content: Text(
-            // 'Expense added successfully'
-          languageProvider.isEnglish ? 'Expense added successfully' : 'اخراجات کامیابی کے ساتھ شامل ہو گئے۔',
-
-        )),
-      );
+          SnackBar(content: Text(
+            languageProvider.isEnglish ? 'Expense added successfully' : 'اخراجات کامیابی کے ساتھ شامل ہو گئے۔',
+          )));
       _descriptionController.clear();
       _amountController.clear();
       setState(() {
@@ -191,16 +256,18 @@ class _AddExpensePageState extends State<AddExpensePage> {
       });
 
       // Save updated opening balance to Firebase after adding expense
-      _saveUpdatedOpeningBalance();
-    }).catchError((error) {
+       _saveUpdatedOpeningBalance();
+    } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(
-            // 'Error adding expense: $error'
-          languageProvider.isEnglish ? 'Error adding expense: $error' : 'اخراجات شامل کرنے میں خرابی:$error',
-
-        )),
-      );
-    });
+          SnackBar(content: Text(
+            languageProvider.isEnglish ? 'Error adding expense: $error' : 'اخراجات شامل کرنے میں خرابی:$error',
+          )));
+    } finally {
+      // Re-enable the button after the operation is complete
+      setState(() {
+        _isSaveButtonPressed = false;
+      });
+    }
   }
 
   // Save the updated opening balance (after deducting the expense)
@@ -332,7 +399,9 @@ class _AddExpensePageState extends State<AddExpensePage> {
             const SizedBox(height: 20),
             const Spacer(),
             ElevatedButton(
-              onPressed: _saveExpense,
+              // onPressed: _saveExpense,
+              onPressed: _isSaveButtonPressed ? null : _saveExpense, // Disable if pressed
+
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal, // Button background color
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 40),

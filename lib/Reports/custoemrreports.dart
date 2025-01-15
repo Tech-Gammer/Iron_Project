@@ -279,10 +279,92 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
 
 
 
+  // Future<void> _generateAndPrintPDF(Map<String, dynamic> report, List<Map<String, dynamic>> transactions) async {
+  //   final pdf = pw.Document();
+  //   final font = await PdfGoogleFonts.robotoRegular();
+  //   final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+  //
+  //   // Calculate total debit, total credit, and balance (balance = credit - debit)
+  //   double totalDebit = 0.0;
+  //   double totalCredit = 0.0;
+  //
+  //   for (var transaction in transactions) {
+  //     totalDebit += transaction['debit'] ?? 0.0;
+  //     totalCredit += transaction['credit'] ?? 0.0;
+  //   }
+  //
+  //   // Calculate total balance as credit - debit
+  //   double totalBalance = totalCredit - totalDebit;
+  //
+  //   // Get the current date in a formatted string
+  //   String printDate = DateFormat('dd MMM yyyy').format(DateTime.now());
+  //
+  //   pdf.addPage(
+  //     pw.Page(
+  //       build: (pw.Context context) {
+  //         return pw.Column(
+  //           crossAxisAlignment: pw.CrossAxisAlignment.start,
+  //           children: [
+  //             pw.Text(
+  //                 'Customer Ledegr for Sarya',
+  //                 // languageProvider.isEnglish ? 'Customer Ledegr for Sarya' : 'سریا کے لیے کسٹمر لیڈیگر',
+  //
+  //                 style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+  //             pw.SizedBox(height: 20),
+  //             pw.Text(
+  //                 'Customer Name: ${widget.customerName}',
+  //                 // '${languageProvider.isEnglish ? 'Customer Name:' : 'گاہک کا نام:'} ${widget.customerName}',
+  //
+  //                 style: pw.TextStyle(fontSize: 18)),
+  //             pw.Text(
+  //                 'Phone Number: ${widget.customerPhone}',
+  //                 // '${languageProvider.isEnglish ? 'Phone Number:' : 'فون نمبر:'} ${widget.customerPhone}',
+  //                 style: pw.TextStyle(fontSize: 18)),
+  //             pw.SizedBox(height: 20),
+  //             pw.Text(
+  //                 'Print Date: $printDate',
+  //                 // '${languageProvider.isEnglish ? 'Print Date:' : 'پرنٹ کی تاریخ:'} $printDate',
+  //                 style: pw.TextStyle(fontSize: 16, color: PdfColors.grey)),
+  //             pw.SizedBox(height: 20),
+  //             pw.Text(
+  //                 'Transactions:',
+  //                 // languageProvider.isEnglish ? 'Transactions' : 'لین دین',
+  //
+  //                 style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+  //             pw.Table.fromTextArray(
+  //               context: context,
+  //               data: [
+  //                 ['Date', 'Invoice Number', 'Transaction Type', 'Debit', 'Credit', 'Balance'],
+  //                 ...transactions.map((transaction) => [
+  //                   transaction['date'] ?? 'N/A',
+  //                   transaction['invoiceNumber'] ?? 'N/A',
+  //                   transaction['credit'] != 0.0 ? 'Invoice' : (transaction['debit'] != 0.0 ? 'Bill' : '-'),
+  //                   transaction['debit'] != 0.0 ? 'Rs ${transaction['debit']?.toStringAsFixed(2)}' : '-',
+  //                   transaction['credit'] != 0.0 ? 'Rs ${transaction['credit']?.toStringAsFixed(2)}' : '-',
+  //                   'Rs ${transaction['balance']?.toStringAsFixed(2)}',
+  //                 ]),
+  //                 // Add totals at the end of the table
+  //                 [
+  //                   'Total', '', '',
+  //                   'Rs ${totalDebit.toStringAsFixed(2)}',
+  //                   'Rs ${totalCredit.toStringAsFixed(2)}',
+  //                   'Rs ${totalBalance.toStringAsFixed(2)}'
+  //                 ],
+  //               ],
+  //             ),
+  //           ],
+  //         );
+  //       },
+  //     ),
+  //   );
+  //
+  //   await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
+  // }
+
   Future<void> _generateAndPrintPDF(Map<String, dynamic> report, List<Map<String, dynamic>> transactions) async {
     final pdf = pw.Document();
-    final font = await PdfGoogleFonts.robotoRegular();
     final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+    final font = await PdfGoogleFonts.robotoRegular();
 
     // Calculate total debit, total credit, and balance (balance = credit - debit)
     double totalDebit = 0.0;
@@ -299,66 +381,87 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
     // Get the current date in a formatted string
     String printDate = DateFormat('dd MMM yyyy').format(DateTime.now());
 
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                  'Customer Ledegr for Sarya',
-                  // languageProvider.isEnglish ? 'Customer Ledegr for Sarya' : 'سریا کے لیے کسٹمر لیڈیگر',
+    // Split the transactions into chunks of 20
+    const int itemsPerPage = 20;
+    int pageCount = (transactions.length / itemsPerPage).ceil();
 
-                  style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 20),
-              pw.Text(
-                  'Customer Name: ${widget.customerName}',
-                  // '${languageProvider.isEnglish ? 'Customer Name:' : 'گاہک کا نام:'} ${widget.customerName}',
+    for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+      final start = pageIndex * itemsPerPage;
+      final end = (start + itemsPerPage > transactions.length) ? transactions.length : start + itemsPerPage;
+      final pageTransactions = transactions.sublist(start, end);
 
-                  style: pw.TextStyle(fontSize: 18)),
-              pw.Text(
-                  'Phone Number: ${widget.customerPhone}',
-                  // '${languageProvider.isEnglish ? 'Phone Number:' : 'فون نمبر:'} ${widget.customerPhone}',
-                  style: pw.TextStyle(fontSize: 18)),
-              pw.SizedBox(height: 20),
-              pw.Text(
-                  'Print Date: $printDate',
-                  // '${languageProvider.isEnglish ? 'Print Date:' : 'پرنٹ کی تاریخ:'} $printDate',
-                  style: pw.TextStyle(fontSize: 16, color: PdfColors.grey)),
-              pw.SizedBox(height: 20),
-              pw.Text(
-                  'Transactions:',
-                  // languageProvider.isEnglish ? 'Transactions' : 'لین دین',
-
-                  style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-              pw.Table.fromTextArray(
-                context: context,
-                data: [
-                  ['Date', 'Invoice Number', 'Transaction Type', 'Debit', 'Credit', 'Balance'],
-                  ...transactions.map((transaction) => [
-                    transaction['date'] ?? 'N/A',
-                    transaction['invoiceNumber'] ?? 'N/A',
-                    transaction['credit'] != 0.0 ? 'Invoice' : (transaction['debit'] != 0.0 ? 'Bill' : '-'),
-                    transaction['debit'] != 0.0 ? 'Rs ${transaction['debit']?.toStringAsFixed(2)}' : '-',
-                    transaction['credit'] != 0.0 ? 'Rs ${transaction['credit']?.toStringAsFixed(2)}' : '-',
-                    'Rs ${transaction['balance']?.toStringAsFixed(2)}',
-                  ]),
-                  // Add totals at the end of the table
-                  [
-                    'Total', '', '',
-                    'Rs ${totalDebit.toStringAsFixed(2)}',
-                    'Rs ${totalCredit.toStringAsFixed(2)}',
-                    'Rs ${totalBalance.toStringAsFixed(2)}'
+      pdf.addPage(
+        pw.Page(
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  languageProvider.isEnglish ? 'Customer Ledger for Sarya' : 'سریا کے لیے کسٹمر لیجر',
+                  style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+                ),
+                pw.SizedBox(height: 20),
+                pw.Text(
+                  '${languageProvider.isEnglish ? 'Customer Name:' : 'گاہک کا نام:'} ${widget.customerName}',
+                  style: pw.TextStyle(fontSize: 18),
+                ),
+                pw.Text(
+                  '${languageProvider.isEnglish ? 'Phone Number:' : 'فون نمبر:'} ${widget.customerPhone}',
+                  style: pw.TextStyle(fontSize: 18),
+                ),
+                pw.SizedBox(height: 20),
+                pw.Text(
+                  '${languageProvider.isEnglish ? 'Print Date:' : 'پرنٹ کی تاریخ:'} $printDate',
+                  style: pw.TextStyle(fontSize: 16, color: PdfColors.grey),
+                ),
+                pw.SizedBox(height: 20),
+                pw.Text(
+                  languageProvider.isEnglish ? 'Transactions:' : 'لین دین',
+                  style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+                ),
+                pw.Table.fromTextArray(
+                  context: context,
+                  data: [
+                    [
+                      languageProvider.isEnglish ? 'Date' : 'ڈیٹ',
+                      languageProvider.isEnglish ? 'Invoice Number' : 'انوائس نمبر',
+                      languageProvider.isEnglish ? 'Transaction Type' : 'لین دین کی قسم',
+                      languageProvider.isEnglish ? 'Debit (-)' : '(-) ڈیبٹ',
+                      languageProvider.isEnglish ? 'Credit (+)' : '(+) کریڈٹ',
+                      languageProvider.isEnglish ? 'Balance' : 'رقم',
+                    ],
+                    ...pageTransactions.map((transaction) {
+                      return [
+                        DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.parse(transaction['date'])),
+                        transaction['invoiceNumber'] ?? 'N/A',
+                        transaction['credit'] != 0.0
+                            ? languageProvider.isEnglish ? 'Invoice' : 'انوائس'
+                            : (transaction['debit'] != 0.0 ? (languageProvider.isEnglish ? 'Bill' : 'بل') : '-'),
+                        transaction['debit'] != 0.0 ? 'Rs ${transaction['debit']?.toStringAsFixed(2)}' : '-',
+                        transaction['credit'] != 0.0 ? 'Rs ${transaction['credit']?.toStringAsFixed(2)}' : '-',
+                        'Rs ${transaction['balance']?.toStringAsFixed(2)}',
+                      ];
+                    }).toList(),
+                    // Add totals at the end of the table for each page
+                    [
+                      languageProvider.isEnglish ? 'Total' : 'کل',
+                      '', '',
+                      'Rs ${totalDebit.toStringAsFixed(2)}',
+                      'Rs ${totalCredit.toStringAsFixed(2)}',
+                      'Rs ${totalBalance.toStringAsFixed(2)}'
+                    ],
                   ],
-                ],
-              ),
-            ],
-          );
-        },
-      ),
-    );
+                ),
+                pw.SizedBox(height: 20),
+              ],
+            );
+          },
+        ),
+      );
+    }
 
     await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
   }
+
 
 }

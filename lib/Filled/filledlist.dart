@@ -294,51 +294,51 @@ class _filledListpageState extends State<filledListpage> {
     );
   }
 
-  // Future<void> _showFilledPaymentDialog(
-  //     Map<String, dynamic> filled, FilledProvider filledProvider, LanguageProvider languageprovider) async {
+
+  // Future<void> _printFilled() async {
+  //   final pdf = pw.Document();
   //
-  //   final languageProvider = context.read<LanguageProvider>();
+  //   // Header for the table
+  //   final headers = ['Filled Number', 'Customer Name', 'Date', 'Grand Total', 'Remaining Amount'];
   //
-  //   _paymentController.clear();
-  //   await showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return AlertDialog(
-  //         // title: const Text('Pay Filled'),
-  //         title: Text(languageProvider.isEnglish ? 'Pay Filled' : 'فلڈ کی رقم ادا کریں'),
+  //   // Prepare data for the table
+  //   final data = _filteredFilled.map((filled) {
+  //     return [
+  //       filled['filledNumber'] ?? 'N/A',
+  //       filled['customerName'] ?? 'N/A',
+  //       filled['createdAt'] ?? 'N/A',
+  //       'Rs ${filled['grandTotal']}',
+  //       'Rs ${(filled['grandTotal'] - filled['debitAmount']).toStringAsFixed(2)}',
+  //     ];
+  //   }).toList();
   //
-  //         content: TextField(
-  //           controller: _paymentController,
-  //           keyboardType: TextInputType.number,
-  //           decoration: InputDecoration(
-  //             // labelText: 'Enter Payment Amount',
-  //               labelText: languageProvider.isEnglish ? 'Enter Payment Amount' : 'رقم لکھیں'
+  //   // Add page with a table
+  //   pdf.addPage(
+  //     pw.Page(
+  //       build: (pw.Context context) {
+  //         return pw.Column(
+  //           crossAxisAlignment: pw.CrossAxisAlignment.start,
+  //           children: [
+  //             pw.Text('Filled List',
+  //                 style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+  //             pw.SizedBox(height: 10),
+  //             pw.Table.fromTextArray(
+  //               headers: headers,
+  //               data: data,
+  //               border: pw.TableBorder.all(),
+  //               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+  //               cellAlignment: pw.Alignment.centerLeft,
+  //               cellPadding: pw.EdgeInsets.all(8),
+  //             ),
+  //           ],
+  //         );
+  //       },
+  //     ),
+  //   );
   //
-  //           ),
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //             child: const Text('Cancel'),
-  //           ),
-  //           TextButton(
-  //             onPressed: () async {
-  //               final amount = double.tryParse(_paymentController.text);
-  //               if (amount != null && amount > 0) {
-  //                 // awaitfilledProvider.addDebit(filled['id'], amount);
-  //                 await filledProvider.payFilled(context, filled['id'], amount);
-  //                 Navigator.of(context).pop();
-  //               } else {
-  //                 // Handle invalid input
-  //               }
-  //             },
-  //             child: const Text('Pay'),
-  //           ),
-  //         ],
-  //       );
-  //     },
+  //   // Send the PDF document to the printer
+  //   await Printing.layoutPdf(
+  //     onLayout: (PdfPageFormat format) async => pdf.save(),
   //   );
   // }
 
@@ -359,29 +359,37 @@ class _filledListpageState extends State<filledListpage> {
       ];
     }).toList();
 
-    // Add page with a table
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text('Filled List',
-                  style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 10),
-              pw.Table.fromTextArray(
-                headers: headers,
-                data: data,
-                border: pw.TableBorder.all(),
-                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                cellAlignment: pw.Alignment.centerLeft,
-                cellPadding: pw.EdgeInsets.all(8),
-              ),
-            ],
-          );
-        },
-      ),
-    );
+    // Define the number of rows per page based on the page size
+    const int rowsPerPage = 20;  // Adjust this value as necessary
+
+    // Split data into chunks
+    for (int i = 0; i < data.length; i += rowsPerPage) {
+      final pageData = data.sublist(i, (i + rowsPerPage) > data.length ? data.length : (i + rowsPerPage));
+
+      // Add page with a table
+      pdf.addPage(
+        pw.Page(
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text('Filled List',
+                    style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 10),
+                pw.Table.fromTextArray(
+                  headers: headers,
+                  data: pageData,
+                  border: pw.TableBorder.all(),
+                  headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  cellAlignment: pw.Alignment.centerLeft,
+                  cellPadding: pw.EdgeInsets.all(8),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+    }
 
     // Send the PDF document to the printer
     await Printing.layoutPdf(
@@ -389,12 +397,14 @@ class _filledListpageState extends State<filledListpage> {
     );
   }
 
+
   Future<void> _showInvoicePaymentDialog(
       Map<String, dynamic> invoice,
       FilledProvider invoiceProvider,
       LanguageProvider languageProvider) async {
-    String? selectedPaymentMethod; // To hold the selected payment method
+    String? selectedPaymentMethod; // To hold the selected payment smethod
     _paymentController.clear();
+    bool _isPaymentButtonPressed = false; // Flag to prevent multiple presses
 
     await showDialog(
       context: context,
@@ -449,7 +459,13 @@ class _filledListpageState extends State<filledListpage> {
                   child: Text(languageProvider.isEnglish ? 'Cancel' : 'انکار'),
                 ),
                 TextButton(
-                  onPressed: () async {
+                  onPressed: _isPaymentButtonPressed
+                      ? null // Disable the button if it's already pressed
+                      : () async {
+                    setState(() {
+                      _isPaymentButtonPressed = true; // Disable the button when pressed
+                    });
+
                     if (selectedPaymentMethod == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -458,6 +474,9 @@ class _filledListpageState extends State<filledListpage> {
                               : 'براہ کرم ادائیگی کا طریقہ منتخب کریں۔'),
                         ),
                       );
+                      setState(() {
+                        _isPaymentButtonPressed = false; // Re-enable the button on failure
+                      });
                       return;
                     }
 
@@ -479,6 +498,10 @@ class _filledListpageState extends State<filledListpage> {
                         ),
                       );
                     }
+
+                    setState(() {
+                      _isPaymentButtonPressed = false; // Re-enable the button after payment is processed
+                    });
                   },
                   child: Text(languageProvider.isEnglish ? 'Pay' : 'رقم ادا کریں'),
                 ),

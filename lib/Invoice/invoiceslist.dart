@@ -302,6 +302,54 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
 
 
 
+  // Future<void> _printInvoices() async {
+  //   final pdf = pw.Document();
+  //
+  //   // Header for the table
+  //   final headers = ['Invoice Number', 'Customer Name', 'Date', 'Grand Total', 'Remaining Amount'];
+  //
+  //   // Prepare data for the table
+  //   final data = _filteredInvoices.map((invoice) {
+  //     return [
+  //       invoice['invoiceNumber'] ?? 'N/A',
+  //       invoice['customerName'] ?? 'N/A',
+  //       invoice['createdAt'] ?? 'N/A',
+  //       'Rs ${invoice['grandTotal']}',
+  //       'Rs ${(invoice['grandTotal'] - invoice['debitAmount']).toStringAsFixed(2)}',
+  //     ];
+  //   }).toList();
+  //
+  //   // Add page with a table
+  //   pdf.addPage(
+  //     pw.Page(
+  //       build: (pw.Context context) {
+  //         return pw.Column(
+  //           crossAxisAlignment: pw.CrossAxisAlignment.start,
+  //           children: [
+  //             pw.Text('Invoice List',
+  //                 style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+  //             pw.SizedBox(height: 10),
+  //             pw.Table.fromTextArray(
+  //               headers: headers,
+  //               data: data,
+  //               border: pw.TableBorder.all(),
+  //               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+  //               cellAlignment: pw.Alignment.centerLeft,
+  //               cellPadding: pw.EdgeInsets.all(8),
+  //             ),
+  //           ],
+  //         );
+  //       },
+  //     ),
+  //   );
+  //
+  //   // Send the PDF document to the printer
+  //   await Printing.layoutPdf(
+  //     onLayout: (PdfPageFormat format) async => pdf.save(),
+  //   );
+  // }
+
+
   Future<void> _printInvoices() async {
     final pdf = pw.Document();
 
@@ -319,29 +367,42 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
       ];
     }).toList();
 
-    // Add page with a table
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text('Invoice List',
-                  style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 10),
-              pw.Table.fromTextArray(
-                headers: headers,
-                data: data,
-                border: pw.TableBorder.all(),
-                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                cellAlignment: pw.Alignment.centerLeft,
-                cellPadding: pw.EdgeInsets.all(8),
-              ),
-            ],
-          );
-        },
-      ),
-    );
+    // Split the data into chunks that fit on a single pages
+    const int rowsPerPage = 20; // Adjust the number of rows per page as needed
+    final pageCount = (data.length / rowsPerPage).ceil();
+
+    for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+      // Get a subset of the data for the current page
+      final startIndex = pageIndex * rowsPerPage;
+      final endIndex = (startIndex + rowsPerPage) < data.length ? startIndex + rowsPerPage : data.length;
+      final pageData = data.sublist(startIndex, endIndex);
+
+      // Add page with a tables
+      pdf.addPage(
+        pw.Page(
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'Invoice List',
+                  style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+                ),
+                pw.SizedBox(height: 10),
+                pw.Table.fromTextArray(
+                  headers: headers,
+                  data: pageData,
+                  border: pw.TableBorder.all(),
+                  headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  cellAlignment: pw.Alignment.centerLeft,
+                  cellPadding: pw.EdgeInsets.all(8),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+    }
 
     // Send the PDF document to the printer
     await Printing.layoutPdf(
@@ -349,12 +410,14 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
     );
   }
 
+
   Future<void> _showInvoicePaymentDialog(
       Map<String, dynamic> invoice,
       InvoiceProvider invoiceProvider,
       LanguageProvider languageProvider) async {
     String? selectedPaymentMethod; // To hold the selected payment method
     _paymentController.clear();
+    bool _isPaymentButtonPressed = false; // Flag to prevent multiple presses
 
     await showDialog(
       context: context,
@@ -409,7 +472,13 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                   child: Text(languageProvider.isEnglish ? 'Cancel' : 'انکار'),
                 ),
                 TextButton(
-                  onPressed: () async {
+                  onPressed: _isPaymentButtonPressed
+                      ? null // Disable the button if it's already pressed
+                      : () async {
+                    setState(() {
+                      _isPaymentButtonPressed = true; // Disable the button when pressed
+                    });
+
                     if (selectedPaymentMethod == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -418,6 +487,9 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                               : 'براہ کرم ادائیگی کا طریقہ منتخب کریں۔'),
                         ),
                       );
+                      setState(() {
+                        _isPaymentButtonPressed = false; // Re-enable the button on failure
+                      });
                       return;
                     }
 
@@ -439,6 +511,10 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                         ),
                       );
                     }
+
+                    setState(() {
+                      _isPaymentButtonPressed = false; // Re-enable the button after payment is processed
+                    });
                   },
                   child: Text(languageProvider.isEnglish ? 'Pay' : 'رقم ادا کریں'),
                 ),

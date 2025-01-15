@@ -218,62 +218,121 @@ class _FilledPaymentTypeReportPageState extends State<FilledPaymentTypeReportPag
   }
 
 
+  // Future<void> _generateAndPrintPDF() async {
+  //   final pdf = pw.Document();
+  //   final languageProvider = Provider.of<LanguageProvider>(context,listen: false);
+  //
+  //   pdf.addPage(
+  //     pw.Page(
+  //       build: (pw.Context context) {
+  //         return pw.Column(
+  //           children: [
+  //             pw.Text(
+  //                 'Payment Type Report For Filled',
+  //                 // languageProvider.isEnglish ? 'Payment Type Report For Filled' : 'فلڈ کے لیے ادائیگی کی قسم کی رپورٹ', // Dynamic text based on language
+  //
+  //                 style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+  //             pw.SizedBox(height: 20),
+  //             pw.Text('Customer: ${_selectedCustomerName ?? 'All'}'),
+  //             // pw.Text('Phone: ${widget.customerPhone ?? 'All'}'),
+  //             pw.SizedBox(height: 20),
+  //             pw.Table.fromTextArray(
+  //               context: context,
+  //               data: [
+  //                 [
+  //                   'Customer',
+  //                   // languageProvider.isEnglish ? 'Customer' : 'کسٹمر', // Dynamic text based on language
+  //                   'Payment Type',
+  //                   // languageProvider.isEnglish ? 'Payment Type' : 'ادائیگی کی قسم', // Dynamic text based on language
+  //                   'Payment Method',
+  //                   // languageProvider.isEnglish ? 'Payment Method' : 'ادائیگی کی طریقہ', // Dynamic text based on language
+  //                   'Amount',
+  //                   // languageProvider.isEnglish ? 'Amount' : 'رقم', // Dynamic text based on language
+  //                   'Date'
+  //                   // languageProvider.isEnglish ? 'Date' : 'تاریخ', // Dynamic text based on language
+  //
+  //                 ],
+  //                 ..._reportData.map((filled) {
+  //                   return [
+  //                     filled['customerName'] ?? 'N/A',
+  //                     filled['paymentType'] ?? 'N/A',
+  //                     filled['paymentMethod'] ?? 'N/A',
+  //                     'Rs ${filled['grandTotal']}',
+  //                     DateFormat.yMMMd().format(DateTime.parse(filled['createdAt'])),
+  //                   ];
+  //                 }).toList(),
+  //               ],
+  //             ),
+  //             pw.SizedBox(height: 20),
+  //             pw.Text(
+  //                 'Total Amount: Rs ${_calculateTotalAmount().toStringAsFixed(2)}'
+  //                 // '${languageProvider.isEnglish ? 'Total Amount: Rs ${_calculateTotalAmount().toStringAsFixed(2)}' : 'کل رقم:${_calculateTotalAmount().toStringAsFixed(2)}روپے' }'
+  //
+  //             ),
+  //           ],
+  //         );
+  //       },
+  //     ),
+  //   );
+  //
+  //   // Print PDF
+  //   await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
+  // }
   Future<void> _generateAndPrintPDF() async {
     final pdf = pw.Document();
-    final languageProvider = Provider.of<LanguageProvider>(context,listen: false);
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
 
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Column(
-            children: [
-              pw.Text(
+    const int rowsPerPage = 20;
+
+    // Split _reportData into chunks of 20 rows
+    for (int i = 0; i < _reportData.length; i += rowsPerPage) {
+      final chunk = _reportData.sublist(i, i + rowsPerPage > _reportData.length ? _reportData.length : i + rowsPerPage);
+
+      pdf.addPage(
+        pw.Page(
+          build: (pw.Context context) {
+            return pw.Column(
+              children: [
+                pw.Text(
                   'Payment Type Report For Filled',
-                  // languageProvider.isEnglish ? 'Payment Type Report For Filled' : 'فلڈ کے لیے ادائیگی کی قسم کی رپورٹ', // Dynamic text based on language
-
-                  style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 20),
-              pw.Text('Customer: ${_selectedCustomerName ?? 'All'}'),
-              // pw.Text('Phone: ${widget.customerPhone ?? 'All'}'),
-              pw.SizedBox(height: 20),
-              pw.Table.fromTextArray(
-                context: context,
-                data: [
-                  [
-                    'Customer',
-                    // languageProvider.isEnglish ? 'Customer' : 'کسٹمر', // Dynamic text based on language
-                    'Payment Type',
-                    // languageProvider.isEnglish ? 'Payment Type' : 'ادائیگی کی قسم', // Dynamic text based on language
-                    'Payment Method',
-                    // languageProvider.isEnglish ? 'Payment Method' : 'ادائیگی کی طریقہ', // Dynamic text based on language
-                    'Amount',
-                    // languageProvider.isEnglish ? 'Amount' : 'رقم', // Dynamic text based on language
-                    'Date'
-                    // languageProvider.isEnglish ? 'Date' : 'تاریخ', // Dynamic text based on language
-
+                  style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+                ),
+                pw.SizedBox(height: 20),
+                pw.Text('Customer: ${_selectedCustomerName ?? 'All'}'),
+                // pw.Text('Phone: ${widget.customerPhone ?? 'All'}'),
+                pw.SizedBox(height: 20),
+                pw.Table.fromTextArray(
+                  context: context,
+                  data: [
+                    [
+                      'Customer',
+                      'Payment Type',
+                      'Payment Method',
+                      'Amount',
+                      'Date',
+                    ],
+                    // Add data for the current chunk of 20 rows
+                    ...chunk.map((filled) {
+                      return [
+                        filled['customerName'] ?? 'N/A',
+                        filled['paymentType'] ?? 'N/A',
+                        filled['paymentMethod'] ?? 'N/A',
+                        'Rs ${filled['grandTotal']}',
+                        DateFormat.yMMMd().format(DateTime.parse(filled['createdAt'])),
+                      ];
+                    }).toList(),
                   ],
-                  ..._reportData.map((filled) {
-                    return [
-                      filled['customerName'] ?? 'N/A',
-                      filled['paymentType'] ?? 'N/A',
-                      filled['paymentMethod'] ?? 'N/A',
-                      'Rs ${filled['grandTotal']}',
-                      DateFormat.yMMMd().format(DateTime.parse(filled['createdAt'])),
-                    ];
-                  }).toList(),
-                ],
-              ),
-              pw.SizedBox(height: 20),
-              pw.Text(
-                  'Total Amount: Rs ${_calculateTotalAmount().toStringAsFixed(2)}'
-                  // '${languageProvider.isEnglish ? 'Total Amount: Rs ${_calculateTotalAmount().toStringAsFixed(2)}' : 'کل رقم:${_calculateTotalAmount().toStringAsFixed(2)}روپے' }'
-
-              ),
-            ],
-          );
-        },
-      ),
-    );
+                ),
+                pw.SizedBox(height: 20),
+                pw.Text(
+                  'Total Amount: Rs ${_calculateTotalAmount().toStringAsFixed(2)}',
+                ),
+              ],
+            );
+          },
+        ),
+      );
+    }
 
     // Print PDF
     await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
