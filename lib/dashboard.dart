@@ -112,16 +112,27 @@ class Dashboard extends StatelessWidget {
         children: [
           DrawerHeader(
             decoration: const BoxDecoration(color: Colors.blue),
-            child: Text(
-              languageProvider.isEnglish ? 'Welcome, User!' : 'خوش آمدید، صارف!',
-              style: const TextStyle(color: Colors.white, fontSize: 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundImage: AssetImage('assets/images/logo.png'), // Replace with your image path
+                  backgroundColor: Colors.white, // Fallback color
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  languageProvider.isEnglish ? 'Welcome, User!' : 'خوش آمدید، صارف!',
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                ),
+              ],
             ),
           ),
           ListTile(
             leading: const Icon(Icons.home),
             title: Text(languageProvider.isEnglish ? 'Home' : 'ہوم'),
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context)=>const Dashboard()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
             },
           ),
           ListTile(
@@ -133,7 +144,8 @@ class Dashboard extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (context) => const ledgerselection(),
                 ),
-              );              },
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.settings),
@@ -145,7 +157,7 @@ class Dashboard extends StatelessWidget {
                   builder: (context) => UsersPage(),
                 ),
               );
-              },
+            },
           ),
         ],
       ),

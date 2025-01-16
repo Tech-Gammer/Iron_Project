@@ -73,7 +73,9 @@ class _UsersPageState extends State<UsersPage> {
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             child: ListTile(
               title: Text(user["name"]),
-              subtitle: Text("Email: ${user["email"]}\nPassword: ${user["password"]}"),
+              // subtitle: Text("Email: ${user["email"]}\nPassword: ${user["password"]}"),
+              subtitle: Text("Email: ${user["email"]}"),
+
               isThreeLine: true,
             ),
           );

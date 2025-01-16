@@ -93,188 +93,6 @@ class _InvoicePageState extends State<InvoicePage> {
     return subtotal - discountAmount;
   }
 
-  // Future<void> _generateAndPrintPDF(String invoiceNumber) async {
-  //   final pdf = pw.Document();
-  //   final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
-  //   final customerProvider = Provider.of<CustomerProvider>(context, listen: false);
-  //   final selectedCustomer = customerProvider.customers.firstWhere((customer) => customer.id == _selectedCustomerId);
-  //
-  //   // Get current date and time
-  //   final DateTime now = DateTime.now();
-  //   final String formattedDate = '${now.day}/${now.month}/${now.year}';
-  //   final String formattedTime = '${now.hour}:${now.minute.toString().padLeft(2, '0')}';
-  //
-  //   // Get the remaining balance from the ledger
-  //   double remainingBalance = await _getRemainingBalance(_selectedCustomerId!);
-  //
-  //   // Load the image asset
-  //   final ByteData bytes = await rootBundle.load('assets/images/logo.png');
-  //   final buffer = bytes.buffer.asUint8List();
-  //   final image = pw.MemoryImage(buffer);
-  //   pdf.addPage(
-  //     pw.Page(
-  //       pageFormat: PdfPageFormat.a5,
-  //       build: (context) {
-  //         return pw.Padding(
-  //           padding: const pw.EdgeInsets.symmetric(horizontal: 0, vertical: 2),  // Reduced side margins
-  //           child: pw.Column(
-  //             crossAxisAlignment: pw.CrossAxisAlignment.start,
-  //             children: [
-  //               // Company Logo and Invoice Header
-  //               pw.Row(
-  //                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-  //                 children: [
-  //                   pw.Image(image, width: 70, height: 70), // Adjust width and height as needed
-  //                   pw.Text(
-  //                     // languageProvider.isEnglish ? 'Invoice' : 'انوائس',
-  //                     'Invoice',
-  //                     style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
-  //                   ),
-  //                 ],
-  //               ),
-  //               pw.Divider(),
-  //               // Customer Information
-  //               pw.Text(
-  //                 // '${languageProvider.isEnglish ? 'Customer Name:' : 'کسٹمر کا نام:'} ${selectedCustomer.name}',
-  //                 'Customer Name: ${selectedCustomer.name}',
-  //                 style: const pw.TextStyle(fontSize: 14),
-  //               ),
-  //               pw.Text(
-  //                 // '${languageProvider.isEnglish ? 'Customer Number:' : 'کسٹمر نمبر:'} ${selectedCustomer.phone}',
-  //                 'Customer Number: ${selectedCustomer.phone}',
-  //                 style: const pw.TextStyle(fontSize: 14),
-  //               ),
-  //               pw.Text(
-  //                 // '${languageProvider.isEnglish ? 'Customer Address:' : 'کسٹمر پتہ:'} ${selectedCustomer.address ?? ''}',
-  //                 'Customer Address ${selectedCustomer.address}',
-  //                 style: const pw.TextStyle(fontSize: 14),
-  //               ),
-  //               pw.Text(
-  //                 // '${languageProvider.isEnglish ? 'Date:' : 'تاریخ:'} $formattedDate',
-  //                 'Date: $formattedDate',
-  //                 style: const pw.TextStyle(fontSize: 8),
-  //               ),
-  //               pw.Text(
-  //                 // '${languageProvider.isEnglish ? 'Time:' : 'وقت:'} $formattedTime',
-  //                 'Time: $formattedTime',
-  //                 style: const pw.TextStyle(fontSize: 8),
-  //               ),
-  //               pw.SizedBox(height: 10),
-  //               // Invoice Table
-  //               pw.Table.fromTextArray(
-  //                 headers: [
-  //                   pw.Text(
-  //                     // languageProvider.isEnglish ? 'Description' : 'تفصیل',
-  //                     'Description',
-  //                     style: const pw.TextStyle(fontSize: 8),  // Reduced font size
-  //                   ),
-  //                   pw.Text(
-  //                     // languageProvider.isEnglish ? 'Sarya Weight' : 'سرئے کا وزن',
-  //                     'Weight',
-  //                     style: const pw.TextStyle(fontSize: 10),  // Reduced font size
-  //                   ),
-  //                   pw.Text(
-  //                     // languageProvider.isEnglish ? 'Sarya Qty' : 'سرئے کی مقدار',
-  //                       'Qty(Pcs)',
-  //                     style: const pw.TextStyle(fontSize: 10),  // Reduced font size
-  //                   ),
-  //                   pw.Text(
-  //                     // languageProvider.isEnglish ? 'Sarya Rate' : 'سرئے کی قیمت',
-  //                       'Rate',
-  //                     style: const pw.TextStyle(fontSize: 10),  // Reduced font size
-  //                   ),
-  //                   pw.Text(
-  //                     // languageProvider.isEnglish ? 'Total' : 'کل',
-  //                     'Total',
-  //                     style: const pw.TextStyle(fontSize: 10),  // Reduced font size
-  //                   ),
-  //                 ],
-  //                 data: _invoiceRows.map((row) {
-  //                   return [
-  //                     pw.Text(row['description'], style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
-  //                     pw.Text(row['weight'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
-  //                     pw.Text(row['qty'].toStringAsFixed(0), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
-  //                     pw.Text(row['rate'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
-  //                     pw.Text(row['total'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),  // Reduced font size for data
-  //                   ];
-  //                 }).toList(),
-  //               ),
-  //               pw.SizedBox(height: 10),
-  //               // Totals Section
-  //               pw.Row(
-  //                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-  //                 children: [
-  //                   // pw.Text('${languageProvider.isEnglish ? 'Sub Total:' : 'کل رقم:'}'),
-  //                   pw.Text('Sub Total:'),
-  //                   pw.Text(_calculateSubtotal().toStringAsFixed(2)),
-  //                 ],
-  //               ),
-  //               pw.Row(
-  //                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-  //                 children: [
-  //                   // pw.Text('${languageProvider.isEnglish ? 'Discount:' : 'رعایت:'}'),
-  //                   pw.Text('Discount:'),
-  //                   pw.Text(_discount.toStringAsFixed(2)),
-  //                 ],
-  //               ),
-  //               pw.Row(
-  //                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-  //                 children: [
-  //                   pw.Text(
-  //                     // '${languageProvider.isEnglish ? 'Grand Total:' : 'مجموعی کل:'}',
-  //                    'Grand Total:',
-  //                     style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
-  //                   ),
-  //                   pw.Text(
-  //                     _calculateGrandTotal().toStringAsFixed(2),
-  //                     style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
-  //                   ),
-  //                 ],
-  //               ),
-  //               pw.SizedBox(height: 20),
-  //               // Footer
-  //               // Previous Balance Section (Remaining Balance)
-  //               pw.Row(
-  //                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-  //                 children: [
-  //                   pw.Text(
-  //                     // languageProvider.isEnglish ? 'Previous Balance:' : 'پچھلا بیلنس:',
-  //                    'Previous Balance:',
-  //
-  //                     style: const pw.TextStyle(fontSize: 14),
-  //                   ),
-  //                   pw.Text(
-  //                     remainingBalance.toStringAsFixed(2),
-  //                     style:  pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
-  //                   ),
-  //                 ],
-  //               ),
-  //               pw.SizedBox(height: 30),
-  //               pw.Row(
-  //                 mainAxisAlignment: pw.MainAxisAlignment.end,
-  //                 children: [
-  //                   pw.Text(
-  //                     '......................',
-  //                     style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
-  //                   ),
-  //                 ],
-  //               ),
-  //             ],
-  //           ),
-  //         );
-  //       },
-  //     ),
-  //   );
-  //   try {
-  //     await Printing.layoutPdf(
-  //       onLayout: (format) async {
-  //         return pdf.save();
-  //       },
-  //     );
-  //   } catch (e) {
-  //     print("Error printsings: $e");
-  //   }
-  // }
 
 
   Future<void> _generateAndPrintPDF(String invoiceNumber) async {
@@ -295,6 +113,11 @@ class _InvoicePageState extends State<InvoicePage> {
     final ByteData bytes = await rootBundle.load('assets/images/logo.png');
     final buffer = bytes.buffer.asUint8List();
     final image = pw.MemoryImage(buffer);
+
+    // Load the footer logo if different
+    final ByteData footerBytes = await rootBundle.load('assets/images/devlogo.png');
+    final footerBuffer = footerBytes.buffer.asUint8List();
+    final footerLogo = pw.MemoryImage(footerBuffer);
 
     // Pre-generate images for all descriptions
     List<pw.MemoryImage> descriptionImages = [];
@@ -330,6 +153,8 @@ class _InvoicePageState extends State<InvoicePage> {
                 pw.Text('Customer Address ${selectedCustomer.address}', style: const pw.TextStyle(fontSize: 14)),
                 pw.Text('Date: $formattedDate', style: const pw.TextStyle(fontSize: 8)),
                 pw.Text('Time: $formattedTime', style: const pw.TextStyle(fontSize: 8)),
+                pw.Text('InvoiceId: $_invoiceId', style: const pw.TextStyle(fontSize: 14)),
+
                 pw.SizedBox(height: 10),
 
                 // Invoice Table with Urdu text converted to image
@@ -347,10 +172,10 @@ class _InvoicePageState extends State<InvoicePage> {
                       [
                         // Use the pre-generated image for the description field
                         pw.Image(descriptionImages[index]),
-                        pw.Text(row['weight'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),
-                        pw.Text(row['qty'].toStringAsFixed(0), style: const pw.TextStyle(fontSize: 8)),
-                        pw.Text(row['rate'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),
-                        pw.Text(row['total'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8)),
+                        pw.Text(row['weight'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 12)),
+                        pw.Text(row['qty'].toStringAsFixed(0), style: const pw.TextStyle(fontSize: 12)),
+                        pw.Text(row['rate'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 12)),
+                        pw.Text(row['total'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 12)),
                       ],
                     );
                   }).values.toList(),
@@ -396,6 +221,28 @@ class _InvoicePageState extends State<InvoicePage> {
                     pw.Text('......................', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
                   ],
                 ),
+                // Footer Section
+                pw.Spacer(), // Push footer to the bottom of the page
+                pw.Divider(),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Image(footerLogo, width: 20, height: 20), // Footer logo
+                    pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.center,
+                        children: [
+                          pw.Text(
+                            'Dev Vally Software House',
+                            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                          ),
+                          pw.Text(
+                            'Contact: 0303-4889663',
+                            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                          ),
+                        ]
+                    )
+                  ],
+                ),
               ],
             ),
           );
@@ -420,7 +267,7 @@ class _InvoicePageState extends State<InvoicePage> {
     final canvas = Canvas(recorder, Rect.fromPoints(Offset(0, 0), Offset(500, 50)));
     final paint = Paint()..color = Colors.black;
 
-    final textStyle = TextStyle(fontSize: 16, fontFamily: 'JameelNoori',color: Colors.black);  // Set custom font here if necessary
+    final textStyle = TextStyle(fontSize: 13, fontFamily: 'JameelNoori',color: Colors.black,fontWeight: FontWeight.bold);  // Set custom font here if necessary
     final textSpan = TextSpan(text: text, style: textStyle);
     final textPainter = TextPainter(
       text: textSpan,
