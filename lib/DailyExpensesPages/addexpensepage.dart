@@ -136,73 +136,6 @@ class _AddExpensePageState extends State<AddExpensePage> {
     });
   }
 
-  // Save the daily expense
-  // void _saveExpense() {
-  //   final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
-  //
-  //   if (_descriptionController.text.isEmpty || _amountController.text.isEmpty) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //        SnackBar(content: Text(
-  //           // 'Please fill in all fields'
-  //         languageProvider.isEnglish ? 'Please fill in all fields' : 'براہ کرم تمام فیلڈز کو پُر کریں۔',
-  //
-  //       )),
-  //     );
-  //     return;
-  //   }
-  //
-  //   double expenseAmount = double.parse(_amountController.text);
-  //
-  //   // Check if opening balance is sufficient for the expense
-  //   if (_openingBalance < expenseAmount) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //        SnackBar(content: Text(
-  //           // 'Insufficient funds!'
-  //         languageProvider.isEnglish ? 'Insufficient funds!' : 'ناکافی فنڈز!',
-  //
-  //       )),
-  //     );
-  //     return;
-  //   }
-  //
-  //   // Deduct the expense from the opening balance
-  //   _openingBalance -= expenseAmount;
-  //
-  //   // Format the date to dd:mm:yyyy
-  //   String formattedDate = DateFormat('dd:MM:yyyy').format(_selectedDate);
-  //
-  //   final data = {
-  //     "description": _descriptionController.text,
-  //     "amount": expenseAmount,
-  //     "date": formattedDate, // Save formatted date without time
-  //   };
-  //
-  //   dbRef.child(formattedDate).child("expenses").push().set(data).then((_) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //        SnackBar(content: Text(
-  //           // 'Expense added successfully'
-  //         languageProvider.isEnglish ? 'Expense added successfully' : 'اخراجات کامیابی کے ساتھ شامل ہو گئے۔',
-  //
-  //       )),
-  //     );
-  //     _descriptionController.clear();
-  //     _amountController.clear();
-  //     setState(() {
-  //       _selectedDate = DateTime.now();
-  //     });
-  //
-  //     // Save updated opening balance to Firebase after adding expense
-  //     _saveUpdatedOpeningBalance();
-  //   }).catchError((error) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text(
-  //           // 'Error adding expense: $error'
-  //         languageProvider.isEnglish ? 'Error adding expense: $error' : 'اخراجات شامل کرنے میں خرابی:$error',
-  //
-  //       )),
-  //     );
-  //   });
-  // }
 
   void _saveExpense() async {
     final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
@@ -270,7 +203,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
     }
   }
 
-  // Save the updated opening balance (after deducting the expense)
+  // Save the updated opening balance (after deducting the expense)s
   void _saveUpdatedOpeningBalance() {
     final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
 
@@ -310,12 +243,136 @@ class _AddExpensePageState extends State<AddExpensePage> {
     }
   }
 
+  void _adjustOpeningBalanceDialog() {
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        TextEditingController adjustmentController = TextEditingController();
+        return AlertDialog(
+          title: Text(
+            languageProvider.isEnglish
+                ? 'Adjust Opening Balance'
+                : 'اوپننگ بیلنس کو ایڈجسٹ کریں۔',
+          ),
+          content: TextField(
+            controller: adjustmentController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: languageProvider.isEnglish
+                  ? 'Enter Additional Amount'
+                  : 'اضافی رقم درج کریں۔',
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                languageProvider.isEnglish ? 'Cancel' : 'منسوخ کریں۔',
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text(
+                languageProvider.isEnglish ? 'Add' : 'شامل کریں۔',
+              ),
+              onPressed: () {
+                double? additionalBalance = double.tryParse(adjustmentController.text);
+                if (additionalBalance == null || additionalBalance <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        languageProvider.isEnglish
+                            ? 'Please enter a valid amount'
+                            : 'براہ کرم ایک درست رقم درج کریں۔',
+                      ),
+                    ),
+                  );
+                } else {
+                  Navigator.of(context).pop();
+                  _updateOpeningBalance(additionalBalance);
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _updateOpeningBalance(double additionalBalance) {
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+
+    String formattedDate = DateFormat('dd:MM:yyyy').format(_selectedDate);
+
+    dbRef.child("openingBalance").child(formattedDate).get().then((snapshot) {
+      if (snapshot.exists) {
+        final currentBalance = snapshot.value as num? ?? 0.0;
+        final updatedBalance = currentBalance.toDouble() + additionalBalance;
+
+        // Save updated balance to the "openingBalance" node
+        dbRef.child("openingBalance").child(formattedDate).set(updatedBalance).then((_) {
+          setState(() {
+            _openingBalance = updatedBalance;
+          });
+
+          // Also update the original opening balance to the new value
+          dbRef.child("originalOpeningBalance").child(formattedDate).set(updatedBalance).then((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  languageProvider.isEnglish
+                      ? 'Opening balance and original balance updated successfully!'
+                      : 'اوپننگ بیلنس اور اصل بیلنس کامیابی کے ساتھ اپ ڈیٹ ہو گئے۔',
+                ),
+              ),
+            );
+          }).catchError((error) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  languageProvider.isEnglish
+                      ? 'Error updating original opening balance: $error'
+                      : 'اصل اوپننگ بیلنس کو اپ ڈیٹ کرنے میں خرابی: $error',
+                ),
+              ),
+            );
+          });
+        }).catchError((error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                languageProvider.isEnglish
+                    ? 'Error updating opening balance: $error'
+                    : 'اوپننگ بیلنس کو اپ ڈیٹ کرنے میں خرابی: $error',
+              ),
+            ),
+          );
+        });
+      }
+    }).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            languageProvider.isEnglish
+                ? 'Error fetching current opening balance: $error'
+                : 'موجودہ اوپننگ بیلنس کو حاصل کرنے میں خرابی: $error',
+          ),
+        ),
+      );
+    });
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
 
     return Scaffold(
-      backgroundColor: Colors.teal.shade50, // Background color
+      backgroundColor: Colors.teal.shade50, // Background colorss
       appBar: AppBar(
         // title: const Text("Add Expense"),
         title: Text(
@@ -323,6 +380,11 @@ class _AddExpensePageState extends State<AddExpensePage> {
           style: TextStyle(color: Colors.white),
 
         ),
+        actions: [
+          IconButton(onPressed: (){
+            _adjustOpeningBalanceDialog();
+          }, icon: Icon(Icons.add,color: Colors.white,))
+        ],
         backgroundColor: Colors.teal,
         centerTitle: true,      ),
       body: Padding(

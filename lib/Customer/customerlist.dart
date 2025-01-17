@@ -14,7 +14,7 @@ class CustomerList extends StatelessWidget {
       appBar: AppBar(
         title: Text(
             // 'Customer List',
-            languageProvider.isEnglish ? 'Customer List' : 'کسٹمر کی فہرست', // Dynamic text based on language
+            languageProvider.isEnglish ? 'Customer List' : 'کسٹمر کی فہرست', // Dynamic text based on languagesss
 
             style: TextStyle(color: Colors.white)
         ),
@@ -55,46 +55,48 @@ class CustomerList extends StatelessWidget {
               return LayoutBuilder(
                 builder: (context, constraints) {
                   if (constraints.maxWidth > 600) {
-                    // Web layout
+                    // Web layouts
                     return Padding(
                       padding: const EdgeInsets.all(16.0),
-                      child: DataTable(
-                        columns: [
-                          const DataColumn(label: Text('#')),
-                          DataColumn(label: Text(languageProvider.isEnglish ? 'Name' : 'نام',style: TextStyle(fontSize: 20),)),
-                          DataColumn(label: Text(languageProvider.isEnglish ? 'Name' : 'نام',style: TextStyle(fontSize: 20),)),
-                          DataColumn(label: Text(languageProvider.isEnglish ? 'Phone' : 'فون',style: TextStyle(fontSize: 20),)),
-                          DataColumn(label: Text(languageProvider.isEnglish ? 'Actions' : 'عمل',style: TextStyle(fontSize: 20),)),
-                        ],
-                        rows: customerProvider.customers
-                            .asMap()
-                            .entries
-                            .map((entry) {
-                          final index = entry.key + 1;
-                          final customer = entry.value;
-                          return DataRow(cells: [
-                            DataCell(Text('$index')),
-                            DataCell(Text(customer.name)),
-                            DataCell(Text(customer.address)),
-                            DataCell(Text(customer.phone)),
-                            DataCell(Row(
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.edit, color: Colors.teal),
-                                  onPressed: () {
-                                    _showEditDialog(context, customer, customerProvider);
-                                  },
-                                ),
-                                // IconButton(
-                                //   icon: Icon(Icons.delete, color: Colors.red),
-                                //   onPressed: () {
-                                //     _confirmDelete(context, customer.id, customerProvider);
-                                //   },
-                                // ),
-                              ],
-                            )),
-                          ]);
-                        }).toList(),
+                      child: SingleChildScrollView(
+                        child: DataTable(
+                          columns: [
+                            const DataColumn(label: Text('#')),
+                            DataColumn(label: Text(languageProvider.isEnglish ? 'Name' : 'نام',style: TextStyle(fontSize: 20),)),
+                            DataColumn(label: Text(languageProvider.isEnglish ? 'Name' : 'نام',style: TextStyle(fontSize: 20),)),
+                            DataColumn(label: Text(languageProvider.isEnglish ? 'Phone' : 'فون',style: TextStyle(fontSize: 20),)),
+                            DataColumn(label: Text(languageProvider.isEnglish ? 'Actions' : 'عمل',style: TextStyle(fontSize: 20),)),
+                          ],
+                          rows: customerProvider.customers
+                              .asMap()
+                              .entries
+                              .map((entry) {
+                            final index = entry.key + 1;
+                            final customer = entry.value;
+                            return DataRow(cells: [
+                              DataCell(Text('$index')),
+                              DataCell(Text(customer.name)),
+                              DataCell(Text(customer.address)),
+                              DataCell(Text(customer.phone)),
+                              DataCell(Row(
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.edit, color: Colors.teal),
+                                    onPressed: () {
+                                      _showEditDialog(context, customer, customerProvider);
+                                    },
+                                  ),
+                                  // IconButton(
+                                  //   icon: Icon(Icons.delete, color: Colors.red),
+                                  //   onPressed: () {
+                                  //     _confirmDelete(context, customer.id, customerProvider);
+                                  //   },
+                                  // ),
+                                ],
+                              )),
+                            ]);
+                          }).toList(),
+                        ),
                       ),
                     );
                   } else {
@@ -131,7 +133,7 @@ class CustomerList extends StatelessWidget {
                                   },
                                 ),
                                 // IconButton(
-                                //   icon: Icon(Icons.delete, color: Colors.red),
+                                //   icon: Icon(Icons.delete, color: Colors.red),ss
                                 //   onPressed: () {
                                 //     _confirmDelete(context, customer.id, customerProvider);
                                 //   },

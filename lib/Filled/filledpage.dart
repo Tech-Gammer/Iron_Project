@@ -114,13 +114,18 @@ class _filledpageState extends State<filledpage> {
       final image = await _createTextImage(row['description']);
       descriptionImages.add(image);
     }
+    final customerDetailsImage = await _createTextImage(
+      'Customer Name: ${selectedCustomer.name}\n'
+          'Customer Address: ${selectedCustomer.address}',
+    );
+
 
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a5,
         build: (context) {
           return pw.Padding(
-            padding: const pw.EdgeInsets.symmetric(horizontal: 0, vertical: 2),  // Reduced side margins
+            padding: const pw.EdgeInsets.symmetric(horizontal: 0, vertical: 2),  // Reduced side marginss
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
@@ -137,9 +142,10 @@ class _filledpageState extends State<filledpage> {
                 ),
                 pw.Divider(),
                 // Customer Information
-                pw.Text('Customer Name: ${selectedCustomer.name}', style: const pw.TextStyle(fontSize: 14)),
+                pw.Image(customerDetailsImage, width: 300,dpi: 1000), // Adjust width as neededs
+                // pw.Text('Customer Name: ${selectedCustomer.name}', style: const pw.TextStyle(fontSize: 14)),
                 pw.Text('Customer Number: ${selectedCustomer.phone}', style: const pw.TextStyle(fontSize: 14)),
-                pw.Text('Customer Address ${selectedCustomer.address}', style: const pw.TextStyle(fontSize: 14)),
+                // pw.Text('Customer Address ${selectedCustomer.address}', style: const pw.TextStyle(fontSize: 14)),
                 pw.Text('Date: $formattedDate', style: const pw.TextStyle(fontSize: 8)),
                 pw.Text('Time: $formattedTime', style: const pw.TextStyle(fontSize: 8)),
                 pw.Text('Filled Id: $_filledId', style: const pw.TextStyle(fontSize: 14)),
@@ -162,9 +168,13 @@ class _filledpageState extends State<filledpage> {
                         // Use the pre-generated image for the description field
                         pw.Image(descriptionImages[index]),
                         // pw.Text(row['weight']?.toStringAsFixed(2) ?? '0.00', style: const pw.TextStyle(fontSize: 8)),
-                        pw.Text(row['qty']?.toStringAsFixed(0) ?? '0', style: const pw.TextStyle(fontSize: 12)),
-                        pw.Text(row['rate']?.toStringAsFixed(2) ?? '0.00', style: const pw.TextStyle(fontSize: 12)),
-                        pw.Text(row['total']?.toStringAsFixed(2) ?? '0.00', style: const pw.TextStyle(fontSize: 12)),
+                        // pw.Text(row['qty']?.toStringAsFixed(0) ?? '0', style: const pw.TextStyle(fontSize: 12)),
+                        // pw.Text(row['rate']?.toStringAsFixed(2) ?? '0.00', style: const pw.TextStyle(fontSize: 12)),
+                        // pw.Text(row['total']?.toStringAsFixed(2) ?? '0.00', style: const pw.TextStyle(fontSize: 12)),
+                        pw.Text((row['weight'] ?? 0.0).toStringAsFixed(2), style: const pw.TextStyle(fontSize: 12)),
+                        pw.Text((row['qty'] ?? 0).toString(), style: const pw.TextStyle(fontSize: 12)),
+                        pw.Text((row['rate'] ?? 0.0).toStringAsFixed(2), style: const pw.TextStyle(fontSize: 12)),
+                        pw.Text((row['total'] ?? 0.0).toStringAsFixed(2), style: const pw.TextStyle(fontSize: 12)),
 
                       ],
                     );
@@ -223,7 +233,7 @@ class _filledpageState extends State<filledpage> {
                         crossAxisAlignment: pw.CrossAxisAlignment.center,
                         children: [
                           pw.Text(
-                            'Dev Vally Software House',
+                            'Dev Valley Software House',
                             style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
                           ),
                           pw.Text(
@@ -469,125 +479,123 @@ class _filledpageState extends State<filledpage> {
                   const SizedBox(height: 20),
 
                   // Display columns for the filled details
-                  Text(languageProvider.isEnglish ? 'Filled Details:' : 'فلڈ کی تفصیلات:',
-                    style: TextStyle(color: Colors.teal.shade800, fontSize: 18),                  ),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minWidth: MediaQuery.of(context).size.width, // Ensures table takes up at least screen width
-                      ),
-                      child: Table(
-                        border: TableBorder.all(),
-                        columnWidths: const {
-                          0: FlexColumnWidth(3),
-                          1: FlexColumnWidth(3),
-                          2: FlexColumnWidth(3),
-                          3: FlexColumnWidth(3),
-                          4: FlexColumnWidth(5),
-                          5: FlexColumnWidth(3), // For Delete button column
-                        },
-                        children: [
-                          TableRow(
-                            children: [
-                              TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Total' : 'کل', textAlign: TextAlign.center))),
-                              TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'FIlled Rate' : 'فلڈ کی قیمت', textAlign: TextAlign.center))),
-                              TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Filled Qty' : 'فلڈ کی مقدار', textAlign: TextAlign.center))),
-                              // TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Filled Weight(Kg)' : 'فلڈ کا وزن(کلوگرام)', textAlign: TextAlign.center))),
-                              TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Description' : 'تفصیل', textAlign: TextAlign.center))),
-                              TableCell(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(languageProvider.isEnglish ? 'Delete' : 'حذف کریں', textAlign: TextAlign.center))),
-                            ],
-                          ),
-                          // Generate a row for each item in _filledRows
-                          for (int i = 0; i < _filledRows.length; i++)
-                            TableRow(
-                              children: [
-                                // Total
-                                TableCell(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(_filledRows[i]['total']?.toStringAsFixed(2) ?? '0.00', textAlign: TextAlign.center),
-                                  ),
-                                ),
-                                // Sarya Rate
-                                TableCell(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: TextField(
-                                      controller: _filledRows[i]['rateController'],
-                                      enabled: !_isReadOnly, // Disable in read-only mode
+                  Text(
+                    languageProvider.isEnglish ? 'Filled Details:' : 'فلڈ کی تفصیلات:',
+                    style: TextStyle(color: Colors.teal.shade800, fontSize: 18),
+                  ),
 
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),  // This allows only numeric input
-                                      ],
-                                      onChanged: (value) {
-                                        _updateRow(i, 'rate', double.tryParse(value) ?? 0.0);
-                                      },
-                                      decoration: InputDecoration(hintText: languageProvider.isEnglish ? 'Rate' : 'قیمت',
-                                        hintStyle: TextStyle(color: Colors.teal.shade600),
+                  Card(
+                    elevation: 5,
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.4, // Adjust height as neededss
+                      child: ListView.builder(
+                        itemCount: _filledRows.length,
+                        itemBuilder: (context, i) {
+                          return Card(
+                            margin: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Total Display and Delete Button
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '${languageProvider.isEnglish ? 'Total:' : 'کل:'} ${_filledRows[i]['total']?.toStringAsFixed(2) ?? '0.00'}',
+                                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal.shade800),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete, color: Colors.red),
+                                        onPressed: () {
+                                          _deleteRow(i);
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 5,),
+                                  // Filled Rate
+                                  TextField(
+                                    controller: _filledRows[i]['rateController'],
+                                    enabled: !_isReadOnly,
+                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                                    ],
+                                    onChanged: (value) {
+                                      _updateRow(i, 'rate', double.tryParse(value) ?? 0.0);
+                                    },
+                                    decoration: InputDecoration(
+                                      labelText: languageProvider.isEnglish ? 'Filled Rate' : 'فلڈ کی قیمت',
+                                      hintStyle: TextStyle(color: Colors.teal.shade600),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                                        borderSide: BorderSide(color: Colors.grey),
                                       ),
                                     ),
                                   ),
-                                ),
-                                // Sarya Qty
-                                TableCell(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: TextField(
-                                      controller: _filledRows[i]['qtyController'],
-                                      enabled: !_isReadOnly, // Disable in read-only mode
-
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,  // This allows only numeric input
-                                      ],
-                                      onChanged: (value) {
-                                        _updateRow(i, 'qty', double.tryParse(value) ?? 0.0);
-                                      },
-                                      decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Qty' : 'مقدار',
-                                        hintStyle: TextStyle(color: Colors.teal.shade600),),
+                                  SizedBox(height: 5,),
+                                  // Filled Quantity
+                                  TextField(
+                                    controller: _filledRows[i]['qtyController'],
+                                    enabled: !_isReadOnly,
+                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                    ],
+                                    onChanged: (value) {
+                                      _updateRow(i, 'qty', double.tryParse(value) ?? 0.0);
+                                    },
+                                    decoration: InputDecoration(
+                                      labelText: languageProvider.isEnglish ? 'Filled Qty' : 'فلڈ کی مقدار',
+                                      hintStyle: TextStyle(color: Colors.teal.shade600),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                                        borderSide: BorderSide(color: Colors.grey),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                // Description
-                                TableCell(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: TextField(
-                                      controller: _filledRows[i]['descriptionController'],
-                                      enabled: !_isReadOnly, // Disable in read-only mode
-
-                                      onChanged: (value) {
-                                        _updateRow(i, 'description', value);
-                                      },
-                                      decoration:  InputDecoration(hintText: languageProvider.isEnglish ? 'Description' : 'تفصیل',
-                                        hintStyle: TextStyle(color: Colors.teal.shade600),),
+                                  SizedBox(height: 5,),
+                                  // Description
+                                  TextField(
+                                    controller: _filledRows[i]['descriptionController'],
+                                    enabled: !_isReadOnly,
+                                    onChanged: (value) {
+                                      _updateRow(i, 'description', value);
+                                    },
+                                    decoration: InputDecoration(
+                                      labelText: languageProvider.isEnglish ? 'Description' : 'تفصیل',
+                                      hintStyle: TextStyle(color: Colors.teal.shade600),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                                        borderSide: BorderSide(color: Colors.grey),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                // Delete Button
-                                TableCell(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: IconButton(
-                                      icon: const Icon(Icons.delete,color: Colors.red,),
-                                      onPressed: () {
-                                        _deleteRow(i); // Delete the current row
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                  SizedBox(height: 5,),
+                                ],
+                              ),
                             ),
-                        ],
+                          );
+                        },
                       ),
                     ),
                   ),
-                  // add row button
-                  IconButton(onPressed: (){
-                    _addNewRow();
-                  }, icon: const Icon(Icons.add, color: Colors.teal)),
+
+                  // Add Row Button
+                  Center(
+                    child: ElevatedButton.icon(
+                      onPressed: _addNewRow,
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      label: Text(
+                        languageProvider.isEnglish ? 'Add Row' : 'نئی لائن شامل کریں',
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                    ),
+                  ),
+
                   // Subtotal row
                   const SizedBox(height: 20),
                   Row(
@@ -792,6 +800,21 @@ class _filledpageState extends State<filledpage> {
                                     languageProvider.isEnglish
                                         ? 'Rate cannot be zero or less'
                                         : 'ریٹ صفر یا اس سے کم نہیں ہو سکتا',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                          }
+                          // Validate rate fields
+                          for (var row in _filledRows) {
+                            if (row['qty'] == null || row['qty'] <= 0) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    languageProvider.isEnglish
+                                        ? 'Qty cannot be zero or less'
+                                        : 'تعداد صفر یا اس سے کم نہیں ہو سکتا',
                                   ),
                                 ),
                               );

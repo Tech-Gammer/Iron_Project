@@ -6,6 +6,10 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../Provider/employeeprovider.dart';
 import '../Provider/lanprovider.dart';
+import 'dart:ui' as ui;
+import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
+
 
 class AttendanceReportPage extends StatefulWidget {
   @override
@@ -81,9 +85,9 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
                   },
                   icon: const Icon(Icons.date_range),
                   label:  Text(
-    // 'Select Date Range'
-    languageProvider.isEnglish ? 'Select Date Range' : 'تاریخ کی حد منتخب کریں۔',
-    ),
+                    // 'Select Date Range'
+                    languageProvider.isEnglish ? 'Select Date Range' : 'تاریخ کی حد منتخب کریں۔',
+                    ),
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: Colors.teal.shade400,
@@ -161,14 +165,44 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
       ),
     );
   }
+  Future<pw.MemoryImage> _createTextImage(String text) async {
+    // Create a custom painter with the Urdu text
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder, Rect.fromPoints(Offset(0, 0), Offset(500, 50)));
+    final paint = Paint()..color = Colors.black;
 
+    final textStyle = TextStyle(fontSize: 15, fontFamily: 'JameelNoori',color: Colors.black,fontWeight: FontWeight.bold);  // Set custom font here if necessary
+    final textSpan = TextSpan(text: text, style: textStyle);
+    final textPainter = TextPainter(
+      text: textSpan,
+      textAlign: TextAlign.left,
+      textDirection: TextDirection.ltr,
+    );
+
+    textPainter.layout();
+    textPainter.paint(canvas, Offset(0, 0));
+
+    // Create image from the canvas
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(textPainter.width.toInt(), textPainter.height.toInt());
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+    final buffer = byteData!.buffer.asUint8List();
+
+    return pw.MemoryImage(buffer);  // Return the image as MemoryImage
+  }
 
 
   Future<void> _generateAndPrintPdf(
       List<String> filteredEmployees,
       EmployeeProvider employeeProvider,
       Map<String, Map<String, String>> employees) async {
+
     final pdf = pw.Document();
+
+    // Load the footer logo if different
+    final ByteData footerBytes = await rootBundle.load('assets/images/devlogo.png');
+    final footerBuffer = footerBytes.buffer.asUint8List();
+    final footerLogo = pw.MemoryImage(footerBuffer);
 
     final employeeAttendances = await Future.wait(
       filteredEmployees.map((employeeId) async {
@@ -182,6 +216,33 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
       }),
     );
 
+    // Collect rows for the table in an async way
+    List<pw.TableRow> tableRows = [];
+    for (var entry in employeeAttendances) {
+      final employeeId = entry.key;
+      final attendanceData = entry.value;
+      final employeeName = employees[employeeId]!['name']!;
+
+      for (var dateEntry in attendanceData.entries) {
+        final date = dateEntry.key;
+        final attendance = dateEntry.value;
+
+        // Await the image generation for employee name and description
+        final employeeNameImage = await _createTextImage(employeeName);
+        final descriptionImage = await _createTextImage(attendance['description'] ?? 'N/A');
+
+        tableRows.add(pw.TableRow(
+          children: [
+            pw.Text(date),
+            pw.Image(   employeeNameImage, dpi: 1000),  // Employee name as image
+            pw.Text(attendance['status'] ?? 'N/A'),
+            pw.Image(descriptionImage, dpi: 1000),  // Description as image
+          ],
+        ));
+      }
+    }
+
+    // Add the collected rows to the PDF table
     pdf.addPage(
       pw.Page(
         build: (pw.Context context) {
@@ -204,26 +265,29 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
                       pw.Text('Description', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                     ],
                   ),
-                  ...employeeAttendances.expand((entry) {
-                    final employeeId = entry.key;
-                    final attendanceData = entry.value;
-                    final employeeName = employees[employeeId]!['name']!;
-
-                    return attendanceData.entries.map((dateEntry) {
-                      final date = dateEntry.key;
-                      final attendance = dateEntry.value;
-
-                      return pw.TableRow(
-                        children: [
-                          pw.Text(date),
-                          // pw.Text('${attendance['date'] ?? 'N/A'} ${attendance['time'] ?? 'N/A'}'),
-                          pw.Text(employeeName),
-                          pw.Text(attendance['status'] ?? 'N/A'),
-                          pw.Text(attendance['description'] ?? 'N/A'),
-                        ],
-                      );
-                    });
-                  }).toList(),
+                  ...tableRows,
+                ],
+              ),
+              // Footer Section
+              pw.Spacer(), // Push footer to the bottom of the page
+              pw.Divider(),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Image(footerLogo, width: 30, height: 30,dpi: 2000), // Footer logo
+                  pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.center,
+                      children: [
+                        pw.Text(
+                          'Dev Valley Software House',
+                          style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                        ),
+                        pw.Text(
+                          'Contact: 0303-4889663',
+                          style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                        ),
+                      ]
+                  )
                 ],
               ),
             ],
@@ -236,5 +300,4 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
       onLayout: (PdfPageFormat format) async => pdf.save(),
     );
   }
-
 }

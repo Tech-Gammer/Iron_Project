@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart'; // For formatting dates
 import 'package:provider/provider.dart';
 import '../Provider/customerprovider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'dart:ui' as ui;
 
 import '../Provider/lanprovider.dart';
 
@@ -175,14 +177,16 @@ class _FilledPaymentTypeReportPageState extends State<FilledPaymentTypeReportPag
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Select a Customer'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: customerProvider.customers.map((customer) {
-              return ListTile(
-                title: Text(customer.name),
-                onTap: () => Navigator.pop(context, customer.id),
-              );
-            }).toList(),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: customerProvider.customers.map((customer) {
+                return ListTile(
+                  title: Text(customer.name),
+                  onTap: () => Navigator.pop(context, customer.id),
+                );
+              }).toList(),
+            ),
           ),
         );
       },
@@ -217,72 +221,45 @@ class _FilledPaymentTypeReportPageState extends State<FilledPaymentTypeReportPag
     });
   }
 
+  Future<pw.MemoryImage> _createTextImage(String text) async {
+    // Create a custom painter with the Urdu text
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder, Rect.fromPoints(Offset(0, 0), Offset(500, 50)));
+    final paint = Paint()..color = Colors.black;
 
-  // Future<void> _generateAndPrintPDF() async {
-  //   final pdf = pw.Document();
-  //   final languageProvider = Provider.of<LanguageProvider>(context,listen: false);
-  //
-  //   pdf.addPage(
-  //     pw.Page(
-  //       build: (pw.Context context) {
-  //         return pw.Column(
-  //           children: [
-  //             pw.Text(
-  //                 'Payment Type Report For Filled',
-  //                 // languageProvider.isEnglish ? 'Payment Type Report For Filled' : 'فلڈ کے لیے ادائیگی کی قسم کی رپورٹ', // Dynamic text based on language
-  //
-  //                 style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-  //             pw.SizedBox(height: 20),
-  //             pw.Text('Customer: ${_selectedCustomerName ?? 'All'}'),
-  //             // pw.Text('Phone: ${widget.customerPhone ?? 'All'}'),
-  //             pw.SizedBox(height: 20),
-  //             pw.Table.fromTextArray(
-  //               context: context,
-  //               data: [
-  //                 [
-  //                   'Customer',
-  //                   // languageProvider.isEnglish ? 'Customer' : 'کسٹمر', // Dynamic text based on language
-  //                   'Payment Type',
-  //                   // languageProvider.isEnglish ? 'Payment Type' : 'ادائیگی کی قسم', // Dynamic text based on language
-  //                   'Payment Method',
-  //                   // languageProvider.isEnglish ? 'Payment Method' : 'ادائیگی کی طریقہ', // Dynamic text based on language
-  //                   'Amount',
-  //                   // languageProvider.isEnglish ? 'Amount' : 'رقم', // Dynamic text based on language
-  //                   'Date'
-  //                   // languageProvider.isEnglish ? 'Date' : 'تاریخ', // Dynamic text based on language
-  //
-  //                 ],
-  //                 ..._reportData.map((filled) {
-  //                   return [
-  //                     filled['customerName'] ?? 'N/A',
-  //                     filled['paymentType'] ?? 'N/A',
-  //                     filled['paymentMethod'] ?? 'N/A',
-  //                     'Rs ${filled['grandTotal']}',
-  //                     DateFormat.yMMMd().format(DateTime.parse(filled['createdAt'])),
-  //                   ];
-  //                 }).toList(),
-  //               ],
-  //             ),
-  //             pw.SizedBox(height: 20),
-  //             pw.Text(
-  //                 'Total Amount: Rs ${_calculateTotalAmount().toStringAsFixed(2)}'
-  //                 // '${languageProvider.isEnglish ? 'Total Amount: Rs ${_calculateTotalAmount().toStringAsFixed(2)}' : 'کل رقم:${_calculateTotalAmount().toStringAsFixed(2)}روپے' }'
-  //
-  //             ),
-  //           ],
-  //         );
-  //       },
-  //     ),
-  //   );
-  //
-  //   // Print PDF
-  //   await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
-  // }
+    final textStyle = TextStyle(fontSize: 18, fontFamily: 'JameelNoori',color: Colors.black,fontWeight: FontWeight.bold);  // Set custom font here if necessary
+    final textSpan = TextSpan(text: text, style: textStyle);
+    final textPainter = TextPainter(
+      text: textSpan,
+      textAlign: TextAlign.left,
+      textDirection: ui.TextDirection.ltr,
+    );
+
+    textPainter.layout();
+    textPainter.paint(canvas, Offset(0, 0));
+
+    // Create image from the canvas
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(textPainter.width.toInt(), textPainter.height.toInt());
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+    final buffer = byteData!.buffer.asUint8List();
+
+    return pw.MemoryImage(buffer);  // Return the image as MemoryImage
+  }
+
   Future<void> _generateAndPrintPDF() async {
     final pdf = pw.Document();
     final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
 
+// Load the footer logo if different
+    final ByteData footerBytes = await rootBundle.load('assets/images/devlogo.png');
+    final footerBuffer = footerBytes.buffer.asUint8List();
+    final footerLogo = pw.MemoryImage(footerBuffer);
     const int rowsPerPage = 20;
+
+
+    // Generate the customer name image
+    final customerNameImage = await _createTextImage(_selectedCustomerName ?? 'All');
 
     // Split _reportData into chunks of 20 rows
     for (int i = 0; i < _reportData.length; i += rowsPerPage) {
@@ -298,7 +275,9 @@ class _FilledPaymentTypeReportPageState extends State<FilledPaymentTypeReportPag
                   style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
                 ),
                 pw.SizedBox(height: 20),
-                pw.Text('Customer: ${_selectedCustomerName ?? 'All'}'),
+                // pw.Text('Customer: ${_selectedCustomerName ?? 'All'}'),
+                pw.Image(customerNameImage),
+
                 // pw.Text('Phone: ${widget.customerPhone ?? 'All'}'),
                 pw.SizedBox(height: 20),
                 pw.Table.fromTextArray(
@@ -314,7 +293,8 @@ class _FilledPaymentTypeReportPageState extends State<FilledPaymentTypeReportPag
                     // Add data for the current chunk of 20 rows
                     ...chunk.map((filled) {
                       return [
-                        filled['customerName'] ?? 'N/A',
+                        pw.Image(customerNameImage, width: 50, height: 20), // Add the customer name image to the table
+                        // filled['customerName'] ?? 'N/A',
                         filled['paymentType'] ?? 'N/A',
                         filled['paymentMethod'] ?? 'N/A',
                         'Rs ${filled['grandTotal']}',
@@ -326,6 +306,28 @@ class _FilledPaymentTypeReportPageState extends State<FilledPaymentTypeReportPag
                 pw.SizedBox(height: 20),
                 pw.Text(
                   'Total Amount: Rs ${_calculateTotalAmount().toStringAsFixed(2)}',
+                ),
+                // Footer Section
+                pw.Spacer(), // Push footer to the bottom of the page
+                pw.Divider(),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Image(footerLogo, width: 30, height: 30), // Footer logo
+                    pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.center,
+                        children: [
+                          pw.Text(
+                            'Dev Valley Software House',
+                            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                          ),
+                          pw.Text(
+                            'Contact: 0303-4889663',
+                            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                          ),
+                        ]
+                    )
+                  ],
                 ),
               ],
             );

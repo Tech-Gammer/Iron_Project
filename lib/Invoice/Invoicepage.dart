@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:flutter_share/flutter_share.dart';
 import 'package:iron_project_new/Invoice/invoiceslist.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import '../Provider/customerprovider.dart';
 import '../Provider/invoice provider.dart';
 import '../Provider/lanprovider.dart'; // Import your customer provider
@@ -19,9 +19,8 @@ import 'dart:ui' as ui;
 
 
 
-
 class InvoicePage extends StatefulWidget {
-  final Map<String, dynamic>? invoice; // Optional invoice data for editing
+  final Map<String, dynamic>? invoice; // Optional invoice data for editingss
 
   InvoicePage({this.invoice});
 
@@ -93,8 +92,6 @@ class _InvoicePageState extends State<InvoicePage> {
     return subtotal - discountAmount;
   }
 
-
-
   Future<void> _generateAndPrintPDF(String invoiceNumber) async {
     final pdf = pw.Document();
     final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
@@ -126,6 +123,12 @@ class _InvoicePageState extends State<InvoicePage> {
       descriptionImages.add(image);
     }
 
+
+    final customerDetailsImage = await _createTextImage(
+      'Customer Name: ${selectedCustomer.name}\n'
+          'Customer Address: ${selectedCustomer.address}',
+    );
+
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a5,
@@ -148,9 +151,10 @@ class _InvoicePageState extends State<InvoicePage> {
                 ),
                 pw.Divider(),
                 // Customer Information
-                pw.Text('Customer Name: ${selectedCustomer.name}', style: const pw.TextStyle(fontSize: 14)),
+                pw.Image(customerDetailsImage, width: 300,dpi: 1000), // Adjust width as neededs
+                // pw.Text('Customer Name: ${selectedCustomer.name}', style: const pw.TextStyle(fontSize: 14)),
                 pw.Text('Customer Number: ${selectedCustomer.phone}', style: const pw.TextStyle(fontSize: 14)),
-                pw.Text('Customer Address ${selectedCustomer.address}', style: const pw.TextStyle(fontSize: 14)),
+                // pw.Text('Customer Address ${selectedCustomer.address}', style: const pw.TextStyle(fontSize: 14)),
                 pw.Text('Date: $formattedDate', style: const pw.TextStyle(fontSize: 8)),
                 pw.Text('Time: $formattedTime', style: const pw.TextStyle(fontSize: 8)),
                 pw.Text('InvoiceId: $_invoiceId', style: const pw.TextStyle(fontSize: 14)),
@@ -171,11 +175,13 @@ class _InvoicePageState extends State<InvoicePage> {
                       index,
                       [
                         // Use the pre-generated image for the description field
-                        pw.Image(descriptionImages[index]),
-                        pw.Text(row['weight'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 12)),
-                        pw.Text(row['qty'].toStringAsFixed(0), style: const pw.TextStyle(fontSize: 12)),
-                        pw.Text(row['rate'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 12)),
-                        pw.Text(row['total'].toStringAsFixed(2), style: const pw.TextStyle(fontSize: 12)),
+                        pw.Image(descriptionImages[index],dpi: 1000),
+
+                        pw.Text((row['weight'] ?? 0.0).toStringAsFixed(2), style: const pw.TextStyle(fontSize: 12)),
+                        pw.Text((row['qty'] ?? 0).toString(), style: const pw.TextStyle(fontSize: 12)),
+                        pw.Text((row['rate'] ?? 0.0).toStringAsFixed(2), style: const pw.TextStyle(fontSize: 12)),
+                        pw.Text((row['total'] ?? 0.0).toStringAsFixed(2), style: const pw.TextStyle(fontSize: 12)),
+
                       ],
                     );
                   }).values.toList(),
@@ -222,7 +228,7 @@ class _InvoicePageState extends State<InvoicePage> {
                   ],
                 ),
                 // Footer Section
-                pw.Spacer(), // Push footer to the bottom of the page
+                pw.Spacer(), // Push footer to the bottom of the pages
                 pw.Divider(),
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -232,7 +238,7 @@ class _InvoicePageState extends State<InvoicePage> {
                         crossAxisAlignment: pw.CrossAxisAlignment.center,
                         children: [
                           pw.Text(
-                            'Dev Vally Software House',
+                            'Dev Valley Software House',
                             style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
                           ),
                           pw.Text(
@@ -259,6 +265,23 @@ class _InvoicePageState extends State<InvoicePage> {
     } catch (e) {
       print("Error printing: $e");
     }
+    // try {
+    //   // Save the PDF to local storage
+    //   final output = await getTemporaryDirectory();
+    //   final file = File("${output.path}/$invoiceNumber.pdf");
+    //   await file.writeAsBytes(await pdf.save());
+    //
+    //   // Share the PDF via WhatsApp using flutter_share
+    //   await FlutterShare.shareFile(
+    //     title: 'Invoice',
+    //     text: 'Check out my invoice!',
+    //     filePath: file.path,
+    //     fileType: 'application/pdf',
+    //   );
+    //
+    // } catch (e) {
+    //   print("Error saving or sharing PDF: $e");
+    // }
   }
 
   Future<pw.MemoryImage> _createTextImage(String text) async {
@@ -286,8 +309,6 @@ class _InvoicePageState extends State<InvoicePage> {
 
     return pw.MemoryImage(buffer);  // Return the image as MemoryImage
   }
-
-
 
   Future<double> _getRemainingBalance(String customerId) async {
     try {
@@ -425,7 +446,7 @@ class _InvoicePageState extends State<InvoicePage> {
         child: Consumer<CustomerProvider>(
           builder: (context, customerProvider, child) {
             if (customerProvider.customers.isEmpty) {
-              return const Center(child: CircularProgressIndicator()); // Shows loading indicator if customers are still being fetched
+              return const Center(child: CircularProgressIndicator()); // Shows loadings sindicator if customers are still being fetched
             }
 
             return Padding(
@@ -469,9 +490,6 @@ class _InvoicePageState extends State<InvoicePage> {
 
                   // Show selected customer name
                   if (_selectedCustomerId != null)
-                    // Text('${languageProvider.isEnglish ? 'Selected Customer:' : 'منتخب شدہ کسٹمر:'} ${customerProvider.customers.firstWhere((customer) => customer.id == _selectedCustomerId).name}',
-                    //   style: TextStyle(color: Colors.teal.shade600),
-                    // ),
                     Text(
                       '${languageProvider.isEnglish ? 'Selected Customer:' : 'منتخب شدہ کسٹمر:'} $_selectedCustomerName',
                       style: TextStyle(color: Colors.teal.shade600),
@@ -482,198 +500,140 @@ class _InvoicePageState extends State<InvoicePage> {
 
                   // Display columns for the invoice details
                   Text(languageProvider.isEnglish ? 'Invoice Details:' : 'انوائس کی تفصیلات:',
-                    style: TextStyle(color: Colors.teal.shade800, fontSize: 18),                  ),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal, // Enable horizontal scrolling
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minWidth: MediaQuery.of(context).size.width, // Ensures table takes up at least screen width
-                      ),
-                      child: Table(
-                        border: TableBorder.all(),
-                        columnWidths: const {
-                          0: FlexColumnWidth(3),
-                          1: FlexColumnWidth(3),
-                          2: FlexColumnWidth(3),
-                          3: FlexColumnWidth(3),
-                          4: FlexColumnWidth(5),
-                          5: FlexColumnWidth(3), // For Delete button column
-                        },
-                        children: [
-                          TableRow(
-                            children: [
-                              TableCell(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    languageProvider.isEnglish ? 'Total' : 'کل',
-                                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.teal.shade800, fontSize: 18),
+                  ),
+                  // Replace the Table widget with a ListView.builder
+                  Card(
+                    elevation: 5,
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.4, // Adjust height as neededs
+                      child: ListView.builder(
+                        itemCount: _invoiceRows.length,
+                        itemBuilder: (context, i) {
+                          return Card(
+                            margin: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Total Displays
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '${languageProvider.isEnglish ? 'Total:' : 'کل:'} ${_invoiceRows[i]['total']?.toStringAsFixed(2) ?? '0.00'}',
+                                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal.shade800),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete, color: Colors.red),
+                                        onPressed: () {
+                                          _deleteRow(i);
+                                        },
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              ),
-                              TableCell(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    languageProvider.isEnglish ? 'Sarya Rate' : 'سرئے کی قیمت',
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                              TableCell(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    languageProvider.isEnglish ? 'Sarya Qty' : 'سرئے کی مقدار',
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                              TableCell(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    languageProvider.isEnglish ? 'Sarya Weight(Kg)' : 'سرئے کا وزن(کلوگرام)',
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                              TableCell(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    languageProvider.isEnglish ? 'Description' : 'تفصیل',
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                              TableCell(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    languageProvider.isEnglish ? 'Delete' : 'حذف کریں',
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          // Generate a row for each item in _invoiceRows
-                          for (int i = 0; i < _invoiceRows.length; i++)
-                            TableRow(
-                              children: [
-                                // Total
-                                TableCell(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      _invoiceRows[i]['total']?.toStringAsFixed(2) ?? '0.00',
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-                                // Sarya Rate
-                                TableCell(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: TextField(
-                                      controller: _invoiceRows[i]['rateController'],
-                                      enabled: !_isReadOnly,
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                                      ],
-                                      onChanged: (value) {
-                                        _updateRow(i, 'rate', double.tryParse(value) ?? 0.0);
-                                      },
-                                      decoration: InputDecoration(
-                                        hintText: languageProvider.isEnglish ? 'Rate' : 'قیمت',
-                                        hintStyle: TextStyle(color: Colors.teal.shade600),
+                                  SizedBox(height: 5,),
+                                  // Sarya Rates
+                                  TextField(
+                                    controller: _invoiceRows[i]['rateController'],
+                                    enabled: !_isReadOnly,
+                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                                    ],
+                                    onChanged: (value) {
+                                      _updateRow(i, 'rate', double.tryParse(value) ?? 0.0);
+                                    },
+                                    decoration: InputDecoration(
+                                      labelText: languageProvider.isEnglish ? 'Sarya Rate' : 'سرئے کی قیمت',
+                                      hintStyle: TextStyle(color: Colors.teal.shade600),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                                        borderSide: BorderSide(color: Colors.grey),
                                       ),
                                     ),
                                   ),
-                                ),
-                                // Sarya Qty
-                                TableCell(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: TextField(
-                                      controller: _invoiceRows[i]['qtyController'],
-                                      enabled: !_isReadOnly,
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                      ],
-                                      onChanged: (value) {
-                                        _updateRow(i, 'qty', double.tryParse(value) ?? 0.0);
-                                      },
-                                      decoration: InputDecoration(
-                                        hintText: languageProvider.isEnglish ? 'Qty' : 'مقدار',
-                                        hintStyle: TextStyle(color: Colors.teal.shade600),
+                                  SizedBox(height: 5,),
+                                  // Sarya Qty
+                                  TextField(
+                                    controller: _invoiceRows[i]['qtyController'],
+                                    enabled: !_isReadOnly,
+                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                    ],
+                                    onChanged: (value) {
+                                      _updateRow(i, 'qty', double.tryParse(value) ?? 0.0);
+                                    },
+                                    decoration: InputDecoration(
+                                      labelText: languageProvider.isEnglish ? 'Sarya Qty' : 'سرئے کی مقدار',
+                                      hintStyle: TextStyle(color: Colors.teal.shade600),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                                        borderSide: BorderSide(color: Colors.grey),
                                       ),
                                     ),
                                   ),
-                                ),
-                                // Sarya Weight
-                                TableCell(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: TextField(
-                                      controller: _invoiceRows[i]['weightController'],
-                                      enabled: !_isReadOnly,
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,4}')),
-                                      ],
-                                      onChanged: (value) {
-                                        _updateRow(i, 'weight', double.tryParse(value) ?? 0.0);
-                                      },
-                                      decoration: InputDecoration(
-                                        hintText: languageProvider.isEnglish ? 'Weight' : 'وزن',
-                                        hintStyle: TextStyle(color: Colors.teal.shade600),
+                                  SizedBox(height: 5,),
+                                  // Sarya Weight
+                                  TextField(
+                                    controller: _invoiceRows[i]['weightController'],
+                                    enabled: !_isReadOnly,
+                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,4}')),
+                                    ],
+                                    onChanged: (value) {
+                                      _updateRow(i, 'weight', double.tryParse(value) ?? 0.0);
+                                    },
+                                    decoration: InputDecoration(
+                                      labelText: languageProvider.isEnglish ? 'Sarya Weight (Kg)' : 'سرئے کا وزن (کلوگرام)',
+                                      hintStyle: TextStyle(color: Colors.teal.shade600),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                                        borderSide: BorderSide(color: Colors.grey),
                                       ),
                                     ),
                                   ),
-                                ),
-                                // Description
-                                TableCell(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: TextField(
-                                      controller: _invoiceRows[i]['descriptionController'],
-                                      enabled: !_isReadOnly,
-                                      onChanged: (value) {
-                                        _updateRow(i, 'description', value);
-                                      },
-                                      decoration: InputDecoration(
-                                        hintText: languageProvider.isEnglish ? 'Description' : 'تفصیل',
-                                        hintStyle: TextStyle(color: Colors.teal.shade600),
+                                  SizedBox(height: 5,),
+                                  // Descriptions
+                                  TextField(
+                                    controller: _invoiceRows[i]['descriptionController'],
+                                    enabled: !_isReadOnly,
+                                    onChanged: (value) {
+                                      _updateRow(i, 'description', value);
+                                    },
+                                    decoration: InputDecoration(
+                                      labelText: languageProvider.isEnglish ? 'Description' : 'تفصیل',
+                                      hintStyle: TextStyle(color: Colors.teal.shade600),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                                        borderSide: BorderSide(color: Colors.grey),
                                       ),
                                     ),
                                   ),
-                                ),
-                                // Delete Button
-                                TableCell(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: IconButton(
-                                      icon: const Icon(Icons.delete, color: Colors.red),
-                                      onPressed: () {
-                                        _deleteRow(i);
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                  SizedBox(height: 5,),
+                                ],
+                              ),
                             ),
-                        ],
+                          );
+                        },
                       ),
                     ),
                   ),
 
-                  IconButton(onPressed: (){
-                    _addNewRow();
-                  }, icon: const Icon(Icons.add, color: Colors.teal)),
+                  Center(
+                    child: ElevatedButton.icon(
+                      onPressed: _addNewRow,
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      label: Text(
+                        languageProvider.isEnglish ? 'Add Row' : 'نئی لائن شامل کریں',
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                    ),
+                  ),
                   // Subtotal row
                   const SizedBox(height: 20),
                   Row(
@@ -685,14 +645,15 @@ class _InvoicePageState extends State<InvoicePage> {
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.teal.shade800, // Subtotal text color
-                        ),                      ),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
                   Text(languageProvider.isEnglish ? 'Discount (Amount):' : 'رعایت (رقم):', style: const TextStyle(fontSize: 18)),
                   TextField(
                     controller: _discountController,
-                    enabled: !_isReadOnly, // Disable in read-only mode
+                    enabled: !_isReadOnly, // Disable in read-only modess
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
                       setState(() {
@@ -998,200 +959,6 @@ class _InvoicePageState extends State<InvoicePage> {
                         backgroundColor: Colors.teal.shade400, // Button background color
                       ),
                     )
-                  // ElevatedButton  (
-                  //   onPressed: () async {
-                  //
-                  //
-                  //     // Validate customer selection
-                  //     if (_selectedCustomerId == null || _selectedCustomerName == null) {
-                  //       ScaffoldMessenger.of(context).showSnackBar(
-                  //         SnackBar(
-                  //           content: Text(
-                  //             languageProvider.isEnglish
-                  //                 ? 'Please select a customer'
-                  //                 : 'براہ کرم کسٹمر منتخب کریں',
-                  //           ),
-                  //         ),
-                  //       );
-                  //       return;
-                  //     }
-                  //
-                  //     // Validate payment type
-                  //     if (_paymentType == null) {
-                  //       ScaffoldMessenger.of(context).showSnackBar(
-                  //         SnackBar(
-                  //           content: Text(
-                  //             languageProvider.isEnglish
-                  //                 ? 'Please select a payment type'
-                  //                 : 'براہ کرم ادائیگی کی قسم منتخب کریں',
-                  //           ),
-                  //         ),
-                  //       );
-                  //       return;
-                  //     }
-                  //
-                  //     // Validate instant payment method if "Instant Payment" is selected
-                  //     if (_paymentType == 'instant' && _instantPaymentMethod == null) {
-                  //       ScaffoldMessenger.of(context).showSnackBar(
-                  //         SnackBar(
-                  //           content: Text(
-                  //             languageProvider.isEnglish
-                  //                 ? 'Please select an instant payment method'
-                  //                 : 'براہ کرم فوری ادائیگی کا طریقہ منتخب کریں',
-                  //           ),
-                  //         ),
-                  //       );
-                  //       return;
-                  //     }
-                  //
-                  //     // Validate weight and rate fields
-                  //     for (var row in _invoiceRows) {
-                  //       if (row['weight'] == null || row['weight'] <= 0) {
-                  //         ScaffoldMessenger.of(context).showSnackBar(
-                  //           SnackBar(
-                  //             content: Text(
-                  //               languageProvider.isEnglish
-                  //                   ? 'Weight cannot be zero or less'
-                  //                   : 'وزن صفر یا اس سے کم نہیں ہو سکتا',
-                  //             ),
-                  //           ),
-                  //         );
-                  //         return;
-                  //       }
-                  //
-                  //       if (row['rate'] == null || row['rate'] <= 0) {
-                  //         ScaffoldMessenger.of(context).showSnackBar(
-                  //           SnackBar(
-                  //             content: Text(
-                  //               languageProvider.isEnglish
-                  //                   ? 'Rate cannot be zero or less'
-                  //                   : 'ریٹ صفر یا اس سے کم نہیں ہو سکتا',
-                  //             ),
-                  //           ),
-                  //         );
-                  //         return;
-                  //       }
-                  //     }
-                  //
-                  //     // Validate discount amount
-                  //     final subtotal = _calculateSubtotal();
-                  //     if (_discount >= subtotal) {
-                  //       ScaffoldMessenger.of(context).showSnackBar(
-                  //         SnackBar(
-                  //           content: Text(
-                  //             languageProvider.isEnglish
-                  //                 ? 'Discount amount cannot be greater than or equal to the subtotal'
-                  //                 : 'ڈسکاؤنٹ کی رقم سب ٹوٹل سے زیادہ یا اس کے برابر نہیں ہو سکتی',
-                  //           ),
-                  //         ),
-                  //       );
-                  //       return; // Do not save or print if discount is invalid
-                  //     }
-                  //     final invoiceNumber = _invoiceId ?? generateInvoiceNumber();
-                  //     final grandTotal = _calculateGrandTotal();
-                  //     // Try saving the invoice
-                  //     try {
-                  //       if (_invoiceId != null) {
-                  //         // Update existing invoice
-                  //         await Provider.of<InvoiceProvider>(context, listen: false).updateInvoice(
-                  //           invoiceId: _invoiceId!, // Pass the correct ID for updating
-                  //           invoiceNumber: invoiceNumber,
-                  //           customerId: _selectedCustomerId!,
-                  //           customerName: _selectedCustomerName!,
-                  //           subtotal: subtotal,
-                  //           discount: _discount,
-                  //           grandTotal: grandTotal,
-                  //           paymentType: _paymentType,
-                  //           paymentMethod: _instantPaymentMethod,
-                  //           items: _invoiceRows,
-                  //         );
-                  //         ScaffoldMessenger.of(context).showSnackBar(
-                  //           SnackBar(
-                  //             content: Text(
-                  //               languageProvider.isEnglish
-                  //                   ? 'Invoice updated successfully'
-                  //                   : 'انوائس کامیابی سے تبدیل ہوگئی',
-                  //             ),
-                  //           ),
-                  //         );
-                  //       }
-                  //       else {
-                  //         // Save new invoice
-                  //         await Provider.of<InvoiceProvider>(context, listen: false).saveInvoice(
-                  //           invoiceId: invoiceNumber, // Pass the invoice number (or generated ID)
-                  //           invoiceNumber: invoiceNumber,
-                  //           customerId: _selectedCustomerId!,
-                  //           customerName: _selectedCustomerName!,
-                  //           subtotal: subtotal,
-                  //           discount: _discount,
-                  //           grandTotal: grandTotal,
-                  //           paymentType: _paymentType,
-                  //           paymentMethod: _instantPaymentMethod,
-                  //           items: _invoiceRows,
-                  //         );
-                  //
-                  //         ScaffoldMessenger.of(context).showSnackBar(
-                  //           SnackBar(
-                  //             content: Text(
-                  //               languageProvider.isEnglish
-                  //                   ? 'Invoice saved successfully'
-                  //                   : 'انوائس کامیابی سے محفوظ ہوگئی',
-                  //             ),
-                  //           ),
-                  //         );
-                  //
-                  //       }
-                  //       // Generate and print the PDF
-                  //       // try {
-                  //       //   // Generate and print the PDF
-                  //       //   await _generateAndPrintPDF(invoiceNumber);
-                  //       // } catch (e) {
-                  //       //   print('Error during PDF generation: $e'); // Log the error for debugging
-                  //       //   ScaffoldMessenger.of(context).showSnackBar(
-                  //       //     SnackBar(
-                  //       //       content: Text(
-                  //       //         languageProvider.isEnglish
-                  //       //             ? 'Failed to generate PDF'
-                  //       //             : 'پی ڈی ایف بنانے میں ناکام',
-                  //       //       ),
-                  //       //     ),
-                  //       //   );
-                  //       //   return; // Exit early if PDF generation fails
-                  //       // }
-                  //
-                  //       // Navigate back
-                  //       // Navigator.pop(context);
-                  //       Navigator.pushReplacement(
-                  //         context,
-                  //         MaterialPageRoute(builder: (context) => InvoiceListPage()),
-                  //       );
-                  //     } catch (e) {
-                  //       // Show error message
-                  //       print(e);
-                  //       ScaffoldMessenger.of(context).showSnackBar(
-                  //         SnackBar(
-                  //           content: Text(
-                  //             languageProvider.isEnglish
-                  //                 ? 'Failed to save invoice'
-                  //                 : 'انوائس محفوظ کرنے میں ناکام',
-                  //           ),
-                  //         ),
-                  //       );
-                  //     }
-                  //   },
-                  //   // child: Text(
-                  //   //   languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں',
-                  //   // ),
-                  //   child: Text(
-                  //     widget.invoice == null
-                  //         ? (languageProvider.isEnglish ? 'Save Invoice' : 'انوائس محفوظ کریں')
-                  //         : (languageProvider.isEnglish ? 'Update Invoice' : 'انوائس کو اپ ڈیٹ کریں'),
-                  //     style: TextStyle(color: Colors.white),
-                  //   ),
-                  //   style: ElevatedButton.styleFrom(
-                  //     backgroundColor: Colors.teal.shade400, // Button background color
-                  //   ),
-                  // )
                 ],
               ),
             );

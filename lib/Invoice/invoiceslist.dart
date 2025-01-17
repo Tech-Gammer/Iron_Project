@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../Provider/lanprovider.dart';
 import 'Invoicepage.dart';
@@ -7,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'dart:ui' as ui;
 
 class InvoiceListPage extends StatefulWidget {
   @override
@@ -235,7 +237,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
 
                         children: [
                           Text(
-                              '${languageProvider.isEnglish ? 'Rs ${invoice['grandTotal']}' : '${invoice['grandTotal']} روپے'}',
+                              '${languageProvider.isEnglish ? 'Rs ${invoice['grandTotal'].toStringAsFixed(2)}' : '${invoice['grandTotal'].toStringAsFixed(2)} روپے'}',
                               style: TextStyle(fontSize: 16)),
                           Text(
                             // 'Remaining: Rs ${remainingAmount.toStringAsFixed(2)}',
@@ -302,82 +304,70 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
 
 
 
-  // Future<void> _printInvoices() async {
-  //   final pdf = pw.Document();
-  //
-  //   // Header for the table
-  //   final headers = ['Invoice Number', 'Customer Name', 'Date', 'Grand Total', 'Remaining Amount'];
-  //
-  //   // Prepare data for the table
-  //   final data = _filteredInvoices.map((invoice) {
-  //     return [
-  //       invoice['invoiceNumber'] ?? 'N/A',
-  //       invoice['customerName'] ?? 'N/A',
-  //       invoice['createdAt'] ?? 'N/A',
-  //       'Rs ${invoice['grandTotal']}',
-  //       'Rs ${(invoice['grandTotal'] - invoice['debitAmount']).toStringAsFixed(2)}',
-  //     ];
-  //   }).toList();
-  //
-  //   // Add page with a table
-  //   pdf.addPage(
-  //     pw.Page(
-  //       build: (pw.Context context) {
-  //         return pw.Column(
-  //           crossAxisAlignment: pw.CrossAxisAlignment.start,
-  //           children: [
-  //             pw.Text('Invoice List',
-  //                 style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-  //             pw.SizedBox(height: 10),
-  //             pw.Table.fromTextArray(
-  //               headers: headers,
-  //               data: data,
-  //               border: pw.TableBorder.all(),
-  //               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-  //               cellAlignment: pw.Alignment.centerLeft,
-  //               cellPadding: pw.EdgeInsets.all(8),
-  //             ),
-  //           ],
-  //         );
-  //       },
-  //     ),
-  //   );
-  //
-  //   // Send the PDF document to the printer
-  //   await Printing.layoutPdf(
-  //     onLayout: (PdfPageFormat format) async => pdf.save(),
-  //   );
-  // }
+
+  Future<pw.MemoryImage> _createTextImage(String text) async {
+    // Create a custom painter with the Urdu text
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder, Rect.fromPoints(Offset(0, 0), Offset(500, 50)));
+    final paint = Paint()..color = Colors.black;
+
+    final textStyle = TextStyle(fontSize: 13, fontFamily: 'JameelNoori',color: Colors.black,fontWeight: FontWeight.bold);  // Set custom font here if necessary
+    final textSpan = TextSpan(text: text, style: textStyle);
+    final textPainter = TextPainter(
+      text: textSpan,
+      textAlign: TextAlign.left,
+      textDirection: ui.TextDirection.ltr,
+    );
+
+    textPainter.layout();
+    textPainter.paint(canvas, Offset(0, 0));
+
+    // Create image from the canvas
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(textPainter.width.toInt(), textPainter.height.toInt());
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+    final buffer = byteData!.buffer.asUint8List();
+
+    return pw.MemoryImage(buffer);  // Return the image as MemoryImage
+  }
 
 
   Future<void> _printInvoices() async {
     final pdf = pw.Document();
-
     // Header for the table
     final headers = ['Invoice Number', 'Customer Name', 'Date', 'Grand Total', 'Remaining Amount'];
 
     // Prepare data for the table
-    final data = _filteredInvoices.map((invoice) {
-      return [
+    final List<List<dynamic>> tableData = [];
+
+    // Pre-process customer name images before building the table
+    for (var invoice in _filteredInvoices) {
+      final customerName = invoice['customerName'] ?? 'N/A';
+      final customerNameImage = await _createTextImage(customerName);
+
+      tableData.add([
         invoice['invoiceNumber'] ?? 'N/A',
-        invoice['customerName'] ?? 'N/A',
+        pw.Image(customerNameImage),
         invoice['createdAt'] ?? 'N/A',
         'Rs ${invoice['grandTotal']}',
         'Rs ${(invoice['grandTotal'] - invoice['debitAmount']).toStringAsFixed(2)}',
-      ];
-    }).toList();
+      ]);
+    }
 
-    // Split the data into chunks that fit on a single pages
+    // Split the data into chunks that fit on a single page
     const int rowsPerPage = 20; // Adjust the number of rows per page as needed
-    final pageCount = (data.length / rowsPerPage).ceil();
+    final pageCount = (tableData.length / rowsPerPage).ceil();
 
     for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
       // Get a subset of the data for the current page
       final startIndex = pageIndex * rowsPerPage;
-      final endIndex = (startIndex + rowsPerPage) < data.length ? startIndex + rowsPerPage : data.length;
-      final pageData = data.sublist(startIndex, endIndex);
-
-      // Add page with a tables
+      final endIndex = (startIndex + rowsPerPage) < tableData.length ? startIndex + rowsPerPage : tableData.length;
+      final pageData = tableData.sublist(startIndex, endIndex);
+      // Load the footer logo if different
+      final ByteData footerBytes = await rootBundle.load('assets/images/devlogo.png');
+      final footerBuffer = footerBytes.buffer.asUint8List();
+      final footerLogo = pw.MemoryImage(footerBuffer);
+      // Add page with a table
       pdf.addPage(
         pw.Page(
           build: (pw.Context context) {
@@ -397,6 +387,28 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                   cellAlignment: pw.Alignment.centerLeft,
                   cellPadding: pw.EdgeInsets.all(8),
                 ),
+                // Footer Section
+                pw.Spacer(), // Push footer to the bottom of the page
+                pw.Divider(),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Image(footerLogo, width: 30, height: 30), // Footer logo
+                    pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.center,
+                        children: [
+                          pw.Text(
+                            'Dev Valley Software House',
+                            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                          ),
+                          pw.Text(
+                            'Contact: 0303-4889663',
+                            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                          ),
+                        ]
+                    )
+                  ],
+                ),
               ],
             );
           },
@@ -409,6 +421,9 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
       onLayout: (PdfPageFormat format) async => pdf.save(),
     );
   }
+
+
+
 
 
   Future<void> _showInvoicePaymentDialog(

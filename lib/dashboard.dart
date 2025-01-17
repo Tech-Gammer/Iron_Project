@@ -72,7 +72,7 @@ class Dashboard extends StatelessWidget {
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.add),
-            label: languageProvider.isEnglish ? 'Add Entry' : 'نیا اندراج',
+            label: languageProvider.isEnglish ? 'Transactions' : 'لین دین',
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.settings),
@@ -112,20 +112,22 @@ class Dashboard extends StatelessWidget {
         children: [
           DrawerHeader(
             decoration: const BoxDecoration(color: Colors.blue),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundImage: AssetImage('assets/images/logo.png'), // Replace with your image path
-                  backgroundColor: Colors.white, // Fallback color
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  languageProvider.isEnglish ? 'Welcome, User!' : 'خوش آمدید، صارف!',
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
-                ),
-              ],
+            child: Center(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 45,
+                    backgroundImage: AssetImage('assets/images/logo.png'), // Replasce wisth yours image pathسسسssس
+                    backgroundColor: Colors.white, // Fallback color
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    languageProvider.isEnglish ? 'Zulfiqar Iron Merchant' : 'ذوالفقار آئرن مرچنت ',
+                    style: const TextStyle(color: Colors.white, fontSize: 20),
+                  ),
+                ],
+              ),
             ),
           ),
           ListTile(

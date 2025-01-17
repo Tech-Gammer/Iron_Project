@@ -7,6 +7,14 @@ import 'addexpensepage.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'dart:ui' as ui; // Keep this import only once
+import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart'; // This can be removed if not necessary
+
+
+
+
+
 class ViewExpensesPage extends StatefulWidget {
   @override
   _ViewExpensesPageState createState() => _ViewExpensesPageState();
@@ -45,7 +53,6 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
     }
   }
 
-
   void _fetchExpenses() {
     String formattedDate = DateFormat('dd:MM:yyyy').format(_selectedDate);
     dbRef.child(formattedDate).child("expenses").onValue.listen((event) {
@@ -72,7 +79,6 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
     });
   }
 
-
   void _pickDate() async {
     final pickedDate = await showDatePicker(
       context: context,
@@ -89,12 +95,55 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
     }
   }
 
+
+
+  Future<pw.MemoryImage> _createTextImage(String text) async {
+    // Create a custom painter with the Urdu text
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder, Rect.fromPoints(Offset(0, 0), Offset(500, 50)));
+    final paint = Paint()..color = Colors.black;
+
+    final textStyle = TextStyle(fontSize: 16, fontFamily: 'JameelNoori', color: Colors.black, fontWeight: FontWeight.bold);
+    final textSpan = TextSpan(text: text, style: textStyle);
+
+    // Explicitly pass a nullable TextDirection
+    final textPainter = TextPainter(
+      text: textSpan,
+      textAlign: TextAlign.left,
+      // textDirection: TextDirection.ltr, // Correct enum value usage
+      textDirection: ui.TextDirection.ltr
+    );
+
+
+    textPainter.layout();
+    textPainter.paint(canvas, Offset(0, 0));
+
+    // Create image from the canvas
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(textPainter.width.toInt(), textPainter.height.toInt());
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+    final buffer = byteData!.buffer.asUint8List();
+
+    return pw.MemoryImage(buffer);  // Return the image as MemoryImage
+  }
   void _generatePdf() async {
     final pdf = pw.Document();
+
+    // Load the footer logo if different
+    final ByteData footerBytes = await rootBundle.load('assets/images/devlogo.png');
+    final footerBuffer = footerBytes.buffer.asUint8List();
+    final footerLogo = pw.MemoryImage(footerBuffer);
+
 
     // Split expenses into chunks of 20 items per page
     const int itemsPerPage = 20;
     int pageCount = (expenses.length / itemsPerPage).ceil();
+    // Pre-generate images for all descriptions
+    List<pw.MemoryImage> descriptionImages = [];
+    for (var expense in expenses) {
+      final image = await _createTextImage(expense['description']);
+      descriptionImages.add(image);
+    }
 
     for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
       // Create the PDF layout for each page
@@ -150,12 +199,13 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
                     return pw.Row(
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
-                        pw.Text(
-                          expense["description"],
-                          style: pw.TextStyle(
-                            fontSize: 20,
-                          ),
-                        ),
+                        // pw.Text(
+                        //   expense["description"],
+                        //   style: pw.TextStyle(
+                        //     fontSize: 20,
+                        //   ),
+                        // ),
+                        pw.Image(descriptionImages[start + index], dpi: 1000),
                         pw.Text(
                           "${expense["amount"].toStringAsFixed(2)} rs",
                           style: pw.TextStyle(
@@ -190,6 +240,28 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
                     fontWeight: pw.FontWeight.bold,
                   ),
                 ),
+                // Footer Section
+                pw.Spacer(), // Push footer to the bottom of the page
+                pw.Divider(),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Image(footerLogo, width: 30, height: 30,dpi: 2000), // Footer logo
+                    pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.center,
+                        children: [
+                          pw.Text(
+                            'Dev Valley Software House',
+                            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                          ),
+                          pw.Text(
+                            'Contact: 0303-4889663',
+                            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                          ),
+                        ]
+                    )
+                  ],
+                ),
               ],
             ),
           );
@@ -202,7 +274,6 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
       onLayout: (PdfPageFormat format) async => pdf.save(),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -326,10 +397,66 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
                           fontSize: 20,
                         ),
                       ),
+                      onLongPress: () async {
+                        final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+
+                        // Show confirmation dialog before deleting
+                        final confirmDelete = await showDialog<bool>(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text(languageProvider.isEnglish ? 'Delete Expense?' : 'اخراجات کو حذف کریں؟'),
+                              content: Text(languageProvider.isEnglish
+                                  ? 'Are you sure you want to delete this expense?'
+                                  : 'کیا آپ واقعی یہ اخراجات حذف کرنا چاہتے ہیں؟'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(false),
+                                  child: Text(languageProvider.isEnglish ? 'Cancel' : 'منسوخ کریں'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(true),
+                                  child: Text(languageProvider.isEnglish ? 'Delete' : 'حذف کریں'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                        if (confirmDelete == true) {
+                          // Proceed with deleting the expense from Firebase
+                          try {
+                            final expenseId = expense["id"];
+                            String formattedDate = DateFormat('dd:MM:yyyy').format(_selectedDate);
+                            await dbRef.child(formattedDate).child("expenses").child(expenseId).remove();
+
+                            // After deletion, fetch the updated expenses list
+                            _fetchExpenses();
+
+                            // Show confirmation message
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(languageProvider.isEnglish
+                                    ? 'Expense deleted successfully'
+                                    : 'اخراجات کامیابی سے حذف ہو گئے'),
+                              ),
+                            );
+                          } catch (error) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(languageProvider.isEnglish
+                                    ? 'Error deleting expense: $error'
+                                    : 'اخراجات کو حذف کرنے میں خرابی: $error'),
+                              ),
+                            );
+                          }
+                        }
+                      },
                     ),
                   );
                 },
-              ),
+              )
+              ,
             ),
             // Show total expense and remaining balance
             Padding(
@@ -348,7 +475,7 @@ class _ViewExpensesPageState extends State<ViewExpensesPage> {
                   ),
                   SizedBox(height: 10),
                   Text(
-                    // "Remaining Balance: ${_remainingBalance.toStringAsFixed(2)} rs",
+                    // "Remaining Balance: ${_remainingBalance.toStringAsFixed(2)} rs",s
                     // '${languageProvider.isEnglish ? 'Remaining Balance:' : 'بقایا رقم'} ${_remainingBalance.toStringAsFixed(2)} rs',
                     '${languageProvider.isEnglish ? 'Remaining Balance: ${_remainingBalance.toStringAsFixed(2)} rs ': 'بقایا رقم${_remainingBalance.toStringAsFixed(2)}ّروپے'}',
 

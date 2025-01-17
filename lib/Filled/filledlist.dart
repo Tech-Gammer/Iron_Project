@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../Provider/filled provider.dart';
@@ -7,6 +8,7 @@ import 'filledpage.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'dart:ui' as ui;
 
 class filledListpage extends StatefulWidget {
   @override
@@ -225,7 +227,7 @@ class _filledListpageState extends State<filledListpage> {
                         crossAxisAlignment: CrossAxisAlignment.end,                        children: [
                           Text(
                               // 'Rs ${filled['grandTotal']}',
-                              '${languageProvider.isEnglish ? 'Rs' : 'روپے'} ${filled['grandTotal']}',
+                              '${languageProvider.isEnglish ? 'Rs' : 'روپے'} ${filled['grandTotal'].toStringAsFixed(2)}',
 
                               style: TextStyle(fontSize: 16)
                           ),
@@ -294,53 +296,32 @@ class _filledListpageState extends State<filledListpage> {
     );
   }
 
+  Future<pw.MemoryImage> _createTextImage(String text) async {
+    // Create a custom painter with the Urdu text
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder, Rect.fromPoints(Offset(0, 0), Offset(500, 50)));
+    final paint = Paint()..color = Colors.black;
 
-  // Future<void> _printFilled() async {
-  //   final pdf = pw.Document();
-  //
-  //   // Header for the table
-  //   final headers = ['Filled Number', 'Customer Name', 'Date', 'Grand Total', 'Remaining Amount'];
-  //
-  //   // Prepare data for the table
-  //   final data = _filteredFilled.map((filled) {
-  //     return [
-  //       filled['filledNumber'] ?? 'N/A',
-  //       filled['customerName'] ?? 'N/A',
-  //       filled['createdAt'] ?? 'N/A',
-  //       'Rs ${filled['grandTotal']}',
-  //       'Rs ${(filled['grandTotal'] - filled['debitAmount']).toStringAsFixed(2)}',
-  //     ];
-  //   }).toList();
-  //
-  //   // Add page with a table
-  //   pdf.addPage(
-  //     pw.Page(
-  //       build: (pw.Context context) {
-  //         return pw.Column(
-  //           crossAxisAlignment: pw.CrossAxisAlignment.start,
-  //           children: [
-  //             pw.Text('Filled List',
-  //                 style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-  //             pw.SizedBox(height: 10),
-  //             pw.Table.fromTextArray(
-  //               headers: headers,
-  //               data: data,
-  //               border: pw.TableBorder.all(),
-  //               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-  //               cellAlignment: pw.Alignment.centerLeft,
-  //               cellPadding: pw.EdgeInsets.all(8),
-  //             ),
-  //           ],
-  //         );
-  //       },
-  //     ),
-  //   );
-  //
-  //   // Send the PDF document to the printer
-  //   await Printing.layoutPdf(
-  //     onLayout: (PdfPageFormat format) async => pdf.save(),
-  //   );
-  // }
+    final textStyle = TextStyle(fontSize: 13, fontFamily: 'JameelNoori',color: Colors.black,fontWeight: FontWeight.bold);  // Set custom font here if necessary
+    final textSpan = TextSpan(text: text, style: textStyle);
+    final textPainter = TextPainter(
+      text: textSpan,
+      textAlign: TextAlign.left,
+      textDirection: ui.TextDirection.ltr,
+    );
+
+    textPainter.layout();
+    textPainter.paint(canvas, Offset(0, 0));
+
+    // Create image from the canvas
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(textPainter.width.toInt(), textPainter.height.toInt());
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+    final buffer = byteData!.buffer.asUint8List();
+
+    return pw.MemoryImage(buffer);  // Return the image as MemoryImage
+  }
+
 
   Future<void> _printFilled() async {
     final pdf = pw.Document();
@@ -348,24 +329,36 @@ class _filledListpageState extends State<filledListpage> {
     // Header for the table
     final headers = ['Filled Number', 'Customer Name', 'Date', 'Grand Total', 'Remaining Amount'];
 
-    // Prepare data for the table
-    final data = _filteredFilled.map((filled) {
-      return [
+    // Prepare data for the table with customer name images
+    final List<List<dynamic>> data = [];
+
+    for (var filled in _filteredFilled) {
+      final customerName = filled['customerName'] ?? 'N/A';
+      final customerNameImage = await _createTextImage(customerName);  // Generate image for customer name
+
+      data.add([
         filled['filledNumber'] ?? 'N/A',
-        filled['customerName'] ?? 'N/A',
+        pw.Image(customerNameImage),  // Add customer name image to the table
         filled['createdAt'] ?? 'N/A',
         'Rs ${filled['grandTotal']}',
         'Rs ${(filled['grandTotal'] - filled['debitAmount']).toStringAsFixed(2)}',
-      ];
-    }).toList();
+      ]);
+    }
 
     // Define the number of rows per page based on the page size
     const int rowsPerPage = 20;  // Adjust this value as necessary
 
-    // Split data into chunks
-    for (int i = 0; i < data.length; i += rowsPerPage) {
-      final pageData = data.sublist(i, (i + rowsPerPage) > data.length ? data.length : (i + rowsPerPage));
+    // Split data into chunks for pagination
+    final pageCount = (data.length / rowsPerPage).ceil();
 
+    for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+      final startIndex = pageIndex * rowsPerPage;
+      final endIndex = (startIndex + rowsPerPage) < data.length ? startIndex + rowsPerPage : data.length;
+      final pageData = data.sublist(startIndex, endIndex);
+      // Load the footer logo if different
+      final ByteData footerBytes = await rootBundle.load('assets/images/devlogo.png');
+      final footerBuffer = footerBytes.buffer.asUint8List();
+      final footerLogo = pw.MemoryImage(footerBuffer);
       // Add page with a table
       pdf.addPage(
         pw.Page(
@@ -373,8 +366,10 @@ class _filledListpageState extends State<filledListpage> {
             return pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text('Filled List',
-                    style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                pw.Text(
+                  'Filled List',
+                  style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+                ),
                 pw.SizedBox(height: 10),
                 pw.Table.fromTextArray(
                   headers: headers,
@@ -383,6 +378,28 @@ class _filledListpageState extends State<filledListpage> {
                   headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                   cellAlignment: pw.Alignment.centerLeft,
                   cellPadding: pw.EdgeInsets.all(8),
+                ),
+                // Footer Section
+                pw.Spacer(), // Push footer to the bottom of the page
+                pw.Divider(),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Image(footerLogo, width: 30, height: 30), // Footer logo
+                    pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.center,
+                        children: [
+                          pw.Text(
+                            'Dev Valley Software House',
+                            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                          ),
+                          pw.Text(
+                            'Contact: 0303-4889663',
+                            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                          ),
+                        ]
+                    )
+                  ],
                 ),
               ],
             );
