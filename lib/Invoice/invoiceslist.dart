@@ -306,12 +306,31 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
 
 
   Future<pw.MemoryImage> _createTextImage(String text) async {
+    // Scale factor to increase resolution
+    const double scaleFactor = 1.5;
+
     // Create a custom painter with the Urdu text
     final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder, Rect.fromPoints(Offset(0, 0), Offset(500, 50)));
+    final canvas = Canvas(
+      recorder,
+      Rect.fromPoints(
+        Offset(0, 0),
+        Offset(500 * scaleFactor, 50 * scaleFactor),
+      ),
+    );
+
+    // Paint settings
     final paint = Paint()..color = Colors.black;
 
-    final textStyle = TextStyle(fontSize: 13, fontFamily: 'JameelNoori',color: Colors.black,fontWeight: FontWeight.bold);  // Set custom font here if necessary
+    // Define text style with scaling
+    final textStyle = TextStyle(
+      fontSize: 13 * scaleFactor,
+      fontFamily: 'JameelNoori',
+      color: Colors.black,
+      fontWeight: FontWeight.bold,
+    );
+
+    // Create the text span and text painter
     final textSpan = TextSpan(text: text, style: textStyle);
     final textPainter = TextPainter(
       text: textSpan,
@@ -319,17 +338,25 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
       textDirection: ui.TextDirection.ltr,
     );
 
+    // Layout and paint the text
     textPainter.layout();
     textPainter.paint(canvas, Offset(0, 0));
 
-    // Create image from the canvas
+    // Create an image from the canvas
     final picture = recorder.endRecording();
-    final img = await picture.toImage(textPainter.width.toInt(), textPainter.height.toInt());
+    final img = await picture.toImage(
+      (textPainter.width * scaleFactor).toInt(),
+      (textPainter.height * scaleFactor).toInt(),
+    );
+
+    // Convert the image to PNG
     final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
     final buffer = byteData!.buffer.asUint8List();
 
-    return pw.MemoryImage(buffer);  // Return the image as MemoryImage
+    // Return the image as a MemoryImage
+    return pw.MemoryImage(buffer);
   }
+
 
 
   Future<void> _printInvoices() async {
@@ -355,7 +382,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
     }
 
     // Split the data into chunks that fit on a single page
-    const int rowsPerPage = 20; // Adjust the number of rows per page as needed
+    const int rowsPerPage = 11; // Adjust the number of rows per page as needed
     final pageCount = (tableData.length / rowsPerPage).ceil();
 
     for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
@@ -364,7 +391,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
       final endIndex = (startIndex + rowsPerPage) < tableData.length ? startIndex + rowsPerPage : tableData.length;
       final pageData = tableData.sublist(startIndex, endIndex);
       // Load the footer logo if different
-      final ByteData footerBytes = await rootBundle.load('assets/images/devlogo.png');
+      final ByteData footerBytes = await rootBundle.load('images/devlogo.png');
       final footerBuffer = footerBytes.buffer.asUint8List();
       final footerLogo = pw.MemoryImage(footerBuffer);
       // Add page with a table

@@ -111,7 +111,7 @@ class _InvoicePageState extends State<InvoicePage> {
     final image = pw.MemoryImage(buffer);
 
     // Load the footer logo if different
-    final ByteData footerBytes = await rootBundle.load('assets/images/devlogo.png');
+    final ByteData footerBytes = await rootBundle.load('images/devlogo.png');
     final footerBuffer = footerBytes.buffer.asUint8List();
     final footerLogo = pw.MemoryImage(footerBuffer);
 
@@ -154,8 +154,8 @@ class _InvoicePageState extends State<InvoicePage> {
                 // pw.Text('Customer Name: ${selectedCustomer.name}', style: const pw.TextStyle(fontSize: 14)),
                 pw.Text('Customer Number: ${selectedCustomer.phone}', style: const pw.TextStyle(fontSize: 14)),
                 // pw.Text('Customer Address ${selectedCustomer.address}', style: const pw.TextStyle(fontSize: 14)),
-                pw.Text('Date: $formattedDate', style: const pw.TextStyle(fontSize: 8)),
-                pw.Text('Time: $formattedTime', style: const pw.TextStyle(fontSize: 8)),
+                pw.Text('Date: $formattedDate', style: const pw.TextStyle(fontSize: 10)),
+                pw.Text('Time: $formattedTime', style: const pw.TextStyle(fontSize: 10)),
                 pw.Text('InvoiceId: $_invoiceId', style: const pw.TextStyle(fontSize: 14)),
 
                 pw.SizedBox(height: 10),
@@ -163,7 +163,7 @@ class _InvoicePageState extends State<InvoicePage> {
                 // Invoice Table with Urdu text converted to image
                 pw.Table.fromTextArray(
                   headers: [
-                    pw.Text('Description', style: const pw.TextStyle(fontSize: 8)),
+                    pw.Text('Description', style: const pw.TextStyle(fontSize: 10)),
                     pw.Text('Weight', style: const pw.TextStyle(fontSize: 10)),
                     pw.Text('Qty(Pcs)', style: const pw.TextStyle(fontSize: 10)),
                     pw.Text('Rate', style: const pw.TextStyle(fontSize: 10)),
@@ -284,30 +284,65 @@ class _InvoicePageState extends State<InvoicePage> {
   }
 
   Future<pw.MemoryImage> _createTextImage(String text) async {
+    // Use default text for empty input
+    final String displayText = text.isEmpty ? "N/A" : text;
+
+    // Scale factor to increase resolution
+    const double scaleFactor = 1.5;
+
     // Create a custom painter with the Urdu text
     final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder, Rect.fromPoints(Offset(0, 0), Offset(500, 50)));
-    final paint = Paint()..color = Colors.black;
-
-    final textStyle = TextStyle(fontSize: 13, fontFamily: 'JameelNoori',color: Colors.black,fontWeight: FontWeight.bold);  // Set custom font here if necessary
-    final textSpan = TextSpan(text: text, style: textStyle);
-    final textPainter = TextPainter(
-      text: textSpan,
-      textAlign: TextAlign.left,
-      textDirection: TextDirection.ltr,
+    final canvas = Canvas(
+      recorder,
+      Rect.fromPoints(
+        Offset(0, 0),
+        Offset(500 * scaleFactor, 50 * scaleFactor),
+      ),
     );
 
+    // Define text style with scaling
+    final textStyle = TextStyle(
+      fontSize: 12 * scaleFactor,
+      fontFamily: 'JameelNoori', // Ensure this font is registered
+      color: Colors.black,
+      fontWeight: FontWeight.bold,
+    );
+
+    // Create the text span and text painter
+    final textSpan = TextSpan(text: displayText, style: textStyle);
+    final textPainter = TextPainter(
+      text: textSpan,
+      textAlign: TextAlign.left, // Adjust as needed for alignment
+      textDirection: ui.TextDirection.rtl, // Use RTL for Urdu text
+    );
+
+    // Layout the text painter
     textPainter.layout();
+
+    // Validate dimensions
+    final double width = textPainter.width * scaleFactor;
+    final double height = textPainter.height * scaleFactor;
+
+    if (width <= 0 || height <= 0) {
+      throw Exception("Invalid text dimensions: width=$width, height=$height");
+    }
+
+    // Paint the text onto the canvas
     textPainter.paint(canvas, Offset(0, 0));
 
-    // Create image from the canvas
+    // Create an image from the canvas
     final picture = recorder.endRecording();
-    final img = await picture.toImage(textPainter.width.toInt(), textPainter.height.toInt());
+    final img = await picture.toImage(width.toInt(), height.toInt());
+
+    // Convert the image to PNG
     final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
     final buffer = byteData!.buffer.asUint8List();
 
-    return pw.MemoryImage(buffer);  // Return the image as MemoryImage
+    // Return the image as a MemoryImage
+    return pw.MemoryImage(buffer);
   }
+
+
 
   Future<double> _getRemainingBalance(String customerId) async {
     try {

@@ -296,13 +296,60 @@ class _filledListpageState extends State<filledListpage> {
     );
   }
 
+  // Future<pw.MemoryImage> _createTextImage(String text) async {
+  //   // Create a custom painter with the Urdu text
+  //   final recorder = ui.PictureRecorder();
+  //   final canvas = Canvas(recorder, Rect.fromPoints(Offset(0, 0), Offset(500, 50)));
+  //   final paint = Paint()..color = Colors.black;
+  //
+  //   final textStyle = TextStyle(fontSize: 13, fontFamily: 'JameelNoori',color: Colors.black,fontWeight: FontWeight.bold);  // Set custom font here if necessary
+  //   final textSpan = TextSpan(text: text, style: textStyle);
+  //   final textPainter = TextPainter(
+  //     text: textSpan,
+  //     textAlign: TextAlign.left,
+  //     textDirection: ui.TextDirection.ltr,
+  //   );
+  //
+  //   textPainter.layout();
+  //   textPainter.paint(canvas, Offset(0, 0));
+  //
+  //   // Create image from the canvas
+  //   final picture = recorder.endRecording();
+  //   final img = await picture.toImage(
+  //       textPainter.width.toInt(),
+  //       textPainter.height.toInt()
+  //   );
+  //   final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+  //   final buffer = byteData!.buffer.asUint8List();
+  //
+  //   return pw.MemoryImage(buffer);  // Return the image as MemoryImage
+  // }
   Future<pw.MemoryImage> _createTextImage(String text) async {
+    // Scale factor to increase resolution
+    const double scaleFactor = 1.5;
+
     // Create a custom painter with the Urdu text
     final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder, Rect.fromPoints(Offset(0, 0), Offset(500, 50)));
+    final canvas = Canvas(
+      recorder,
+      Rect.fromPoints(
+        Offset(0, 0),
+        Offset(500 * scaleFactor, 50 * scaleFactor),
+      ),
+    );
+
+    // Paint settings
     final paint = Paint()..color = Colors.black;
 
-    final textStyle = TextStyle(fontSize: 13, fontFamily: 'JameelNoori',color: Colors.black,fontWeight: FontWeight.bold);  // Set custom font here if necessary
+    // Define text style with scaling
+    final textStyle = TextStyle(
+      fontSize: 13 * scaleFactor,
+      fontFamily: 'JameelNoori',
+      color: Colors.black,
+      fontWeight: FontWeight.bold,
+    );
+
+    // Create the text span and text painter
     final textSpan = TextSpan(text: text, style: textStyle);
     final textPainter = TextPainter(
       text: textSpan,
@@ -310,18 +357,24 @@ class _filledListpageState extends State<filledListpage> {
       textDirection: ui.TextDirection.ltr,
     );
 
+    // Layout and paint the text
     textPainter.layout();
     textPainter.paint(canvas, Offset(0, 0));
 
-    // Create image from the canvas
+    // Create an image from the canvas
     final picture = recorder.endRecording();
-    final img = await picture.toImage(textPainter.width.toInt(), textPainter.height.toInt());
+    final img = await picture.toImage(
+      (textPainter.width * scaleFactor).toInt(),
+      (textPainter.height * scaleFactor).toInt(),
+    );
+
+    // Convert the image to PNG
     final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
     final buffer = byteData!.buffer.asUint8List();
 
-    return pw.MemoryImage(buffer);  // Return the image as MemoryImage
+    // Return the image as a MemoryImage
+    return pw.MemoryImage(buffer);
   }
-
 
   Future<void> _printFilled() async {
     final pdf = pw.Document();
@@ -346,7 +399,7 @@ class _filledListpageState extends State<filledListpage> {
     }
 
     // Define the number of rows per page based on the page size
-    const int rowsPerPage = 20;  // Adjust this value as necessary
+    const int rowsPerPage = 11;  // Adjust this value as necessary
 
     // Split data into chunks for pagination
     final pageCount = (data.length / rowsPerPage).ceil();
@@ -356,7 +409,7 @@ class _filledListpageState extends State<filledListpage> {
       final endIndex = (startIndex + rowsPerPage) < data.length ? startIndex + rowsPerPage : data.length;
       final pageData = data.sublist(startIndex, endIndex);
       // Load the footer logo if different
-      final ByteData footerBytes = await rootBundle.load('assets/images/devlogo.png');
+      final ByteData footerBytes = await rootBundle.load('images/devlogo.png');
       final footerBuffer = footerBytes.buffer.asUint8List();
       final footerLogo = pw.MemoryImage(footerBuffer);
       // Add page with a table
